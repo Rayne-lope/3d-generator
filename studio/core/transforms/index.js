@@ -405,7 +405,12 @@ function decimate(prim, target) {
   }
   const welded = new Float32Array(verts.length * 3);
   verts.forEach((v, i) => welded.set(prim.positions.subarray(v * 3, v * 3 + 3), i * 3));
-  const [result] = MeshoptSimplifier.simplify(indices, welded, 3, target * 3, 0.02, ['LockBorder']);
+  // Relax the error bound until the target is met (meshoptimizer stops early at the bound).
+  let result = indices;
+  for (const err of [0.01, 0.03, 0.08, 0.2, 0.5]) {
+    [result] = MeshoptSimplifier.simplify(indices, welded, 3, target * 3, err, err < 0.2 ? ['LockBorder'] : []);
+    if (result.length / 3 <= target) break;
+  }
   const tris = result.length / 3;
   const out = { ...prim, positions: new Float32Array(tris * 9), normals: new Float32Array(tris * 9), uvs: new Float32Array(tris * 6) };
   for (let i = 0; i < result.length; i++) {
@@ -456,7 +461,11 @@ function triangleLimit(ir, profile, { allowDecimate = false } = {}) {
       }
       for (const c of chunks) newPrims.push(c.prims || [subPrim(prim, c.tris_list)]);
     }
-    if (newPrims.length <= 1) return;
+    if (newPrims.length <= 1) {
+      // Single chunk (possibly decimated): keep it on the node itself.
+      if (newPrims.length === 1) n.primitives = newPrims[0];
+      return;
+    }
     n.primitives = [];
     newPrims.forEach((prims, i) => added.push({ name: `${n.name}_chunk${i + 1}`, parent: ni, translation: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1], primitives: prims }));
     ir.notes.push({ id: 'tri-limit.split', message: `'${n.name}' (${total} triangles) split into ${newPrims.length} meshes of ≤ ${limit} triangles` });
