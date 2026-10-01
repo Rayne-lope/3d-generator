@@ -87,6 +87,66 @@ export function resizeImage(src, sw, sh, dw, dh, { space = 'linear', normal = fa
   return out;
 }
 
+/**
+ * Tile an image nu × nv times and resample the result to dw × dh in one pass (area average
+ * with wrap-around), without allocating the full tiled image.
+ */
+export function tileResize(src, sw, sh, nu, nv, dw, dh, { space = 'linear', normal = false } = {}) {
+  const TW = sw * nu;
+  const TH = sh * nv;
+  if (TW === dw && TH === dh) return tileImage(src, sw, sh, nu, nv).data;
+  const out = new Uint8Array(dw * dh * 4);
+  const fx = TW / dw;
+  const fy = TH / dh;
+  for (let y = 0; y < dh; y++) {
+    const y0 = y * fy;
+    const y1 = (y + 1) * fy;
+    for (let x = 0; x < dw; x++) {
+      const x0 = x * fx;
+      const x1 = (x + 1) * fx;
+      let r = 0; let g = 0; let b = 0; let a = 0; let wsum = 0;
+      for (let ty = Math.floor(y0); ty < Math.ceil(y1); ty++) {
+        const wy = Math.min(y1, ty + 1) - Math.max(y0, ty);
+        const sy = ty % sh;
+        for (let tx = Math.floor(x0); tx < Math.ceil(x1); tx++) {
+          const wx = Math.min(x1, tx + 1) - Math.max(x0, tx);
+          const wgt = wx * wy;
+          const i = (sy * sw + (tx % sw)) * 4;
+          if (space === 'srgb') {
+            r += LUT_TO_LINEAR[src[i]] * wgt;
+            g += LUT_TO_LINEAR[src[i + 1]] * wgt;
+            b += LUT_TO_LINEAR[src[i + 2]] * wgt;
+          } else {
+            r += (src[i] / 255) * wgt;
+            g += (src[i + 1] / 255) * wgt;
+            b += (src[i + 2] / 255) * wgt;
+          }
+          a += (src[i + 3] / 255) * wgt;
+          wsum += wgt;
+        }
+      }
+      r /= wsum; g /= wsum; b /= wsum; a /= wsum;
+      if (space === 'srgb') {
+        r = linearToSrgb(r);
+        g = linearToSrgb(g);
+        b = linearToSrgb(b);
+      }
+      if (normal) {
+        let nx = r * 2 - 1; let ny = g * 2 - 1; let nz = b * 2 - 1;
+        const len = Math.hypot(nx, ny, nz) || 1;
+        nx /= len; ny /= len; nz /= len;
+        r = nx * 0.5 + 0.5; g = ny * 0.5 + 0.5; b = nz * 0.5 + 0.5;
+      }
+      const o = (y * dw + x) * 4;
+      out[o] = Math.round(Math.min(1, Math.max(0, r)) * 255);
+      out[o + 1] = Math.round(Math.min(1, Math.max(0, g)) * 255);
+      out[o + 2] = Math.round(Math.min(1, Math.max(0, b)) * 255);
+      out[o + 3] = Math.round(Math.min(1, Math.max(0, a)) * 255);
+    }
+  }
+  return out;
+}
+
 /** Solid-color image. rgba components 0..255. */
 export function solidImage(w, h, rgba) {
   const out = new Uint8Array(w * h * 4);

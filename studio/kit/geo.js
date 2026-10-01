@@ -12,7 +12,36 @@ import { box as boxUV, planar as planarUV } from './uv.js';
 
 const TAU = Math.PI * 2;
 
-function finish(g, { base = false } = {}) {
+/** Remove zero-area triangles (e.g. collapsed poles of three.js generators). */
+function dropDegenerate(g) {
+  const pos = g.attributes.position;
+  const keep = [];
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  for (let t = 0; t < pos.count; t += 3) {
+    a.fromBufferAttribute(pos, t);
+    b.fromBufferAttribute(pos, t + 1);
+    c.fromBufferAttribute(pos, t + 2);
+    if (b.clone().sub(a).cross(c.clone().sub(a)).lengthSq() > 1e-20) keep.push(t);
+  }
+  if (keep.length * 3 === pos.count) return g;
+  const out = new THREE.BufferGeometry();
+  for (const name of Object.keys(g.attributes)) {
+    const attr = g.attributes[name];
+    const arr = new Float32Array(keep.length * 3 * attr.itemSize);
+    let o = 0;
+    for (const t of keep) {
+      for (let k = 0; k < 3 * attr.itemSize; k++) arr[o++] = attr.array[t * attr.itemSize + k];
+    }
+    out.setAttribute(name, new THREE.BufferAttribute(arr, attr.itemSize));
+  }
+  out.userData = { ...g.userData };
+  return out;
+}
+
+function finish(geometry, { base = false } = {}) {
+  const g = geometry.index ? geometry : dropDegenerate(geometry);
   if (base) {
     g.computeBoundingBox();
     g.translate(0, -g.boundingBox.min.y, 0);

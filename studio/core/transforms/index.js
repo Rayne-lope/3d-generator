@@ -5,10 +5,12 @@
 // → texture limits → gutter dilation → emissive clamp → unit scale.
 
 import { MeshoptSimplifier } from 'meshoptimizer';
-import { linearToSrgb, srgbToLinear, nextPOT, resizeImage, solidImage, tileImage, to8 } from './pixels.js';
+import { linearToSrgb, srgbToLinear, nextPOT, resizeImage, solidImage, tileResize, to8 } from './pixels.js';
 import { uvIslands, rasterizeIslands, dilate } from '../uvtools.js';
 
 const SWATCH = 16;
+const isPOT = (n) => n > 0 && (n & (n - 1)) === 0;
+const floorPOT = (n) => 2 ** Math.floor(Math.log2(Math.max(1, n)));
 const TEX_KEYS = ['baseColorTexture', 'metallicRoughnessTexture', 'normalTexture', 'occlusionTexture', 'emissiveTexture'];
 
 const isTextured = (m) => TEX_KEYS.some((k) => m[k] !== null);
@@ -62,12 +64,22 @@ function tileBake(ir, profile) {
       ir.notes.push({ id: 'tile-bake.too-many', message: `material '${m.name}' repeats ${nu}×${nv} times; more than ${maxTiles} tiles cannot be baked without losing detail. Use fewer repeats (larger texture scale) or split the surface.` });
       continue;
     }
+    // Bake straight to the final size (profile max, power of two) — no giant intermediate image.
+    const max = profile.textures.maxSize || 4096;
     for (const key of TEX_KEYS) {
       if (m[key] === null) continue;
       const src = ir.textures[m[key]];
-      const tiled = tileImage(src.data, src.width, src.height, nu, nv);
-      const t = cloneTexture(ir, m[key], { data: tiled.data, width: tiled.width, height: tiled.height, name: `${src.name}_x${nu}x${nv}`, tileable: true });
+      let w = src.width * nu;
+      let h = src.height * nv;
+      const scale = Math.min(1, max / Math.max(w, h));
+      w = floorPOT(Math.max(1, Math.round(w * scale)));
+      h = floorPOT(Math.max(1, Math.round(h * scale)));
+      const data = tileResize(src.data, src.width, src.height, nu, nv, w, h, { space: src.space, normal: src.slots.includes('normal') });
+      const t = cloneTexture(ir, m[key], { data, width: w, height: h, name: `${src.name}_x${nu}x${nv}`, tileable: true });
       m[key] = t.id;
+      if (w !== src.width * nu || h !== src.height * nv) {
+        ir.notes.push({ id: 'texture.downscaled', message: `texture '${t.name}' baked at ${w}×${h} instead of ${src.width * nu}×${src.height * nv} (${profile.label}: max ${max}px, power of two); the preview shows exactly this` });
+      }
     }
     for (const p of prims) {
       for (let i = 0; i < p.uvs.length; i += 2) {
@@ -460,16 +472,25 @@ function triangleLimit(ir, profile, { allowDecimate = false } = {}) {
 function textureLimits(ir, profile) {
   const max = profile.textures.maxSize;
   if (!max) return;
+  // Engines that downscale or recompress textures (Roblox) get power-of-two sizes from us,
+  // so the preview shows exactly the resolution the engine keeps.
+  const forcePOT = !!profile.uv.tileBake;
   for (const t of ir.textures) {
-    if (t.width <= max && t.height <= max) continue;
-    const scale = max / Math.max(t.width, t.height);
-    const w = Math.max(1, Math.round(t.width * scale));
-    const h = Math.max(1, Math.round(t.height * scale));
+    const tooBig = t.width > max || t.height > max;
+    const npot = forcePOT && (!isPOT(t.width) || !isPOT(t.height));
+    if (!tooBig && !npot) continue;
+    const scale = Math.min(1, max / Math.max(t.width, t.height));
+    let w = Math.max(1, Math.round(t.width * scale));
+    let h = Math.max(1, Math.round(t.height * scale));
+    if (forcePOT) {
+      w = floorPOT(w);
+      h = floorPOT(h);
+    }
     const before = `${t.width}×${t.height}`;
     t.data = resizeImage(t.data, t.width, t.height, w, h, { space: t.space, normal: t.slots.includes('normal') });
     t.width = w;
     t.height = h;
-    ir.notes.push({ id: 'texture.downscaled', message: `texture '${t.name}' downscaled ${before} → ${w}×${h} (${profile.label} max ${max}px); the preview shows the downscaled result` });
+    ir.notes.push({ id: 'texture.downscaled', message: `texture '${t.name}' resized ${before} → ${w}×${h} (${profile.label}: max ${max}px${forcePOT ? ', power of two' : ''}); the preview shows the resized result` });
   }
 }
 
@@ -539,6 +560,7 @@ export async function applyProfile(ir, profile, opts = {}) {
   ir.profile = profile.id;
   await MeshoptSimplifier.ready;
   if (profile.uv.tileBake) tileBake(ir, profile);
+  textureLimits(ir, profile); // resize before per-pixel baking so big textures stay fast
   if (profile.materials.bakeFactorsIntoTextures) bakeFactors(ir);
   if (profile.materials.paletteAtlas) paletteAtlas(ir);
   if (profile.materials.maxMaterialsPerMesh === 1) splitByMaterial(ir);

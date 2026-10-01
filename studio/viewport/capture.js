@@ -168,11 +168,12 @@ window.studioCapture = {
     sc.height = height;
     const ctx = sc.getContext('2d');
     ctx.drawImage(shot, 0, 0);
-    for (const p of placed) {
+    placed.forEach((p, i) => {
       const box = contentBox(p.holder);
       const v = new THREE.Vector3((box.min.x + box.max.x) / 2, box.min.y, box.max.z).project(camera);
-      drawLabel(ctx, p.label, ((v.x + 1) / 2) * width, ((1 - v.y) / 2) * height + 8, { align: 'center', size: 14 });
-    }
+      // Alternate label rows so neighbors never overlap.
+      drawLabel(ctx, p.label, ((v.x + 1) / 2) * width, ((1 - v.y) / 2) * height + 8 + (i % 2) * 26, { align: 'center', size: 14 });
+    });
     return sc.toDataURL('image/png');
   },
 };

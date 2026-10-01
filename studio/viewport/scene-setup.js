@@ -28,31 +28,49 @@ export function createRenderer(canvas, { preserveDrawingBuffer = false, antialia
   return renderer;
 }
 
+/** Plain gray gradient environment (light above, darker below): engine-like ambient, no HDRI tricks. */
+function neutralEnvironment(renderer) {
+  const envScene = new THREE.Scene();
+  const geo = new THREE.SphereGeometry(10, 32, 16);
+  const colors = [];
+  const pos = geo.attributes.position;
+  const top = new THREE.Color('#d9dde3');
+  const horizon = new THREE.Color('#9a9ea5');
+  const bottom = new THREE.Color('#4a4743');
+  for (let i = 0; i < pos.count; i++) {
+    const t = pos.getY(i) / 10;
+    const c = t > 0 ? horizon.clone().lerp(top, t) : horizon.clone().lerp(bottom, -t);
+    colors.push(c.r, c.g, c.b);
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  envScene.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const tex = pmrem.fromScene(envScene, 0.04).texture;
+  pmrem.dispose();
+  return tex;
+}
+
 /**
  * Lighting rigs.
- * neutral  — simple hemisphere + key + fill, no environment, no tone mapping. The parity
- *            reference: if it looks right here, it is the asset, not the lighting.
- * showcase — room environment reflections + filmic tone mapping + soft shadow. Pretty, but
- *            not a parity reference.
+ * neutral  — gray gradient ambient + one key + one fill, no tone mapping, no shadows.
+ *            Close to an engine's default sky/ambient, and the parity reference: if it
+ *            looks right here, it is the asset, not the lighting.
+ * showcase — room environment reflections + filmic tone mapping + soft shadow. Pretty,
+ *            but not a parity reference.
  */
 export function applyLighting(renderer, scene, mode = 'neutral', { size = 1 } = {}) {
   const old = scene.getObjectByName('__lights');
-  if (old) {
-    old.traverse((o) => o.dispose?.());
-    scene.remove(old);
-  }
-  if (scene.userData.pmrem) {
-    scene.environment = null;
-  }
+  if (old) scene.remove(old);
   const rig = new THREE.Group();
   rig.name = '__lights';
   if (mode === 'showcase') {
-    if (!scene.userData.envTexture) {
+    if (!scene.userData.roomEnv) {
       const pmrem = new THREE.PMREMGenerator(renderer);
-      scene.userData.envTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.userData.roomEnv = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
       pmrem.dispose();
     }
-    scene.environment = scene.userData.envTexture;
+    scene.environment = scene.userData.roomEnv;
+    scene.environmentIntensity = 1;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
     const key = new THREE.DirectionalLight(0xffffff, 1.6);
@@ -65,14 +83,15 @@ export function applyLighting(renderer, scene, mode = 'neutral', { size = 1 } = 
     rig.add(key);
     renderer.shadowMap.enabled = true;
   } else {
-    scene.environment = null;
+    if (!scene.userData.neutralEnv) scene.userData.neutralEnv = neutralEnvironment(renderer);
+    scene.environment = scene.userData.neutralEnv;
+    scene.environmentIntensity = 0.85;
     renderer.toneMapping = THREE.NoToneMapping;
     renderer.shadowMap.enabled = false;
-    rig.add(new THREE.HemisphereLight(0xf2f5ff, 0x3a3631, 1.25));
-    const key = new THREE.DirectionalLight(0xffffff, 1.9);
+    const key = new THREE.DirectionalLight(0xffffff, 1.7);
     key.position.set(0.55, 1, 0.75);
     rig.add(key);
-    const fill = new THREE.DirectionalLight(0xdfe6ff, 0.8);
+    const fill = new THREE.DirectionalLight(0xdfe6ff, 0.45);
     fill.position.set(-0.8, 0.35, -0.6);
     rig.add(fill);
   }

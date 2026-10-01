@@ -127,6 +127,21 @@ export function transform(g, matrix) {
   return g;
 }
 
+/**
+ * Lay geometry built around the Y axis (lathe, cylinder, tube rings) along X or Z.
+ * The lathe's phi = 0 side (+Z) ends up on top (+Y), so a partial lathe centered on
+ * phi = 0 becomes an upward arc: barrel-vault lids, logs, horizontal pipes, arches.
+ * 'x': (x, y, z) → (y, z, x)   'z': (x, y, z) → (-x, z, y)   (pure rotations)
+ */
+export function lieAlong(g, axis = 'x') {
+  const m = new THREE.Matrix4();
+  if (axis === 'x') m.set(0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1);
+  else if (axis === 'z') m.set(-1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1);
+  else throw new Error("k.op.lieAlong: axis must be 'x' or 'z'");
+  g.applyMatrix4(m);
+  return g;
+}
+
 /** Mirrored copy across an axis plane through the origin ('x' mirrors x → -x). */
 export function mirror(g, axis = 'x') {
   const out = clone(g);

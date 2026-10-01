@@ -1,0 +1,17 @@
+{
+  "title": "Cozy Tavern Props",
+  "prompt": "Cozy fantasy tavern props: a trestle table, a stool, a wooden mug, a candle holder and a wall shelf",
+  "interpretation": "Chunky, slightly oversized tavern furniture in warm honey wood with soft chamfers, dark painted-iron fittings and warm candle light. One shared palette and bevel size; seat 0.45 m and table 0.76 m keep the pieces at human scale with each other.",
+  "style": [
+    "stylized",
+    "cozy",
+    "fantasy"
+  ],
+  "members": [
+    "tavern-table",
+    "tavern-stool",
+    "tavern-mug",
+    "tavern-candle-holder",
+    "tavern-shelf"
+  ]
+}

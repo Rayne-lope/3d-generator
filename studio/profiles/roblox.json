@@ -27,7 +27,7 @@
     "uvPaddingPx": 8,
     "warnTotalMegapixels": 8
   },
-  "uv": { "require01": true, "tileBake": true, "maxTiles": 16 },
+  "uv": { "require01": true, "tileBake": true, "maxTiles": 64 },
   "importHints": [
     "File > Import 3D (or Home/Avatar tab > Import 3D) and pick the .glb.",
     "File Geometry > Scale Unit: keep 'Stud' (this export is already in studs, 25:7 studs per meter).",

@@ -39,6 +39,7 @@ export const k = {
     scale: op.scale,
     transform: op.transform,
     mirror: op.mirror,
+    lieAlong: op.lieAlong,
     clone: op.clone,
     merge: op.merge,
     center: op.center,

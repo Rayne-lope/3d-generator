@@ -41,6 +41,14 @@ function uvArea(uvs, t) {
 /**
  * @returns {{issues: any[], textures: any[]}} issues plus per-texture analysis for the report/viewport
  */
+function isSolid(info, ti) {
+  const { data } = info.pixels(ti);
+  for (let i = 4; i < data.length; i += 4) {
+    if (data[i] !== data[0] || data[i + 1] !== data[1] || data[i + 2] !== data[2] || data[i + 3] !== data[3]) return false;
+  }
+  return true;
+}
+
 export function checkTexturesAndUVs({ info, profile }) {
   const out = [];
   const analysis = [];
@@ -79,8 +87,14 @@ export function checkTexturesAndUVs({ info, profile }) {
     const triCount = uvs.length / 6;
     if (!triCount) return;
     const isPalette = tex.name.startsWith('palette');
+    const solid = !isPalette && isSolid(info, ti);
     const atlas = isPalette || refs.every((r) => r.wrapS === 'CLAMP_TO_EDGE' && r.wrapT === 'CLAMP_TO_EDGE');
-    const entry = { texture: ti, name: tex.name, width: tex.width, height: tex.height, slots: [...new Set(refs.map((r) => r.slot))], materials: [...new Set(refs.map((r) => r.material))], layout: isPalette ? 'palette' : atlas ? 'atlas' : 'tiling' };
+    const entry = { texture: ti, name: tex.name, width: tex.width, height: tex.height, slots: [...new Set(refs.map((r) => r.slot))], materials: [...new Set(refs.map((r) => r.material))], layout: isPalette ? 'palette' : solid ? 'solid' : atlas ? 'atlas' : 'tiling' };
+    if (solid) {
+      // A constant-color texture (baked factor): resolution, density and padding are irrelevant.
+      analysis.push(entry);
+      return;
+    }
 
     // Texel density (texels per meter), area weighted.
     if (!isPalette) {
