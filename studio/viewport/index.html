@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 3D Asset Studio</title>
+  <link rel="stylesheet" href="/viewport/styles.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/vendor/three/build/three.module.js",
+      "three/addons/": "/vendor/three/examples/jsm/",
+      "three-mesh-bvh": "/vendor/three-mesh-bvh/src/index.js",
+      "three-bvh-csg/": "/vendor/three-bvh-csg/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">AI 3D Asset Studio</div>
+    <div class="title" id="title">No asset selected</div>
+    <div class="controls">
+      <label>Profile <select id="profile"></select></label>
+      <label>Light
+        <select id="lighting">
+          <option value="neutral">Neutral (parity)</option>
+          <option value="showcase">Showcase</option>
+        </select>
+      </label>
+      <label>View
+        <select id="viewMode">
+          <option value="shaded">Shaded</option>
+          <option value="normals">Normals</option>
+          <option value="uv">UV checker</option>
+          <option value="density">Texel density</option>
+        </select>
+      </label>
+      <div class="toggles">
+        <button data-toggle="wire" title="Wireframe overlay (W)">Wire</button>
+        <button data-toggle="backfaces" title="Highlight back faces in red: shows missing or inverted faces (B)">Backfaces</button>
+        <button data-toggle="grid" class="on" title="1 m grid (G)">Grid</button>
+        <button data-toggle="dims" class="on" title="Dimensions (D)">Dims</button>
+        <button data-toggle="human" title="1.75 m human for scale (H)">Human</button>
+      </div>
+      <div class="views">
+        <button data-view="front">Front</button>
+        <button data-view="right">Side</button>
+        <button data-view="top">Top</button>
+        <button data-view="iso">3/4</button>
+      </div>
+      <button id="shot" title="Save a PNG of the viewport">PNG</button>
+    </div>
+  </header>
+  <aside class="sidebar">
+    <div class="side-head">
+      <span>Assets</span>
+      <input id="filter" placeholder="filter…" autocomplete="off">
+    </div>
+    <div id="assetList" class="asset-list"></div>
+    <div class="side-foot">Prompt your coding agent (e.g. <code>/asset a mossy stone well</code>). This page only shows exported GLBs.</div>
+  </aside>
+  <main class="stage">
+    <canvas id="canvas"></canvas>
+    <div id="banner" class="banner hidden"></div>
+    <div id="variantBar" class="variant-bar hidden"></div>
+    <div id="empty" class="empty">
+      <h2>Prompt → Generate → Preview → Revise → Export</h2>
+      <p>Pick an asset on the left, or ask your coding agent to create one. Edits rebuild automatically.</p>
+    </div>
+  </main>
+  <section class="panel">
+    <nav class="tabs">
+      <button data-tab="report" class="on">Report</button>
+      <button data-tab="issues">Issues <span id="issueCount" class="pill"></span></button>
+      <button data-tab="uv">UV</button>
+      <button data-tab="versions">Versions</button>
+    </nav>
+    <div id="tab-report" class="tab on"></div>
+    <div id="tab-issues" class="tab"></div>
+    <div id="tab-uv" class="tab">
+      <select id="uvTexture"></select>
+      <canvas id="uvCanvas" width="512" height="512"></canvas>
+      <div id="uvInfo" class="muted"></div>
+    </div>
+    <div id="tab-versions" class="tab"></div>
+  </section>
+  <footer class="status">
+    <span id="status">Connecting…</span>
+    <span class="badge" title="The viewport loads the exported GLB through a clean GLTFLoader — never the source scene">Preview = Export</span>
+  </footer>
+  <script type="module" src="/viewport/app.js"></script>
+</body>
+</html>

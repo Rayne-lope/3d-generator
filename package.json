@@ -1,0 +1,32 @@
+{
+  "name": "ai-3d-asset-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local AI 3D asset studio: prompt -> procedural Three.js asset -> live GLB viewport -> engine-ready GLB export (Godot, Roblox Studio, generic glTF).",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "node studio dev",
+    "studio": "node studio",
+    "test": "node --test --test-reporter=spec tests/",
+    "golden": "node studio golden --profile all",
+    "doctor": "node studio doctor"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
+    "gltf-validator": "^2.0.0-dev.3.10",
+    "meshoptimizer": "^1.3.0",
+    "mikktspace": "^1.1.1",
+    "pixelmatch": "^7.2.0",
+    "playwright": "1.56.1",
+    "pngjs": "^7.0.0",
+    "three": "^0.186.1",
+    "three-bvh-csg": "^0.0.18",
+    "three-mesh-bvh": "^0.9.15"
+  }
+}

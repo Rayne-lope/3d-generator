@@ -30,3 +30,8 @@ yarn-error.log*
 .idea/
 *.swp
 *.swo
+
+# AI 3D Asset Studio local state (previews, history, shots, caches)
+.studio/
+golden/report/
+engines/godot/.godot/

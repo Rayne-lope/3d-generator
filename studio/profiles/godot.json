@@ -1,0 +1,47 @@
+{
+  "id": "godot",
+  "label": "Godot 4",
+  "description": "Godot 4.3+ native glTF import (editor import or runtime GLTFDocument). Meters, +Y up, models face +Z (Vector3.MODEL_FRONT); no conversion needed.",
+  "units": { "name": "m", "perMeter": 1 },
+  "axes": { "up": "+Y", "front": "+Z" },
+  "geometry": {
+    "maxTrianglesPerMesh": null,
+    "warnTrianglesPerMesh": 100000,
+    "warnTrianglesTotal": 100000,
+    "splitOverLimit": false,
+    "warnMeshes": 64
+  },
+  "materials": {
+    "bakeFactorsIntoTextures": false,
+    "paletteAtlas": false,
+    "maxMaterialsPerMesh": null,
+    "alphaModes": { "OPAQUE": "ok", "MASK": "ok", "BLEND": "ok" },
+    "emissive": "ok",
+    "emissiveStrength": true
+  },
+  "textures": {
+    "maxSize": 4096,
+    "warnSize": 2048,
+    "powerOfTwo": "warn",
+    "texelDensity": { "min": 128, "target": 256 },
+    "uvPaddingPx": 4,
+    "warnTotalMegapixels": 24
+  },
+  "uv": { "require01": false, "tileBake": false, "maxTiles": 16 },
+  "importHints": [
+    "Drop the .glb into the Godot FileSystem dock (or load it at runtime with GLTFDocument).",
+    "Godot imports 3D textures as VRAM Compressed by default (lossy). For pixel-exact palettes or crisp detail set the texture import mode to Lossless, or keep VRAM Compressed with High Quality.",
+    "Base color factors map to StandardMaterial3D.albedo_color (converted to sRGB by the importer)."
+  ],
+  "verification": {
+    "status": "needs-engine-run",
+    "notes": [
+      "engines/godot/verify/verify_golden.gd checks every golden GLB headless (AABB, origin, triangles, surfaces, albedo, metal/rough, transparency, culling).",
+      "Godot binaries could not be downloaded in the build container, so the script must be run once on a machine with Godot 4.3+."
+    ],
+    "sources": [
+      "https://docs.godotengine.org/en/stable/tutorials/assets_pipeline/importing_3d_scenes/available_formats.html",
+      "https://docs.godotengine.org/en/stable/tutorials/io/runtime_file_loading_and_saving.html"
+    ]
+  }
+}

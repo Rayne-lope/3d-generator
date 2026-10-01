@@ -1,0 +1,8 @@
+{
+  "defaultProfile": "generic",
+  "server": { "port": 5178, "host": "127.0.0.1" },
+  "history": { "keep": 20 },
+  "review": { "views": ["front", "right", "back", "top", "iso", "iso-wire"], "size": 512 },
+  "parity": { "pixelThreshold": 0.12, "maxDiffRatio": 0.02 },
+  "golden": { "regressionMaxDiffRatio": 0.01 }
+}

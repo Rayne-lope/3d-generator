@@ -1,0 +1,56 @@
+{
+  "id": "roblox",
+  "label": "Roblox Studio",
+  "description": "Roblox Studio Importer (File > Import 3D) with native glTF/GLB. Pre-scaled to studs so the importer's default Scale Unit (Stud) gives the right size.",
+  "units": { "name": "stud", "perMeter": 3.5714285714285716, "importerScaleUnit": "Stud" },
+  "axes": { "up": "+Y", "front": "+Z" },
+  "geometry": {
+    "maxTrianglesPerMesh": 20000,
+    "warnTrianglesPerMesh": 10000,
+    "warnTrianglesTotal": 60000,
+    "splitOverLimit": true,
+    "warnMeshes": 40
+  },
+  "materials": {
+    "bakeFactorsIntoTextures": true,
+    "paletteAtlas": true,
+    "maxMaterialsPerMesh": 1,
+    "alphaModes": { "OPAQUE": "ok", "MASK": "ok", "BLEND": "warn" },
+    "emissive": "warn",
+    "emissiveStrength": false
+  },
+  "textures": {
+    "maxSize": 1024,
+    "warnSize": null,
+    "powerOfTwo": "warn",
+    "texelDensity": { "min": 90, "target": 180 },
+    "uvPaddingPx": 8,
+    "warnTotalMegapixels": 8
+  },
+  "uv": { "require01": true, "tileBake": true, "maxTiles": 16 },
+  "importHints": [
+    "File > Import 3D (or Home/Avatar tab > Import 3D) and pick the .glb.",
+    "File Geometry > Scale Unit: keep 'Stud' (this export is already in studs, 25:7 studs per meter).",
+    "Each material becomes its own MeshPart (Roblox allows one material per MeshPart); flat colors share one palette texture so they stay one MeshPart.",
+    "Colors come from textures because the Roblox glTF importer ignores baseColorFactor."
+  ],
+  "verification": {
+    "status": "needs-engine-run",
+    "notes": [
+      "Research (2026-10): glTF/GLB is supported natively by the Importer; FBX/OBJ conversion is not needed.",
+      "baseColorFactor is not preserved by the glTF importer (DevForum bug report), so every color is baked into a texture.",
+      "Each MeshPart holds a single material; UVs must be in 0..1 (Roblox texture specifications).",
+      "Meshes above 20,000 triangles are rejected by the Importer; 10,000 is the conservative mobile target.",
+      "SurfaceAppearance maps are capped at 1024x1024; normal maps are OpenGL tangent space (same as glTF).",
+      "Since 2026-06-16 the Importer converts non-stud units with 25:7 studs per meter; Scale Unit defaults to Stud.",
+      "Emissive and alpha blend mapping are unverified: check them with engines/roblox/CHECKLIST.md."
+    ],
+    "sources": [
+      "https://create.roblox.com/docs/art/modeling/3d-importer",
+      "https://create.roblox.com/docs/art/modeling/texture-specifications",
+      "https://devforum.roblox.com/t/3d-importer-gltf-basecolorfactor/4013776",
+      "https://devforum.roblox.com/t/more-control-over-importer-custom-scale-factor-and-updated-unit-conversions/4644371",
+      "https://devforum.roblox.com/t/3d-importer-gltf-file-support-full-release/2584034"
+    ]
+  }
+}

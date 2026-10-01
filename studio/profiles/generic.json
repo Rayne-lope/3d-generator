@@ -1,0 +1,38 @@
+{
+  "id": "generic",
+  "label": "Generic glTF",
+  "description": "Standard glTF 2.0 (meters, +Y up, front +Z). Works in any glTF viewer and in Unity (glTFast) / Unreal (Interchange) without parity guarantees.",
+  "units": { "name": "m", "perMeter": 1 },
+  "axes": { "up": "+Y", "front": "+Z" },
+  "geometry": {
+    "maxTrianglesPerMesh": null,
+    "warnTrianglesPerMesh": 100000,
+    "warnTrianglesTotal": 100000,
+    "splitOverLimit": false,
+    "warnMeshes": 64
+  },
+  "materials": {
+    "bakeFactorsIntoTextures": false,
+    "paletteAtlas": false,
+    "maxMaterialsPerMesh": null,
+    "alphaModes": { "OPAQUE": "ok", "MASK": "ok", "BLEND": "ok" },
+    "emissive": "ok",
+    "emissiveStrength": true
+  },
+  "textures": {
+    "maxSize": 4096,
+    "warnSize": 2048,
+    "powerOfTwo": "warn",
+    "texelDensity": { "min": 128, "target": 256 },
+    "uvPaddingPx": 4,
+    "warnTotalMegapixels": 24
+  },
+  "uv": { "require01": false, "tileBake": false, "maxTiles": 16 },
+  "verification": {
+    "status": "verified-headless",
+    "notes": [
+      "Validated with the Khronos glTF validator and three.js GLTFLoader in the studio pipeline."
+    ],
+    "sources": ["https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html"]
+  }
+}

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>studio capture</title>
+  <style>html, body { margin: 0; background: #4b5057; } canvas { display: block; }</style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/vendor/three/build/three.module.js",
+      "three/addons/": "/vendor/three/examples/jsm/",
+      "three-mesh-bvh": "/vendor/three-mesh-bvh/src/index.js",
+      "three-bvh-csg/": "/vendor/three-bvh-csg/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <script type="module" src="/viewport/capture.js"></script>
+</body>
+</html>
