@@ -7,7 +7,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {
   createRenderer, applyLighting, contentBox, frameCamera, forceSingleSided, makeGrid, makeHuman,
-  makeDimensions, setViewMode, setOverlays, unitsPerMeter,
+  makeDimensions, setViewMode, setOverlays, unitsPerMeter, VIEWS,
 } from './scene-setup.js';
 
 const $ = (id) => document.getElementById(id);
@@ -70,6 +70,7 @@ function rebuildHelpers() {
   if (state.toggles.dims) helpers.add(makeDimensions(box, u, { studs: state.profile === 'roblox' }));
   if (state.toggles.human) {
     const h = makeHuman(u);
+    h.name = '__human';
     h.position.set(box.max.x + 0.45 * u, 0, (box.min.z + box.max.z) / 2);
     helpers.add(h);
   }
@@ -438,7 +439,21 @@ document.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('cl
   state.toggles[k] = !state.toggles[k];
   b.classList.toggle('on', state.toggles[k]);
   applyViewSettings();
+  if (k === 'human') frameWithHelpers();
 }));
+
+/** Re-frame from the current direction so the asset (and the human, when shown) fits. */
+function frameWithHelpers() {
+  if (!content) return;
+  const box = contentBox(content).clone();
+  const human = helpers.getObjectByName('__human');
+  if (human) box.union(new THREE.Box3().setFromObject(human));
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  VIEWS.current = { dir: dir.toArray(), up: Math.abs(dir.y) > 0.98 ? [0, 0, -1] : [0, 1, 0] };
+  const { center } = frameCamera(camera, box, 'current');
+  controls.target.copy(center);
+  controls.update();
+}
 document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
 document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => {
   document.querySelectorAll('[data-tab]').forEach((x) => x.classList.toggle('on', x === b));

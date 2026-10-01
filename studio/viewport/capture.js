@@ -145,7 +145,11 @@ window.studioCapture = {
 
   /** Several GLBs side by side at true relative scale (meters), with labels and a 1.75 m human. */
   async lineup({ items, width = 1400, height = 700, lighting = 'neutral', human = true }) {
-    renderer.setSize(width, height, false);
+    // Labels go in a strip under the render (two alternating rows), so they never cover the
+    // models or fall off the image.
+    const strip = 64;
+    const viewH = height - strip;
+    renderer.setSize(width, viewH, false);
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(BACKGROUND);
     const placed = [];
@@ -179,22 +183,29 @@ window.studioCapture = {
     scene.traverse((o) => {
       if (o.isMesh) all.expandByObject(o, true);
     });
-    const camera = new THREE.PerspectiveCamera(28, width / height, 0.01, 1000);
+    const camera = new THREE.PerspectiveCamera(28, width / viewH, 0.01, 1000);
     applyLighting(renderer, scene, lighting, { size: all.getSize(new THREE.Vector3()).length() || 1 });
     VIEWS.lineup = { dir: [0.18, 0.32, 1], up: [0, 1, 0], label: 'Lineup' };
-    frameCamera(camera, all, 'lineup', { fit: 1.02 });
+    frameCamera(camera, all, 'lineup', { fit: 1.04 });
     renderer.render(scene, camera);
     const shot = await loadImage(canvas.toDataURL('image/png'));
     const sc = document.createElement('canvas');
     sc.width = width;
     sc.height = height;
     const ctx = sc.getContext('2d');
+    ctx.fillStyle = '#2a2e34';
+    ctx.fillRect(0, 0, width, height);
     ctx.drawImage(shot, 0, 0);
     placed.forEach((p, i) => {
       const box = contentBox(p.holder);
       const v = new THREE.Vector3((box.min.x + box.max.x) / 2, box.min.y, box.max.z).project(camera);
-      // Alternate label rows so neighbors never overlap.
-      drawLabel(ctx, p.label, ((v.x + 1) / 2) * width, ((1 - v.y) / 2) * height + 8 + (i % 2) * 26, { align: 'center', size: 14 });
+      const px = ((v.x + 1) / 2) * width;
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.beginPath();
+      ctx.moveTo(px, viewH);
+      ctx.lineTo(px, viewH + 6 + (i % 2) * 28);
+      ctx.stroke();
+      drawLabel(ctx, p.label, px, viewH + 6 + (i % 2) * 28, { align: 'center', size: 14 });
     });
     return sc.toDataURL('image/png');
   },

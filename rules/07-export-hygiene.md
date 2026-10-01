@@ -63,4 +63,12 @@ switcher shows exactly that file.
 | `source.node-api` / `dynamic-load` | Asset code not portable | Only use the kit inside `build()` |
 | `source.material` / `source.side` | Non-portable material/sidedness | `k.mat.pbr`; model thickness |
 | `parity.mismatch` | Source and exported GLB render differently | Open the parity images (source / GLB / diff) and remove the non-exportable feature |
+| `export.nondeterministic` | A fresh build does not reproduce the preview bytes | Randomness only from `rng`/`noise`; no clocks; don't iterate objects whose order can change |
+| `scene.empty` | No triangles in the GLB | `build()` must add meshes to the `k.asset()` root and return it |
+| `scene.triangles-total` | Many triangles for the whole asset on this engine | Lower segments on small parts; split big environment pieces into tiles |
+| `scene.materials-per-mesh` | A mesh has more materials than the engine allows | Normally handled by the profile (split / palette); merge similar materials |
+| `scene.node-scale` | A node has scale left after baking | Don't scale separate parts' roots; scale geometry instead |
+| `material.double-sided` | Double-sided materials are not portable | Model thickness, or add a back face with `k.op.flipWinding` |
+| `material.emissive-strength` | Emissive intensity > 1 needs an extension the engine ignores | Keep `emissiveIntensity` ≤ 1 for Roblox; brighten the emissive color instead |
+| `texture.density-below-target` | Sharpness below the profile's target (above its minimum) | Fine for secondary parts; raise resolution or reduce repeats on hero surfaces |
 | `khronos.*` | glTF validator finding | Report as a studio bug if it comes from kit-made geometry |
