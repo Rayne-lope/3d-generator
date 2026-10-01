@@ -348,29 +348,36 @@ async function loadVersions() {
     el.innerHTML = `<p class="muted">No saved versions yet.</p><p class="muted">Your agent saves one after each request:<br><code>node studio save ${esc(state.slug)} -m "…"</code></p>`;
     return;
   }
+  state.versionList = versions;
   el.innerHTML = `
     <p class="muted">Click to preview a version (read-only). Restore with the command shown.</p>
     <div class="version ${state.version === null ? 'on' : ''}" data-version=""><div class="muted" style="display:flex;align-items:center;justify-content:center">live</div><div><div class="v">Working copy</div><div class="muted">latest build</div></div></div>
-    ${versions.slice().reverse().map((v) => `
-      <div class="version ${state.version === v.id ? 'on' : ''}" data-version="${v.id}">
-        <img src="/files/history/${state.slug}/${v.id}/sheet.png" alt="" onerror="this.style.visibility='hidden'">
-        <div><div class="v">${v.id}${v.pinned ? ' 📌' : ''}</div><div>${esc(v.note || '')}</div>
+    ${versions.slice().reverse().map((v) => {
+      const key = `${v.target}|${v.id}`;
+      const scope = v.target === state.slug ? '' : ` <span class="muted">(${esc(v.target)})</span>`;
+      return `
+      <div class="version ${state.version === key ? 'on' : ''}" data-version="${esc(key)}">
+        <img src="/files/history/${v.thumb}" alt="" onerror="this.onerror=null;this.src='/files/history/${v.sheet}'">
+        <div><div class="v">${v.id}${scope}${v.pinned ? ' 📌' : ''}${v.auto ? ' <span class="muted">auto</span>' : ''}</div><div>${esc(v.note || '')}</div>
         <div class="muted">${new Date(v.createdAt).toLocaleString()} · ${v.triangles?.toLocaleString() ?? '?'}△</div>
-        <code>node studio revert ${esc(state.slug)} ${v.id}</code></div>
-      </div>`).join('')}
+        <code>node studio revert ${esc(v.target)} ${v.id}</code></div>
+      </div>`;
+    }).join('')}
   `;
 }
 
-async function previewVersion(id) {
-  state.version = id || null;
+async function previewVersion(key) {
+  state.version = key || null;
   loadVersions();
-  if (!id) {
+  if (!key) {
     hideBanner();
     await showCurrent();
     return;
   }
-  showBanner(`Previewing saved version ${id} (read-only). Restore: node studio revert ${state.slug} ${id}`);
-  await loadGLB(`/files/history/${state.slug}/${id}/generic.glb`);
+  const v = (state.versionList || []).find((x) => `${x.target}|${x.id}` === key);
+  if (!v) return;
+  showBanner(`Previewing saved version ${v.id}${v.target === state.slug ? '' : ` of ${v.target}`} (read-only). Restore: node studio revert ${v.target} ${v.id}`);
+  await loadGLB(`/files/history/${v.glb}`);
 }
 
 // ------------------------------------------------------------------ UI helpers

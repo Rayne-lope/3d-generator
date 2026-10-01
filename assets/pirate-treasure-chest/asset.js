@@ -6,22 +6,23 @@ export default defineAsset({
   meta: {
     title: 'Pirate Treasure Chest',
     prompt: 'Pirate treasure chest with a hinged lid, gold trim and a big lock',
-    interpretation: '0.9 × 0.55 × 0.6 m chest: planked dark-wood box with a barrel-vault lid that is a separate part hinged at the back top edge (it can open in-engine), gold bands along edges and around the body, gold studs, and a big front lock plate with a padlock. Stylized proportions, flat colors.',
+    interpretation: '1.1 × 0.49 × 0.6 m chest (wide and low): planked dark-wood box with a barrel-vault lid that is a separate part hinged at the back top edge (it can open in-engine), gold bands along edges and around the body, gold studs, and a big front lock plate with a padlock. Worn (darker grime, dull gold, missing studs) and damaged: a snapped front plank and a snapped side plank open onto the dark inside. Stylized proportions, flat colors.',
     style: ['stylized', 'pirate', 'fantasy'],
     category: 'container',
     budget: { triangles: 6000 },
   },
   seed: 1720,
   params: {
-    width: 0.9,
+    width: 1.1,
     depth: 0.6,
-    bodyHeight: 0.38,
+    bodyHeight: 0.32,
     lidRise: 0.17, // vault height above the body
     planks: 5,
     bands: 2, // gold bands across the lid/body (besides edge trim)
-    lockScale: 1.0,
+    lockScale: 2.0,
     lidOpen: 0, // radians (0 = closed)
-    wear: 0, // 0..1: chipped trim, missing studs, darker grime
+    wear: 0.7, // 0..1: chipped trim, missing studs, darker grime
+    damage: 0.7, // 0..1: broken planks (a front plank, from 0.5 also a side plank)
     wood: '#6b4228',
     woodDark: '#4a2c1a',
     gold: '#e0b43c',
@@ -46,12 +47,37 @@ export default defineAsset({
     const body = k.part('body');
     body.add(k.mesh(k.geo.box(W - 0.04, BH - 0.01, D - 0.04, { base: true }), darkWood, { name: 'inner' }));
     const ph = BH / p.planks;
+    // Damage: planks snapped in two, with jagged ends around a gap into the dark inside.
+    const dmg = rng.stream('damage');
+    const breaks = [];
+    if (p.damage > 0) breaks.push({ row: 1, side: 0, at: -W * 0.27 + dmg.jitter(0.03), gap: 0.07 + 0.09 * p.damage });
+    if (p.damage >= 0.5) breaks.push({ row: p.planks - 2, side: 2, at: dmg.jitter(0.05), gap: 0.05 + 0.08 * p.damage });
+    const voidMat = breaks.length ? k.mat.pbr({ name: 'chest_void', color: '#160d08', roughness: 1 }) : null;
+    const jag = (x0, dir, h) => Array.from({ length: 6 }, (_, j) => [x0 + dir * (j % 2 ? 1 : -1) * dmg.range(0.005, 0.022), -h / 2 + (j / 5) * h]);
+    const brokenPlank = (len, h, thick, brk, mat, at, alongZ) => {
+      const g0 = brk.at - brk.gap / 2;
+      const g1 = brk.at + brk.gap / 2;
+      const left = [[-len / 2, -h / 2], ...jag(g0, 1, h), [-len / 2, h / 2]];
+      const right = [[len / 2, -h / 2], [len / 2, h / 2], ...jag(g1, -1, h).reverse()];
+      for (const outline of [left, right]) {
+        const g = k.geo.extrude(k.shape.polygon(outline), thick - 0.004, { axis: alongZ ? 'x' : 'z', bevel: 0.002, bevelSegments: 1 });
+        body.add(k.mesh(g, mat, { at, name: 'broken_plank' }));
+      }
+      // Dark panel just in front of the inner box, so the gap reads as a hole.
+      const vw = brk.gap + 0.05;
+      const panel = alongZ ? k.geo.box(0.002, h, vw) : k.geo.box(vw, h, 0.002);
+      const off = alongZ ? [at[0] - Math.sign(at[0]) * 0.004, at[1], -brk.at] : [brk.at, at[1], at[2] - Math.sign(at[2]) * 0.004];
+      body.add(k.mesh(panel, voidMat, { at: off, name: 'break_void' }));
+    };
     for (let i = 0; i < p.planks; i++) {
       const y = ph * (i + 0.5);
-      for (const [w, d, x, z] of [[W, 0.03, 0, D / 2 - 0.015], [W, 0.03, 0, -D / 2 + 0.015], [0.03, D - 0.06, W / 2 - 0.015, 0], [0.03, D - 0.06, -W / 2 + 0.015, 0]]) {
-        const g = k.geo.plank(w, ph - 0.006, d, { seed: pr.int(0, 1e6), warp: 0.004, bevel: 0.005 });
-        body.add(k.mesh(g, woods[pr.int(0, woods.length - 1)], { at: [x, y, z] }));
-      }
+      [[W, 0.03, 0, D / 2 - 0.015], [W, 0.03, 0, -D / 2 + 0.015], [0.03, D - 0.06, W / 2 - 0.015, 0], [0.03, D - 0.06, -W / 2 + 0.015, 0]].forEach(([w, d, x, z], side) => {
+        const seed = pr.int(0, 1e6);
+        const mat = woods[pr.int(0, woods.length - 1)];
+        const brk = breaks.find((b) => b.row === i && b.side === side);
+        if (brk) brokenPlank(Math.max(w, d), ph - 0.006, Math.min(w, d), brk, mat, [x, y, z], d > w);
+        else body.add(k.mesh(k.geo.plank(w, ph - 0.006, d, { seed, warp: 0.004, bevel: 0.005 }), mat, { at: [x, y, z] }));
+      });
     }
     // Gold trim: vertical corner bands and top/bottom rims.
     const trim = k.part('trim');

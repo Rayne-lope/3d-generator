@@ -53,6 +53,7 @@ export async function withCapture(fn) {
     const api = {
       url: server.url,
       renderGLB: call('renderGLB'),
+      boxGLB: call('boxGLB'),
       renderSource: call('renderSource'),
       sheet: call('sheet'),
       lineup: call('lineup'),

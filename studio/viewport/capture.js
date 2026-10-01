@@ -26,13 +26,16 @@ async function loadSource(slug, variant) {
   return { object: root, units: 1 };
 }
 
-function renderViews(object, { views, size, lighting = 'neutral' }) {
+// frameBox ({min, max} in file units) frames every render with the same camera, so two
+// versions of an asset can be compared pixel by pixel (version diffs).
+function renderViews(object, { views, size, lighting = 'neutral', frameBox = null }) {
   renderer.setSize(size, size, false);
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(BACKGROUND);
   scene.add(object);
   const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 1000);
-  const box = contentBox(object);
+  const box = frameBox ? new THREE.Box3(new THREE.Vector3(...frameBox.min), new THREE.Vector3(...frameBox.max)) : contentBox(object);
+  const own = frameBox ? contentBox(object) : box;
   applyLighting(renderer, scene, lighting, { size: box.getSize(new THREE.Vector3()).length() || 1 });
   const images = {};
   for (const v of views) {
@@ -43,7 +46,7 @@ function renderViews(object, { views, size, lighting = 'neutral' }) {
   }
   setOverlays(object, {});
   scene.remove(object);
-  return { images, bbox: { min: box.min.toArray(), max: box.max.toArray() } };
+  return { images, bbox: { min: own.min.toArray(), max: own.max.toArray() } };
 }
 
 function drawLabel(ctx, text, x, y, { size = 13, align = 'left', bg = 'rgba(20,22,26,0.75)', color = '#fff' } = {}) {
@@ -79,14 +82,21 @@ async function loadImage(src) {
 }
 
 window.studioCapture = {
-  async renderGLB({ url, views, size = 512, lighting = 'neutral' }) {
+  async renderGLB({ url, views, size = 512, lighting = 'neutral', frameBox = null }) {
     const { object, units } = await loadGLB(url);
-    return { ...renderViews(object, { views, size, lighting }), units };
+    return { ...renderViews(object, { views, size, lighting, frameBox }), units };
   },
 
-  async renderSource({ slug, variant = null, views, size = 512, lighting = 'neutral' }) {
+  /** Bounding box of a GLB without rendering (used to build a shared frame for diffs). */
+  async boxGLB({ url }) {
+    const { object, units } = await loadGLB(url);
+    const box = contentBox(object);
+    return { min: box.min.toArray(), max: box.max.toArray(), units };
+  },
+
+  async renderSource({ slug, variant = null, views, size = 512, lighting = 'neutral', frameBox = null }) {
     const { object } = await loadSource(slug, variant);
-    return renderViews(object, { views, size, lighting });
+    return renderViews(object, { views, size, lighting, frameBox });
   },
 
   /** Compose tiles into one contact sheet with a header. */

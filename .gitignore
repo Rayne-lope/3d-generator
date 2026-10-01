@@ -35,3 +35,6 @@ yarn-error.log*
 .studio/
 golden/report/
 engines/godot/.godot/
+
+# Temporary asset folders created by tests
+.tmp-test-*/

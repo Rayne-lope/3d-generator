@@ -30,7 +30,33 @@ export function runAsset(def, { variant = null, params: overrides = {} } = {}) {
   return { root, params: p, seed, meta: def.meta, variant };
 }
 
-/** Move the root so the requested origin sits at (0, 0, 0). */
+/** Height band (from the lowest point) that counts as the footprint an asset stands on. */
+export function footprintBand(height) {
+  return Math.max(height * 0.02, 0.002);
+}
+
+function forEachWorldVertex(root, fn) {
+  const v = new THREE.Vector3();
+  const m = new THREE.Matrix4();
+  root.traverse((o) => {
+    if (!o.isMesh || !o.geometry?.attributes?.position) return;
+    const pos = o.geometry.attributes.position;
+    const instances = o.isInstancedMesh ? o.count : 1;
+    for (let k = 0; k < instances; k++) {
+      if (o.isInstancedMesh) o.getMatrixAt(k, m).premultiply(o.matrixWorld);
+      else m.copy(o.matrixWorld);
+      for (let i = 0; i < pos.count; i++) fn(v.fromBufferAttribute(pos, i).applyMatrix4(m));
+    }
+  });
+}
+
+/**
+ * Move the root so the requested origin sits at (0, 0, 0).
+ * base-center: lowest point at y = 0, x/z at the center of the footprint (the vertices within
+ * a thin band above the lowest point). Using the footprint instead of the whole bounding box
+ * keeps the pivot where the asset stands, so a revision that grows a protruding detail
+ * (a bigger lock, a longer branch) does not shift the whole asset.
+ */
 export function applyOrigin(root, mode = 'base-center') {
   root.updateMatrixWorld(true);
   if (mode === 'none') return;
@@ -40,7 +66,15 @@ export function applyOrigin(root, mode = 'base-center') {
   let off;
   if (mode === 'center') off = c;
   else if (mode === 'back-center') off = new THREE.Vector3(c.x, box.min.y, box.min.z);
-  else off = new THREE.Vector3(c.x, box.min.y, c.z);
+  else {
+    const limit = box.min.y + footprintBand(box.max.y - box.min.y);
+    const foot = new THREE.Box3();
+    forEachWorldVertex(root, (v) => {
+      if (v.y <= limit) foot.expandByPoint(v);
+    });
+    const fc = foot.isEmpty() ? c : foot.getCenter(new THREE.Vector3());
+    off = new THREE.Vector3(fc.x, box.min.y, fc.z);
+  }
   root.position.sub(off);
   root.updateMatrixWorld(true);
 }

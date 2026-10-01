@@ -1,6 +1,7 @@
 // Scene-level checks: origin, dimensions, triangle limits, mesh counts.
 
 import { issue } from '../issues.js';
+import { footprintBand } from '../../../kit/runtime.js';
 
 const PLAUSIBLE = {
   prop: [0.02, 6], furniture: [0.15, 5], container: [0.05, 8], architecture: [0.3, 80], environment: [0.3, 250],
@@ -20,10 +21,27 @@ export function checkScene({ info, profile, meta }) {
   const largest = Math.max(...sizeM);
   const tol = Math.max(0.002, largest * 0.01);
   const origin = meta.origin || 'base-center';
-  const cx = (minM[0] + maxM[0]) / 2;
-  const cz = (minM[2] + maxM[2]) / 2;
-  if (origin === 'base-center' && (Math.abs(minM[1]) > 0.002 || Math.abs(cx) > tol || Math.abs(cz) > tol)) {
-    out.push(issue('scene.origin', 'warning', `origin is not at the base center (min y ${minM[1].toFixed(3)} m, center x ${cx.toFixed(3)} m, z ${cz.toFixed(3)} m)`, { hint: "Keep meta.origin 'base-center' (default) or set it to what the asset needs." }));
+  if (origin === 'base-center') {
+    // Same rule as the kit's applyOrigin: x/z at the center of the footprint.
+    const limit = info.bbox.min[1] + footprintBand(info.bbox.size[1] / perMeter) * perMeter;
+    const foot = [Infinity, -Infinity, Infinity, -Infinity];
+    for (const m of info.meshes) {
+      for (const prim of m.primitives) {
+        const p = prim.positions;
+        for (let i = 0; i < p.length; i += 3) {
+          if (p[i + 1] > limit) continue;
+          if (p[i] < foot[0]) foot[0] = p[i];
+          if (p[i] > foot[1]) foot[1] = p[i];
+          if (p[i + 2] < foot[2]) foot[2] = p[i + 2];
+          if (p[i + 2] > foot[3]) foot[3] = p[i + 2];
+        }
+      }
+    }
+    const cx = (foot[0] + foot[1]) / 2 / perMeter;
+    const cz = (foot[2] + foot[3]) / 2 / perMeter;
+    if (Math.abs(minM[1]) > 0.002 || Math.abs(cx) > tol || Math.abs(cz) > tol) {
+      out.push(issue('scene.origin', 'warning', `origin is not at the base center (min y ${minM[1].toFixed(3)} m, footprint center x ${cx.toFixed(3)} m, z ${cz.toFixed(3)} m)`, { hint: "Keep meta.origin 'base-center' (default) or set it to what the asset needs." }));
+    }
   }
   const range = PLAUSIBLE[meta.category] || PLAUSIBLE.prop;
   if (largest < range[0] || largest > range[1]) {

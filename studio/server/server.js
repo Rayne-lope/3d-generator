@@ -266,8 +266,8 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
       }
       if (p === '/api/history') {
         const slug = url.searchParams.get('slug');
-        const { listVersions } = await import('../core/history.js');
-        return send(res, 200, { versions: listVersions(slug) });
+        const { versionsForAsset } = await import('../core/history.js');
+        return send(res, 200, { versions: versionsForAsset(slug) });
       }
       if (p === '/api/build' && req.method === 'POST') {
         const body = await readBody(req);
