@@ -50,6 +50,9 @@ function neutralEnvironment(renderer) {
   return tex;
 }
 
+const envCache = new WeakMap();
+const roomCache = new WeakMap();
+
 /**
  * Lighting rigs.
  * neutral  — gray gradient ambient + one key + one fill, no tone mapping, no shadows.
@@ -64,12 +67,12 @@ export function applyLighting(renderer, scene, mode = 'neutral', { size = 1 } = 
   const rig = new THREE.Group();
   rig.name = '__lights';
   if (mode === 'showcase') {
-    if (!scene.userData.roomEnv) {
+    if (!roomCache.has(renderer)) {
       const pmrem = new THREE.PMREMGenerator(renderer);
-      scene.userData.roomEnv = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      roomCache.set(renderer, pmrem.fromScene(new RoomEnvironment(), 0.04).texture);
       pmrem.dispose();
     }
-    scene.environment = scene.userData.roomEnv;
+    scene.environment = roomCache.get(renderer);
     scene.environmentIntensity = 1;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
@@ -83,8 +86,9 @@ export function applyLighting(renderer, scene, mode = 'neutral', { size = 1 } = 
     rig.add(key);
     renderer.shadowMap.enabled = true;
   } else {
-    if (!scene.userData.neutralEnv) scene.userData.neutralEnv = neutralEnvironment(renderer);
-    scene.environment = scene.userData.neutralEnv;
+    // PMREM generation is slow on software WebGL: build it once per renderer, not per scene.
+    if (!envCache.has(renderer)) envCache.set(renderer, neutralEnvironment(renderer));
+    scene.environment = envCache.get(renderer);
     scene.environmentIntensity = 0.85;
     renderer.toneMapping = THREE.NoToneMapping;
     renderer.shadowMap.enabled = false;

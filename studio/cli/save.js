@@ -5,6 +5,24 @@ import { saveVersion, parseTarget, listVersions } from '../core/history.js';
 import { loadConfig } from '../core/config.js';
 import { c, sym, fmtNum } from '../core/log.js';
 import { buildGeneric, renderVersionThumbnail, signed } from './history-util.js';
+import { paths } from '../core/paths.js';
+import { readJson, writeJson } from '../core/fsutil.js';
+
+function recordSave(t) {
+  try {
+    const m = readJson(paths.metrics, { assets: {} });
+    const now = new Date().toISOString();
+    for (const slug of t.members) {
+      const a = m.assets[slug] || {};
+      if (!a.firstSavedAt) a.firstSavedAt = now;
+      a.saves = (a.saves || 0) + 1;
+      m.assets[slug] = a;
+    }
+    writeJson(paths.metrics, m);
+  } catch {
+    // metrics are best effort
+  }
+}
 
 const USAGE = `Usage: node studio save <slug | set:<name>> -m "<what the user asked>" [options]
 
@@ -37,6 +55,7 @@ export async function run(argv) {
     build: buildGeneric,
     thumbnail: opts['no-thumb'] ? null : renderVersionThumbnail,
   });
+  if (!res.skipped) recordSave(t);
   if (opts.json) {
     console.log(JSON.stringify(res, null, 2));
     return 0;

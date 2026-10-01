@@ -2,8 +2,14 @@
   "id": "generic",
   "label": "Generic glTF",
   "description": "Standard glTF 2.0 (meters, +Y up, front +Z). Works in any glTF viewer and in Unity (glTFast) / Unreal (Interchange) without parity guarantees.",
-  "units": { "name": "m", "perMeter": 1 },
-  "axes": { "up": "+Y", "front": "+Z" },
+  "units": {
+    "name": "m",
+    "perMeter": 1
+  },
+  "axes": {
+    "up": "+Y",
+    "front": "+Z"
+  },
   "geometry": {
     "maxTrianglesPerMesh": null,
     "warnTrianglesPerMesh": 100000,
@@ -15,7 +21,11 @@
     "bakeFactorsIntoTextures": false,
     "paletteAtlas": false,
     "maxMaterialsPerMesh": null,
-    "alphaModes": { "OPAQUE": "ok", "MASK": "ok", "BLEND": "ok" },
+    "alphaModes": {
+      "OPAQUE": "ok",
+      "MASK": "ok",
+      "BLEND": "ok"
+    },
     "emissive": "ok",
     "emissiveStrength": true
   },
@@ -23,16 +33,30 @@
     "maxSize": 4096,
     "warnSize": 2048,
     "powerOfTwo": "warn",
-    "texelDensity": { "min": 128, "target": 256 },
+    "texelDensity": {
+      "min": 128,
+      "target": 256
+    },
     "uvPaddingPx": 4,
     "warnTotalMegapixels": 24
   },
-  "uv": { "require01": false, "tileBake": false, "maxTiles": 16 },
+  "uv": {
+    "require01": false,
+    "tileBake": false,
+    "maxTiles": 16
+  },
+  "importHints": [
+    "Standard glTF 2.0 binary: 1 unit = 1 m, +Y up, the asset faces +Z, origin at the base center (unless meta.origin says otherwise).",
+    "Blender: File > Import > glTF 2.0 (.glb/.gltf). Unity: install the glTFast package and drop the .glb into Assets. Unreal Engine 5: drag the .glb into the Content Browser (Interchange glTF importer).",
+    "Materials are glTF metallic-roughness (KHR_materials_emissive_strength when emissive); faces are single-sided."
+  ],
   "verification": {
     "status": "verified-headless",
     "notes": [
       "Validated with the Khronos glTF validator and three.js GLTFLoader in the studio pipeline."
     ],
-    "sources": ["https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html"]
+    "sources": [
+      "https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html"
+    ]
   }
 }

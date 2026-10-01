@@ -1,0 +1,21 @@
+; Engine configuration file.
+; Reference project for checking studio exports in Godot 4 (golden set verification + gallery).
+
+config_version=5
+
+[application]
+
+config/name="AI 3D Asset Studio - Golden Check"
+config/description="Loads the golden GLBs exported by the studio and verifies them (verify/verify_golden.gd) or shows them in a gallery (gallery/gallery.tscn)."
+run/main_scene="res://gallery/gallery.tscn"
+config/features=PackedStringArray("4.3")
+
+[display]
+
+window/size/viewport_width=1600
+window/size/viewport_height=900
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

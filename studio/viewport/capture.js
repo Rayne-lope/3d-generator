@@ -82,6 +82,18 @@ async function loadImage(src) {
 }
 
 window.studioCapture = {
+  /** What the headless browser renders with (used by node studio doctor). */
+  webglInfo() {
+    const gl = renderer.getContext();
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    return {
+      webgl2: renderer.capabilities.isWebGL2 !== false,
+      renderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+      vendor: ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : gl.getParameter(gl.VENDOR),
+      maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+    };
+  },
+
   async renderGLB({ url, views, size = 512, lighting = 'neutral', frameBox = null }) {
     const { object, units } = await loadGLB(url);
     return { ...renderViews(object, { views, size, lighting, frameBox }), units };

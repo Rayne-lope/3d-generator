@@ -1,0 +1,31 @@
+{
+  "description": "Golden set: assets covering the main asset types and styles. Every item must pass validation (0 errors, only allowed warnings), determinism (a fresh build reproduces the preview), source-vs-GLB parity, structure (manifest) and visual regression (baselines) in every profile. Run: node studio golden --profile all",
+  "profiles": ["generic", "godot", "roblox"],
+  "views": ["front", "right", "top", "iso"],
+  "tileSize": 192,
+  "paritySize": 256,
+  "allowWarnings": {
+    "roblox": ["material.emissive"]
+  },
+  "items": [
+    { "slug": "stylized-barrel", "type": "container", "style": "stylized", "variants": "all" },
+    { "slug": "lowpoly-pine-tree", "type": "nature", "style": "low-poly", "variants": "all" },
+    { "slug": "realistic-crate", "type": "container", "style": "realistic (textures + normal + ORM)", "variants": "all" },
+    { "slug": "scifi-supply-crate", "type": "container", "style": "sci-fi (emissive)", "variants": "all" },
+    { "slug": "fantasy-crystal-cluster", "type": "nature", "style": "fantasy", "variants": "all" },
+    { "slug": "wasteland-oil-drum", "type": "container", "style": "post-apocalyptic", "variants": "all" },
+    { "slug": "medieval-street-lamp", "type": "lighting", "style": "medieval", "variants": "all" },
+    { "slug": "cartoon-mailbox", "type": "prop", "style": "cartoon", "variants": "all" },
+    { "slug": "castle-wall-modular", "type": "modular architecture", "style": "medieval", "variants": "all" },
+    { "slug": "steampunk-pressure-valve", "type": "prop", "style": "steampunk", "variants": "all" },
+    { "slug": "minimalist-chair", "type": "furniture", "style": "minimalist", "variants": "all" },
+    { "slug": "pirate-treasure-chest", "type": "container (hinged lid part)", "style": "stylized", "variants": "all" },
+    { "slug": "stone-cottage", "type": "building", "style": "stylized", "variants": "all" },
+    { "slug": "meadow-terrain-tile", "type": "environment / terrain", "style": "low-poly", "variants": "all" },
+    { "slug": "tavern-table", "type": "set member", "style": "cozy (set: tavern)", "variants": "all" },
+    { "slug": "tavern-stool", "type": "set member", "style": "cozy (set: tavern)", "variants": "all" },
+    { "slug": "tavern-mug", "type": "set member", "style": "cozy (set: tavern)", "variants": "all" },
+    { "slug": "tavern-candle-holder", "type": "set member (emissive)", "style": "cozy (set: tavern)", "variants": "all" },
+    { "slug": "tavern-shelf", "type": "set member (back-center origin)", "style": "cozy (set: tavern)", "variants": "all" }
+  ]
+}

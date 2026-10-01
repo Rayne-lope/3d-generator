@@ -38,3 +38,13 @@ engines/godot/.godot/
 
 # Temporary asset folders created by tests
 .tmp-test-*/
+
+# Engine files written by `node studio export` and `node studio engine-pack`
+exports/
+engines/godot/golden/
+engines/godot/verify/report.json
+engines/godot/verify/*.png
+engines/roblox/golden/
+engines/roblox/GoldenManifest.lua
+engines/roblox/GoldenVerify.rbxlx
+engines/godot/verify/items/

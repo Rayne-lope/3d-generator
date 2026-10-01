@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-// STUDIO_ASSETS_DIR / STUDIO_SETS_DIR / STUDIO_STATE_DIR let tests run against fixtures
+// STUDIO_ASSETS_DIR / STUDIO_SETS_DIR / STUDIO_STATE_DIR / STUDIO_EXPORTS_DIR let tests run against fixtures
 // without touching the real project folders.
 const STATE = process.env.STUDIO_STATE_DIR ? path.resolve(process.env.STUDIO_STATE_DIR) : path.join(ROOT, '.studio');
 
@@ -14,7 +14,7 @@ export const paths = {
   assets: process.env.STUDIO_ASSETS_DIR ? path.resolve(process.env.STUDIO_ASSETS_DIR) : path.join(ROOT, 'assets'),
   sets: process.env.STUDIO_SETS_DIR ? path.resolve(process.env.STUDIO_SETS_DIR) : path.join(ROOT, 'sets'),
   rules: path.join(ROOT, 'rules'),
-  exports: path.join(ROOT, 'exports'),
+  exports: process.env.STUDIO_EXPORTS_DIR ? path.resolve(process.env.STUDIO_EXPORTS_DIR) : path.join(ROOT, 'exports'),
   golden: path.join(ROOT, 'golden'),
   engines: path.join(ROOT, 'engines'),
   profiles: path.join(ROOT, 'studio', 'profiles'),

@@ -38,6 +38,7 @@ const MOUNTS = [
   ['/files/history/', paths.history],
   ['/files/shots/', paths.shots],
   ['/files/exports/', paths.exports],
+  ['/files/engines/', paths.engines],
 ];
 
 function send(res, status, body, type = 'application/json; charset=utf-8') {

@@ -65,3 +65,14 @@ export function sideBySide(images, { gap = 8, background = [29, 32, 36] } = {}) 
   }
   return out;
 }
+
+/** Arrange same-size images in a grid (row-major). */
+export function grid(images, columns, { gap = 0, background = [29, 32, 36] } = {}) {
+  const w = images[0].width;
+  const h = images[0].height;
+  const rows = Math.ceil(images.length / columns);
+  const out = new PNG({ width: columns * w + (columns - 1) * gap, height: rows * h + (rows - 1) * gap });
+  for (let i = 0; i < out.data.length; i += 4) out.data.set([...background, 255], i);
+  images.forEach((img, i) => PNG.bitblt(img, out, 0, 0, w, h, (i % columns) * (w + gap), Math.floor(i / columns) * (h + gap)));
+  return out;
+}

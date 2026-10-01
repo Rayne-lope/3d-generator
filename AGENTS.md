@@ -34,8 +34,10 @@ node studio review <slug|set:name> [--profile p]   # contact sheet + parity; ope
 node studio save <slug|set:name> -m "<user prompt>"
 node studio diff <slug>                 # working copy vs latest saved version (heatmap + stats + source)
 node studio history <slug>  |  node studio revert <slug> <vNNN>  |  node studio undo <slug>  |  node studio pin <slug> <vNNN>
-node studio export <slug|set:name> --profile <generic|godot|roblox|all>
-node studio validate <slug> --profile <p>  |  node studio report <slug>  |  node studio list  |  node studio stats
+node studio export <slug|set:name> --profile <generic|godot|roblox|all>   # strict: blocked by errors
+node studio validate <slug> --profile <p>  |  node studio report <slug> [--profile p]  |  node studio list  |  node studio stats
+node studio golden                      # golden suite (maintainers: after kit/exporter/profile changes)
+node studio engine-verify godot  |  node studio engine-pack roblox  |  node studio doctor
 ```
 
 ## Workflow A — new asset from a prompt
@@ -85,6 +87,8 @@ Roblox: textures and colors are baked automatically; watch texel density and tri
 ## Never
 
 - Edit files under `studio/`, `exports/` (generated), `.studio/` (state) or `golden/baselines/` by hand.
+- Run `golden --update-baselines` to make a failing golden suite pass; a regression is fixed in
+  code, and baselines change only when a maintainer approves the new look.
 - Use non-kit materials, double-sided faces, negative scale, `Math.random`, `Date`, `fetch`, Node APIs in assets.
 - Delete history or rewrite saved versions.
 - Claim an asset is finished without looking at its review sheet.

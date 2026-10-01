@@ -105,6 +105,8 @@ export function reportMarkdown(r) {
   out.push(`- **Dimensions:** ${r.dimensions.meters.map((v) => v.toFixed(3)).join(' × ')} m (${r.dimensions.studs.map((v) => v.toFixed(1)).join(' × ')} studs)${r.profile.units.name !== 'm' ? ` — file units: ${r.profile.units.name}` : ''}`);
   out.push(`- **Triangles:** ${fmtNum(r.triangles.total)}${r.triangles.budget ? ` (budget ${fmtNum(r.triangles.budget)})` : ''} in ${r.meshCount} mesh(es)`);
   if (r.prompt) out.push(`- **Prompt:** ${r.prompt}`);
+  if (r.export) out.push(`- **Preview = Export:** a fresh rebuild reproduced the preview byte for byte (exported ${r.export.exportedAt})`);
+  if (r.parity) out.push(`- **Parity (source scene ↔ GLB):** max ${(r.parity.max * 100).toFixed(2)}% of object pixels differ — ${r.parity.ok ? 'OK' : 'MISMATCH'} (limit ${(r.parity.threshold * 100).toFixed(1)}%)`);
   out.push('');
   out.push('## Meshes');
   out.push('');
