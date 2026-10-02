@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "kit": "1.1.0",
-  "updatedAt": "2026-10-02T06:18:25.690Z",
+  "updatedAt": "2026-10-02T11:54:59.886Z",
   "items": {
     "generic/ak-rifle": {
       "title": "AK-47 style assault rifle",
@@ -934,6 +934,206 @@
         -0.69
       ],
       "sha256": "43914acdcb6a3195f38f1691cd27f6765e24eed9c631eb60c94f94dd3f74d6e6"
+    },
+    "generic/energy-rifle": {
+      "title": "Futuristic energy rifle",
+      "triangles": 7090,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6842,
+          "materials": [
+            "armor",
+            "glow"
+          ]
+        },
+        {
+          "node": "cell",
+          "triangles": 248,
+          "materials": [
+            "armor"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "cell",
+          "translation": [
+            0.24215,
+            0.16329,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "armor",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "glow",
+          "baseColor": "#007ec8",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.3,
+          "alphaMode": "OPAQUE",
+          "emissive": "#2fb2ff",
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "rifle-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "sizeUnits": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.21811,
+        0,
+        -0.048
+      ],
+      "sha256": "2f799c340bc1f1017bce79333f46f49fa76903728df67d97ed0ab3388820fe75"
+    },
+    "generic/energy-rifle@crimson": {
+      "title": "Futuristic energy rifle",
+      "triangles": 7090,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6842,
+          "materials": [
+            "armor",
+            "glow"
+          ]
+        },
+        {
+          "node": "cell",
+          "triangles": 248,
+          "materials": [
+            "armor"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "cell",
+          "translation": [
+            0.24215,
+            0.16329,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "armor",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "glow",
+          "baseColor": "#c90b00",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.3,
+          "alphaMode": "OPAQUE",
+          "emissive": "#ff3b30",
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "rifle-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "sizeUnits": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.21811,
+        0,
+        -0.048
+      ],
+      "sha256": "adc1d919ae399d8bb9a1250a4e25f2ea66c395145bda63d636c8b524556d5051"
     },
     "generic/fantasy-crystal-cluster": {
       "title": "Fantasy Crystal Cluster",
@@ -4997,6 +5197,206 @@
       ],
       "sha256": "5c85c82f5964e44cc6f467e3d7b23b264a00e8206a619d7cc35d244b383ec2a2"
     },
+    "godot/energy-rifle": {
+      "title": "Futuristic energy rifle",
+      "triangles": 7090,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6842,
+          "materials": [
+            "armor",
+            "glow"
+          ]
+        },
+        {
+          "node": "cell",
+          "triangles": 248,
+          "materials": [
+            "armor"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "cell",
+          "translation": [
+            0.24215,
+            0.16329,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "armor",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "glow",
+          "baseColor": "#007ec8",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.3,
+          "alphaMode": "OPAQUE",
+          "emissive": "#2fb2ff",
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "rifle-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "sizeUnits": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.21811,
+        0,
+        -0.048
+      ],
+      "sha256": "3ab9b755417aebaf8081477dec28c79d08b44f00fff43267bdbb05f3da183e35"
+    },
+    "godot/energy-rifle@crimson": {
+      "title": "Futuristic energy rifle",
+      "triangles": 7090,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6842,
+          "materials": [
+            "armor",
+            "glow"
+          ]
+        },
+        {
+          "node": "cell",
+          "triangles": 248,
+          "materials": [
+            "armor"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "cell",
+          "translation": [
+            0.24215,
+            0.16329,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "armor",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "glow",
+          "baseColor": "#c90b00",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.3,
+          "alphaMode": "OPAQUE",
+          "emissive": "#ff3b30",
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "rifle-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "sizeUnits": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.21811,
+        0,
+        -0.048
+      ],
+      "sha256": "49f556d071534b4c06a7993627c103c6c95ae6dbfe162ff9aa7594ba10a27119"
+    },
     "godot/fantasy-crystal-cluster": {
       "title": "Fantasy Crystal Cluster",
       "triangles": 492,
@@ -8953,6 +9353,272 @@
         -2.46429
       ],
       "sha256": "98496ab3c6a595e53648ab241adf6ee893c98297739d634723e2f2cbf45cefb4"
+    },
+    "roblox/energy-rifle": {
+      "title": "Futuristic energy rifle",
+      "triangles": 7090,
+      "meshes": 3,
+      "meshNodes": [
+        {
+          "node": "body_armor",
+          "triangles": 6202,
+          "materials": [
+            "armor"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 640,
+          "materials": [
+            "palette"
+          ]
+        },
+        {
+          "node": "cell",
+          "triangles": 248,
+          "materials": [
+            "armor"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_armor",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "cell",
+          "translation": [
+            0.86482,
+            0.58317,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "armor",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": "#ffffff",
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "emissive"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "rifle-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-normal",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-color_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "palette",
+          "width": 16,
+          "height": 16
+        },
+        {
+          "name": "palette_mr",
+          "width": 16,
+          "height": 16
+        },
+        {
+          "name": "palette_emissive",
+          "width": 16,
+          "height": 16
+        }
+      ],
+      "sizeMeters": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "sizeUnits": [
+        3.5773,
+        0.9605,
+        0.3429
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -0.77895,
+        0,
+        -0.17143
+      ],
+      "sha256": "2b6a949b66be3c671f09174e8c630a297e8146a2f1caabed8324b11039157297"
+    },
+    "roblox/energy-rifle@crimson": {
+      "title": "Futuristic energy rifle",
+      "triangles": 7090,
+      "meshes": 3,
+      "meshNodes": [
+        {
+          "node": "body_armor",
+          "triangles": 6202,
+          "materials": [
+            "armor"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 640,
+          "materials": [
+            "palette"
+          ]
+        },
+        {
+          "node": "cell",
+          "triangles": 248,
+          "materials": [
+            "armor"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_armor",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "cell",
+          "translation": [
+            0.86482,
+            0.58317,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "armor",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": "#ffffff",
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "emissive"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "rifle-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-normal",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "rifle-color_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "palette",
+          "width": 16,
+          "height": 16
+        },
+        {
+          "name": "palette_mr",
+          "width": 16,
+          "height": 16
+        },
+        {
+          "name": "palette_emissive",
+          "width": 16,
+          "height": 16
+        }
+      ],
+      "sizeMeters": [
+        1.0016,
+        0.2689,
+        0.096
+      ],
+      "sizeUnits": [
+        3.5773,
+        0.9605,
+        0.3429
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -0.77895,
+        0,
+        -0.17143
+      ],
+      "sha256": "9c2b1d232c3853eccd3cdb01518e0d5dcb80cc9d2af6be3d1048003045a926c6"
     },
     "roblox/fantasy-crystal-cluster": {
       "title": "Fantasy Crystal Cluster",

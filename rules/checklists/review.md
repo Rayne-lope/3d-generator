@@ -26,7 +26,10 @@ re-review, then save.
 
 ## Construction
 
-- [ ] Nothing floats; nothing intersects visibly where it shouldn't; no z-fighting.
+- [ ] `parts.png`: every piece is in the part you intended; moving pieces are separate parts.
+- [ ] `blueprint.png`: overall size and key dimensions match the plan (rulers in meters).
+- [ ] With `meta.reference`: `reference.png` overlay checked; the largest red/cyan areas fixed (IoU ≥ 85 % is a good target, 17).
+- [ ] Nothing floats (no `scene.floating-part` lines unless on purpose); nothing intersects visibly where it shouldn't; no z-fighting.
 - [ ] No missing faces (backfaces view shows no red from outside).
 - [ ] Moving parts are separate with the pivot on the hinge/axle (06).
 - [ ] Triangle count within `meta.budget`; no wasted segments on tiny parts (05).

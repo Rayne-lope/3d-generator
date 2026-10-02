@@ -11,7 +11,9 @@ Input: an asset slug or `set:<name>`, optionally followed by a profile.
 2. Open every printed sheet PNG (and the lineup for sets and variants) with your image tool
    (Claude Code: Read · Codex: view_image · Gemini CLI: read_file) and **look** at it. If you
    cannot view images, use `node studio review <target> --json` and ask the user to check the
-   viewport.
+   viewport. Also open `parts.png` and `blueprint.png` for structure and proportions, and
+   `reference.png` when the asset has `meta.reference` (silhouette IoU, red/cyan mismatch).
+   Consider the `scene.floating-part` lines the review prints.
 3. Go through `rules/checklists/review.md` line by line against the stored prompt
    (`meta.prompt`): fidelity, form, surface, construction, export. Check the report: 0 errors,
    warnings understood, parity OK (open the `parity/` images if not).

@@ -16,13 +16,18 @@ Follow **Workflow A** in `AGENTS.md`:
 2. Pick a short kebab-case slug and run
    `node studio new <slug> --prompt "<the prompt verbatim>" --category <category> --style <style,words>`.
 3. Read `rules/01`–`06`, the rule files for the asset type (12 terrain, 13 buildings, 14 nature,
-   08 for the style words) and `docs/KIT.md`.
+   15 weapons, 17 complex shapes such as sci-fi gear, vehicles and gadgets, 08 for the style
+   words) and `docs/KIT.md`. If the user gave a picture, save it as `assets/<slug>/reference.png`
+   and set `meta.reference: { image: 'reference.png', view: 'front' }` (rule 17).
 4. Write `build()` in `assets/<slug>/asset.js`: primary forms → secondary → tertiary detail.
    Revisable numbers go in `params`. Moving parts get `{ separate: true, pivot }`. Fill
    `meta.interpretation` and `meta.budget`. Never edit `studio/`.
 5. `node studio review <slug>` → open the printed sheet PNG with your image tool and look at it
    (Claude Code: Read · Codex: view_image · Gemini CLI: read_file) → go through
    `rules/checklists/review.md` → fix → review again (usually 1–3 rounds). 0 errors required.
+   When a piece or a proportion looks wrong, open `parts.png` (each part colored, with a legend)
+   and `blueprint.png` (rulers in meters). With a reference, open `reference.png` and fix the
+   largest red (model only) or cyan (reference only) area first; the IoU is printed.
 6. `node studio save <slug> -m "<the prompt verbatim>"`.
 7. Reply: what you built (parts, size in m, triangles), anything you could not do, and 2–3 useful
    next revisions. Mention that the viewport (`node studio dev`) shows it live.

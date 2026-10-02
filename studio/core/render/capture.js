@@ -58,6 +58,9 @@ export async function withCapture(fn) {
       sheet: call('sheet'),
       lineup: call('lineup'),
       webglInfo: call('webglInfo'),
+      renderParts: call('renderParts'),
+      blueprint: call('blueprint'),
+      referenceOverlay: call('referenceOverlay'),
       errors,
     };
     return await fn(api);

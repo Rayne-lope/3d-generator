@@ -39,7 +39,7 @@ prompt ──► agent writes assets/<slug>/asset.js (kit code)
 | `studio/core/validate/` | Khronos glTF validator + studio checks (`checks/geometry, texture-uv, material, scene, source`). Issues are `{ id, severity, message, hint, where }`. |
 | `studio/core/build.js` | One item × one profile: build → GLB → inspect → validate → report. Results are cached by a hash of the asset folder, the set folder, the kit, the core and the profiles. |
 | `studio/core/render/` | `capture.js` drives the headless capture page. `image.js` handles PNGs, pixel diffs and grids. |
-| `studio/core/review.js` | Contact sheets, lineups and the parity check (source scene vs GLB). |
+| `studio/core/review.js` | Contact sheets, lineups, the parity check (source scene vs GLB), and the debug images: parts view (source scene colored per `k.part`), blueprint (orthographic views with grid and rulers) and the reference overlay (silhouette IoU against `meta.reference`). |
 | `studio/core/history.js` | Versions (save/revert/undo/pin/prune, parent links) and the unified source diff. |
 | `studio/core/diff.js` | Version diffs: shared-camera renders, two-level change map, stats delta, source diff. |
 | `studio/core/export.js` | Strict export (error gate, fresh-rebuild byte check, parity, reports). |

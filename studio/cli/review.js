@@ -29,6 +29,9 @@ Options:
   --views <list>    comma list (default: front,right,back,top,iso,iso-wire)
   --size <px>       tile size (default 512)
   --no-parity       skip the source-vs-GLB comparison
+  --no-parts        skip the parts view (parts.png: one color + label per k.part)
+  --no-blueprint    skip the blueprint (blueprint.png: orthographic views with rulers)
+  Assets with meta.reference also get reference.png (reference | model | overlay + IoU).
   --force           ignore the build cache
   --json`;
 
@@ -41,6 +44,8 @@ export async function run(argv) {
     views: { type: 'string' },
     size: { type: 'string' },
     'no-parity': { type: 'boolean', default: false },
+    'no-parts': { type: 'boolean', default: false },
+    'no-blueprint': { type: 'boolean', default: false },
     all: { type: 'boolean', default: false },
     force: { type: 'boolean', default: false },
   }, USAGE);
@@ -54,12 +59,17 @@ export async function run(argv) {
     for (const profileId of profiles) {
       for (const item of items) {
         try {
-          const r = await reviewItem(api, { ...item, profileId, parity: !opts['no-parity'], views: opts.views ? opts.views.split(',') : undefined, size: opts.size ? Number(opts.size) : undefined, force: opts.force });
+          const r = await reviewItem(api, { ...item, profileId, parity: !opts['no-parity'], parts: !opts['no-parts'] && !item.skin, blueprint: !opts['no-blueprint'] && !item.skin, views: opts.views ? opts.views.split(',') : undefined, size: opts.size ? Number(opts.size) : undefined, force: opts.force });
           results.push(r);
           if (!opts.json) {
             console.log(formatReport(r.report, { verbose: opts.verbose }));
             if (r.parity) console.log(`  ${r.parity.ok ? sym.ok : sym.warn} parity source↔GLB: max ${(r.parity.max * 100).toFixed(2)}% (${Object.entries(r.parity.views).map(([v, x]) => `${v} ${(x * 100).toFixed(1)}%`).join(', ')})`);
             console.log(`  ${c.bold('review sheet:')} ${c.cyan(r.sheet)}`);
+            if (r.parts) console.log(`  ${c.bold('parts view:')}   ${c.cyan(r.parts.file)}`);
+            if (r.blueprint) console.log(`  ${c.bold('blueprint:')}    ${c.cyan(r.blueprint.file)}`);
+            if (r.reference?.file) console.log(`  ${c.bold('reference:')}    ${c.cyan(r.reference.file)} ${c.gray(`(silhouette IoU ${(r.reference.iou * 100).toFixed(1)}%)`)}`);
+            else if (r.reference?.missing) console.log(`  ${sym.warn} meta.reference points to ${r.reference.missing}, which does not exist`);
+            for (const i of r.report.issues.filter((x) => x.id === 'scene.floating-part')) console.log(`  ${sym.warn} ${i.message}`);
           }
         } catch (err) {
           failed++;

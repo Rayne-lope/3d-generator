@@ -27,6 +27,7 @@
     { "slug": "tavern-mug", "type": "set member", "style": "cozy (set: tavern)", "variants": "all" },
     { "slug": "tavern-candle-holder", "type": "set member (emissive)", "style": "cozy (set: tavern)", "variants": "all" },
     { "slug": "tavern-shelf", "type": "set member (back-center origin)", "style": "cozy (set: tavern)", "variants": "all" },
-    { "slug": "ak-rifle", "type": "weapon (detachable magazine part, skins)", "style": "realistic (3D-painted atlas)", "variants": "all", "skins": ["desert", "digital", "gold"] }
+    { "slug": "ak-rifle", "type": "weapon (detachable magazine part, skins)", "style": "realistic (3D-painted atlas)", "variants": "all", "skins": ["desert", "digital", "gold"] },
+    { "slug": "energy-rifle", "type": "weapon (shape language: chamfers, polylines, dualProfile, loft, sweep; skins)", "style": "sci-fi (3D-painted atlas + glow)", "variants": "all", "skins": ["crimson"] }
   ]
 }

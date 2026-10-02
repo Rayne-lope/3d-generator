@@ -10,6 +10,7 @@ export default defineAsset({
     style: {{STYLE_JSON}},
     category: '{{CATEGORY}}',
     budget: { triangles: 5000 },{{SET_LINE}}
+    // reference: { image: 'reference.png', view: 'front' }, // a side-view picture to match (rules/17)
   },
   seed: {{SEED}},
   // Every proportion and count the user might want to change lives here.
@@ -27,6 +28,8 @@ export default defineAsset({
     const asset = k.asset('{{SLUG_NAME}}');
     const body = k.part('body');
     const mat = k.mat.physical('painted-wood', { color: '#b8443a' });
+    // Beyond boxes: k.shape.chamfered/rounded/spline → k.geo.extrude, k.geo.loft, k.geo.sweep,
+    // k.geo.dualProfile (rules/17-complex-shapes.md, docs/KIT.md).
     body.add(k.mesh(k.geo.box(p.width, p.height, p.depth, { bevel: p.bevel, base: true }), mat));
     asset.add(body);
     return asset;

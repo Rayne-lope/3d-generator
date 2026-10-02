@@ -68,12 +68,17 @@ viewport.
 1. **Interpret** (reply text, 1–2 sentences): style, real size, key parts. Flag limitations.
 2. `node studio new <slug> --prompt "<prompt verbatim>" --category <c> --style <words>`.
 3. **Read the relevant rules** (always 01–06; plus 12 terrain, 13 buildings, 14 nature,
-   15 weapons, 16 skins/3D-painted textures, 08 style words) and `docs/KIT.md` for the API.
+   15 weapons, 16 skins/3D-painted textures, 17 complex shapes, 08 style words) and
+   `docs/KIT.md` for the API. If the user gives a picture, save it as
+   `assets/<slug>/reference.png` and set `meta.reference` (rule 17).
 4. **Write `build()`**: primary forms → secondary → tertiary. Put every revisable number in
    `params`. Group meshes into named `k.part`s; moving pieces get `{ separate: true, pivot }`.
    Fill `meta.interpretation` and `meta.budget`.
 5. `node studio review <slug>` → **open the printed sheet PNG** (see *Looking at images*) and go
-   through `rules/checklists/review.md`. Fix errors and visible problems; repeat (usually 1–3 rounds).
+   through `rules/checklists/review.md`. When structure or proportions look wrong, also open
+   `parts.png` (each `k.part` colored) and `blueprint.png` (rulers in meters); with a reference,
+   open `reference.png` and fix the largest red/cyan area (IoU printed). Fix errors and visible
+   problems; repeat (usually 1–3 rounds, more when matching a reference).
 6. `node studio save <slug> -m "<user prompt>"`.
 7. **Reply**: interpretation, what you built (parts, size, triangles), anything you could not do,
    and 2–3 useful next revisions. Mention the viewport shows it live.
@@ -138,5 +143,5 @@ never print it or write it anywhere else. Reply with the asset ids and the inser
 
 ## Where things are
 
-`rules/` modeling knowledge (15 weapons, 16 skins) · `.agents/skills/` workflow shortcuts · `docs/KIT.md` kit API · `docs/GUIDE.md` user guide ·
+`rules/` modeling knowledge (15 weapons, 16 skins, 17 complex shapes) · `.agents/skills/` workflow shortcuts · `docs/KIT.md` kit API · `docs/GUIDE.md` user guide ·
 `studio/profiles/*.json` engine limits · `assets/` assets · `sets/` packs · `exports/` engine files.

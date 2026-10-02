@@ -64,6 +64,15 @@ const barrel = k.op.translate(k.op.lieAlong(k.geo.cylinder(0.0092, 0.35, { segme
 - **Overlap joins by 1–2 mm** (magazine into the well, stock into the receiver) so no gaps show;
   hide intersections inside solids instead of matching faces exactly.
 
+### Futuristic and complex weapons
+
+Sci-fi guns, blasters and other designed shapes follow `17-complex-shapes.md`: chamfered plates
+with `k.shape.chamfered` and openings with `withHoles` (skeleton stocks, guards), layered armor
+with `k.shape.offset`, glow strips with `k.shape.polyline`, a receiver from two views with
+`k.geo.dualProfile`, shroud transitions with `k.geo.loft`, curved conduits with `k.geo.sweep`,
+and the reference overlay loop when the user gives a picture. `assets/energy-rifle` is the
+complete example (traced from its `reference.png`, 4 skins).
+
 ## 4. Parts and pivots for animation
 
 Separate parts (`k.part(name, { separate: true, pivot })`) only for what an animation moves:

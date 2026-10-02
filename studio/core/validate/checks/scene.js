@@ -75,5 +75,101 @@ export function checkScene({ info, profile, meta }) {
   for (const n of info.nodes) {
     if (n.scale.some((s) => Math.abs(s - 1) > 1e-6)) out.push(issue('scene.node-scale', 'warning', `node '${n.name}' has scale ${n.scale.join(', ')}`, { where: n.name }));
   }
+  for (const f of floatingPieces(info, perMeter)) {
+    out.push(issue('scene.floating-part', 'info', `a piece of '${f.node}' (${f.triangles} triangles, around ${f.center.map((v) => v.toFixed(3)).join(', ')} m) touches nothing else: is it floating?`, { where: f.node, hint: 'Move it until it overlaps what it is attached to by 1–2 mm (open parts.png from the review to see which part it is), or ignore this if it floats on purpose (sparks, glow).' }));
+  }
   return out;
+}
+
+/**
+ * Connected pieces whose padded bounding box touches no other piece and that do not stand on
+ * the ground. Bounding boxes keep it fast and conservative: only clearly detached pieces show.
+ */
+export function floatingPieces(info, perMeter = 1, { maxPieces = 2000, maxVertices = 400000 } = {}) {
+  let total = 0;
+  for (const m of info.meshes) for (const p of m.primitives) total += p.positions.length / 3;
+  if (total > maxVertices) return [];
+  const pieces = [];
+  for (const m of info.meshes) {
+    for (const prim of m.primitives) {
+      const P = prim.positions;
+      const I = prim.indices;
+      const keyId = new Map();
+      const parent = [];
+      const find = (x) => {
+        while (parent[x] !== x) {
+          parent[x] = parent[parent[x]];
+          x = parent[x];
+        }
+        return x;
+      };
+      const vid = new Int32Array(P.length / 3);
+      for (let v = 0; v < P.length / 3; v++) {
+        const k = `${Math.round(P[v * 3] * 1e5)},${Math.round(P[v * 3 + 1] * 1e5)},${Math.round(P[v * 3 + 2] * 1e5)}`;
+        let id = keyId.get(k);
+        if (id === undefined) {
+          id = parent.length;
+          parent.push(id);
+          keyId.set(k, id);
+        }
+        vid[v] = id;
+      }
+      for (let t = 0; t < I.length; t += 3) {
+        const a = find(vid[I[t]]);
+        parent[find(vid[I[t + 1]])] = a;
+        parent[find(vid[I[t + 2]])] = a;
+      }
+      const boxes = new Map();
+      for (let t = 0; t < I.length; t += 3) {
+        const r = find(vid[I[t]]);
+        let b = boxes.get(r);
+        if (!b) boxes.set(r, (b = { node: m.node, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity], triangles: 0 }));
+        b.triangles++;
+        for (let k = 0; k < 3; k++) {
+          const v = I[t + k];
+          for (let c = 0; c < 3; c++) {
+            const x = P[v * 3 + c];
+            if (x < b.min[c]) b.min[c] = x;
+            if (x > b.max[c]) b.max[c] = x;
+          }
+        }
+      }
+      pieces.push(...boxes.values());
+      if (pieces.length > maxPieces) return [];
+    }
+  }
+  if (pieces.length < 2) return [];
+  const size = Math.max(...info.bbox.size);
+  const pad = Math.max(0.001 * perMeter, size * 0.003);
+  const parent = pieces.map((_, i) => i);
+  const find = (x) => {
+    while (parent[x] !== x) {
+      parent[x] = parent[parent[x]];
+      x = parent[x];
+    }
+    return x;
+  };
+  const touch = (a, b) => a.min.every((v, c) => v - pad <= b.max[c] && b.min[c] - pad <= a.max[c]);
+  for (let i = 0; i < pieces.length; i++) {
+    for (let j = i + 1; j < pieces.length; j++) if (touch(pieces[i], pieces[j])) parent[find(j)] = find(i);
+  }
+  const groups = new Map();
+  pieces.forEach((p, i) => {
+    const r = find(i);
+    if (!groups.has(r)) groups.set(r, []);
+    groups.get(r).push(p);
+  });
+  if (groups.size < 2) return [];
+  const list = [...groups.values()].map((g) => ({
+    pieces: g,
+    triangles: g.reduce((s, p) => s + p.triangles, 0),
+    minY: Math.min(...g.map((p) => p.min[1])),
+  })).sort((a, b) => b.triangles - a.triangles);
+  const ground = info.bbox.min[1] + pad;
+  return list.slice(1).filter((g) => g.minY > ground).slice(0, 5).map((g) => {
+    const big = g.pieces.reduce((a, b) => (b.triangles > a.triangles ? b : a));
+    const min = [0, 1, 2].map((c) => Math.min(...g.pieces.map((p) => p.min[c])));
+    const max = [0, 1, 2].map((c) => Math.max(...g.pieces.map((p) => p.max[c])));
+    return { node: big.node, triangles: g.triangles, center: min.map((v, c) => (v + max[c]) / 2 / perMeter) };
+  });
 }

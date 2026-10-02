@@ -1,12 +1,14 @@
 // Visual review: multi-view contact sheets of the exported GLB, plus the parity check
 // (source scene vs re-imported GLB from identical cameras).
 
+import fs from 'node:fs';
 import path from 'node:path';
 import { paths, itemId, previewGlb, previewReport, rel } from './paths.js';
 import { buildItem } from './build.js';
 import { readJson, writeJson, ensureDir } from './fsutil.js';
 import { loadConfig } from './config.js';
 import { dataUrlToBuffer, diffImages, readPNG, writeDataUrl, writePNG, sideBySide } from './render/image.js';
+import { loadAssetDef } from './load-asset.js';
 
 export const PARITY_VIEWS = ['front', 'right', 'top', 'iso'];
 
@@ -25,7 +27,7 @@ const previewUrl = (api, slug, variant, profileId, skin) => `${api.url}files/pre
 /**
  * Render a contact sheet (and optionally parity) for one item. Requires an open capture api.
  */
-export async function reviewItem(api, { slug, variant = null, skin = null, profileId = 'generic', parity = true, views, size, force = false }) {
+export async function reviewItem(api, { slug, variant = null, skin = null, profileId = 'generic', parity = true, parts = true, blueprint = true, views, size, force = false }) {
   const config = loadConfig();
   const viewList = views || config.review.views;
   const tile = size || config.review.size;
@@ -43,7 +45,51 @@ export async function reviewItem(api, { slug, variant = null, skin = null, profi
   });
   const sheetFile = writeDataUrl(path.join(dir, 'sheet.png'), sheet);
   const parityResult = parity ? await parityCheck(api, { slug, variant, skin, profileId, size: tile }) : null;
-  return { slug, variant, skin, profile: profileId, report: readJson(previewReport(slug, variant, profileId, skin)), sheet: rel(sheetFile), dir: rel(dir), parity: parityResult, glb: rel(previewGlb(slug, variant, profileId, skin)) };
+  const extra = {};
+  if (parts) extra.parts = await partsSheet(api, { slug, variant, skin, profileId, size: tile, title: report.title });
+  if (blueprint) extra.blueprint = await blueprintSheet(api, { slug, variant, skin, profileId, size: tile, title: report.title });
+  const def = await loadAssetDef(slug);
+  if (def.meta.reference) extra.reference = await referenceSheet(api, { slug, variant, skin, profileId, reference: def.meta.reference });
+  return { slug, variant, skin, profile: profileId, report: readJson(previewReport(slug, variant, profileId, skin)), sheet: rel(sheetFile), dir: rel(dir), parity: parityResult, glb: rel(previewGlb(slug, variant, profileId, skin)), ...extra };
+}
+
+/**
+ * Parts view: the source scene with one flat color per k.part, labeled, plus a legend with
+ * triangles and sizes. Shows which code made which piece (the GLB merges non-separate parts).
+ */
+export async function partsSheet(api, { slug, variant = null, skin = null, profileId = 'generic', size = 512, title = slug }) {
+  const r = await api.renderParts({ slug, variant, skin, views: ['front', 'top', 'iso'], size });
+  const sheet = await api.sheet({
+    tiles: [['front', r.images.front], ['top', r.images.top], ['iso', r.images.iso], ['legend', r.images.legend]].map(([label, image]) => ({ image, label })),
+    columns: 2,
+    tileSize: size,
+    title: `${title} — parts`,
+    lines: [`${r.parts.length} part(s): ${r.parts.map((p) => `${p.name} (${p.triangles.toLocaleString('en-US')} tris)`).join(', ')}`],
+  });
+  return { file: rel(writeDataUrl(path.join(shotsDir(slug, variant, profileId, skin), 'parts.png'), sheet)), parts: r.parts };
+}
+
+/** Blueprint: orthographic views of the GLB with a metric grid, rulers and overall sizes. */
+export async function blueprintSheet(api, { slug, variant = null, skin = null, profileId = 'generic', size = 512, title = slug }) {
+  const r = await api.blueprint({ url: previewUrl(api, slug, variant, profileId, skin), views: ['front', 'top', 'right'], size });
+  const fmt = (d) => `${(d.width * 100).toFixed(1)} × ${(d.height * 100).toFixed(1)} cm`;
+  const sheet = await api.sheet({
+    tiles: Object.entries(r.images).map(([label, image]) => ({ image, label })),
+    columns: 3,
+    tileSize: size,
+    title: `${title} — blueprint (orthographic, meters)`,
+    lines: [`front ${fmt(r.dims.front)} · top ${fmt(r.dims.top)} · right ${fmt(r.dims.right)} · rulers start at the model's min corner`],
+  });
+  return { file: rel(writeDataUrl(path.join(shotsDir(slug, variant, profileId, skin), 'blueprint.png'), sheet)), dims: r.dims };
+}
+
+/** Reference overlay: model silhouette vs the asset's reference image (meta.reference). */
+export async function referenceSheet(api, { slug, variant = null, skin = null, profileId = 'generic', reference }) {
+  const ref = typeof reference === 'string' ? { image: reference } : reference;
+  const file = path.join(paths.assets, slug, ref.image);
+  if (!fs.existsSync(file)) return { file: null, iou: null, missing: rel(file) };
+  const r = await api.referenceOverlay({ url: previewUrl(api, slug, variant, profileId, skin), image: `${api.url}assets/${slug}/${ref.image}`, view: ref.view || 'front', size: 768 });
+  return { file: rel(writeDataUrl(path.join(shotsDir(slug, variant, profileId, skin), 'reference.png'), r.sheet)), iou: +r.iou.toFixed(3) };
 }
 
 /**

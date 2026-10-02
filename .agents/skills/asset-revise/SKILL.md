@@ -21,6 +21,8 @@ Follow **Workflow B** (`AGENTS.md`) and `rules/10-revisions.md`:
    change) must appear only where the request applies; orange (subtle color/shading) only for
    color, wear or material requests. If other areas changed, find out why and fix it.
 4. `node studio review <slug>` → open the sheet → fix anything the change broke (0 errors).
+   For shape or proportion requests also open `blueprint.png` (and `reference.png` when the
+   asset has one) to confirm the numbers moved the way the user asked.
 5. `node studio save <slug> -m "<the revision request verbatim>"`.
 6. Reply: what changed (params/parts, stats delta from the diff), and mention that the
    asset-undo command (`/asset-undo` or `$asset-undo`) brings back the previous version.

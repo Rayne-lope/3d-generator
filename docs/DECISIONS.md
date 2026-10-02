@@ -59,7 +59,7 @@ automatically by `node studio engine-verify godot`).
 - Godot 4 imports glTF 2.0 natively (editor import, or runtime `GLTFDocument.append_from_file` + `generate_scene`). Meters, +Y up; models face +Z (`Vector3.MODEL_FRONT`), so no conversion is needed. Latest stable at the time of writing: 4.7.2.
 - `baseColorFactor` → `StandardMaterial3D.albedo_color` (converted to sRGB by the importer); metallic-roughness, normal (with tangents), occlusion, emissive and alpha modes map directly.
 - Godot imports 3D textures as **VRAM Compressed** by default (lossy). For pixel-exact palettes set the texture import mode to Lossless; the default is fine for most assets.
-- **Verified (2026-10-01):** `node studio engine-verify godot` on the official Godot 4.7.2 Linux build: **42/42** golden items (re-verified 2026-10-02 with the AK skins) load through `GLTFDocument` with the expected size and bounds, triangles, mesh/surface counts, node pivots, albedo, alpha, metallic/roughness, texture slots, emission, transparency and culling. Deliberately corrupted expectations fail as they should. `--capture` renders every item in Godot next to the studio view (`docs/demos/phase5.md`). CI repeats the check on every push.
+- **Verified (2026-10-01):** `node studio engine-verify godot` on the official Godot 4.7.2 Linux build: **44/44** golden items (re-verified 2026-10-02 with the AK skins and the energy rifle) load through `GLTFDocument` with the expected size and bounds, triangles, mesh/surface counts, node pivots, albedo, alpha, metallic/roughness, texture slots, emission, transparency and culling. Deliberately corrupted expectations fail as they should. `--capture` renders every item in Godot next to the studio view (`docs/demos/phase5.md`). CI repeats the check on every push.
 
 ## Quality gates the user asked for
 
@@ -105,6 +105,6 @@ Plus geometry (inverted faces, inside-out shells, degenerate/duplicate triangles
 ## Reliability
 
 - **Preview = Export** is enforced, not assumed: `export` rebuilds from scratch and refuses to write a file whose bytes differ from the preview the user approved.
-- **Golden suite** (`node studio golden`): 20 assets / 42 items × 3 profiles (skins included), checked for validation, determinism, structure (`golden/manifest.json`), visual regression against committed baselines and source-vs-GLB parity. Baselines change only through `--update-baselines`, so an unnoticed visual change cannot slip in.
+- **Golden suite** (`node studio golden`): 21 assets / 44 items × 3 profiles (skins included), checked for validation, determinism, structure (`golden/manifest.json`), visual regression against committed baselines and source-vs-GLB parity. Baselines change only through `--update-baselines`, so an unnoticed visual change cannot slip in.
 - The viewport environment map (PMREM) is built once per renderer: on software WebGL each rebuild cost about 2 s, so caching it made every render command 10–20× faster without changing a pixel.
 - **History** stores each version's parent, so `undo` follows the edits actually made, even after a revert; unsaved work is auto-saved before any restore.

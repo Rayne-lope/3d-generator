@@ -9,6 +9,8 @@ import { createNoise } from './noise.js';
 import { createRng } from './rng.js';
 import { bend, crease, flat, jitter, nonIndexed, setShading, smooth, flipWinding } from './ops.js';
 import { box as boxUV, planar as planarUV } from './uv.js';
+import { outlinePoints } from './shapes.js';
+import { intersect as csgIntersect } from './csg.js';
 
 const TAU = Math.PI * 2;
 
@@ -437,4 +439,258 @@ export function plank(w, h, d, opts = {}) {
   if (warp > 0) g = jitter(g, { amount: Math.min(w, h, d) * 0.04, seed: rng.int(0, 1e9) });
   setShading(g, 'flat', 0);
   return finish(flat(g), { base });
+}
+
+// ------------------------------------------------------------------ lofts, sweeps, blueprints
+
+function loopArea(pts) {
+  let a = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const [x0, y0] = pts[i];
+    const [x1, y1] = pts[(i + 1) % pts.length];
+    a += x0 * y1 - x1 * y0;
+  }
+  return a / 2;
+}
+
+/** Resample a closed loop to n points by arc length, counter-clockwise, starting at the top. */
+function resampleLoop(pts, n) {
+  let loop = loopArea(pts) < 0 ? pts.slice().reverse() : pts.slice();
+  let cx = 0;
+  let cy = 0;
+  for (const [x, y] of loop) {
+    cx += x;
+    cy += y;
+  }
+  cx /= loop.length;
+  cy /= loop.length;
+  // Start at 12 o'clock: where the loop crosses the vertical line through its center (top
+  // crossing), so a square and a circle line up instead of twisting by 45°.
+  let start = null;
+  let bestY = -Infinity;
+  for (let i = 0; i < loop.length; i++) {
+    const [ax, ay] = loop[i];
+    const [bx, by] = loop[(i + 1) % loop.length];
+    if ((ax - cx) * (bx - cx) > 0 || ax === bx) continue;
+    const t = (cx - ax) / (bx - ax);
+    const y = ay + (by - ay) * t;
+    if (y > bestY) {
+      bestY = y;
+      start = { i, t, p: [cx, y] };
+    }
+  }
+  if (start) {
+    const rotate = (k) => [...loop.slice(k), ...loop.slice(0, k)];
+    if (start.t <= 1e-9) loop = rotate(start.i);
+    else if (start.t >= 1 - 1e-9) loop = rotate((start.i + 1) % loop.length);
+    else loop = [start.p, ...rotate(start.i + 1)];
+  }
+  const lens = [0];
+  for (let i = 1; i <= loop.length; i++) {
+    const a = loop[i - 1];
+    const b = loop[i % loop.length];
+    lens.push(lens[i - 1] + Math.hypot(b[0] - a[0], b[1] - a[1]));
+  }
+  const total = lens[lens.length - 1];
+  const out = [];
+  let j = 0;
+  for (let k = 0; k < n; k++) {
+    const target = (k / n) * total;
+    while (j < loop.length - 1 && lens[j + 1] < target) j++;
+    const a = loop[j];
+    const b = loop[(j + 1) % loop.length];
+    const seg = lens[j + 1] - lens[j] || 1;
+    const t = (target - lens[j]) / seg;
+    out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+  }
+  return out;
+}
+
+function capTriangles(loop2d) {
+  const contour = loop2d.map(([x, y]) => new THREE.Vector2(x, y));
+  return THREE.ShapeUtils.triangulateShape(contour, []);
+}
+
+function soupGeometry(positions) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  return g;
+}
+
+/** Make a closed triangle soup face outward (positive signed volume). */
+function outward(g) {
+  const p = g.attributes.position.array;
+  let vol = 0;
+  for (let i = 0; i < p.length; i += 9) {
+    vol += p[i] * (p[i + 4] * p[i + 8] - p[i + 5] * p[i + 7])
+      - p[i + 1] * (p[i + 3] * p[i + 8] - p[i + 5] * p[i + 6])
+      + p[i + 2] * (p[i + 3] * p[i + 7] - p[i + 4] * p[i + 6]);
+  }
+  return vol < 0 ? flipWinding(g) : g;
+}
+
+/**
+ * Loft: a solid through 2D cross-sections placed along X. sections = [{ at, shape }, …]
+ * (shape drawn in the ZY plane like extrude({ axis: 'x' }): shape x → -z, shape y → y).
+ * Sections are resampled to the same number of points, so a rounded square can turn into a
+ * circle (barrel shrouds, tapered noses, ergonomic grips).
+ */
+export function loft(sections, { samples = 48, caps = true, uvScale = 1, crease: creaseAngle = 35 } = {}) {
+  if (!Array.isArray(sections) || sections.length < 2) throw new Error('k.geo.loft: pass at least 2 sections [{ at, shape }]');
+  const sorted = sections.slice().sort((a, b) => a.at - b.at);
+  const rings = sorted.map((sec) => {
+    const pts = outlinePoints(sec.shape);
+    if (pts.length < 3) throw new Error('k.geo.loft: every section needs at least 3 points');
+    return { at: sec.at, pts: resampleLoop(pts, samples) };
+  });
+  const P = (x, [sx, sy]) => [x, sy, -sx];
+  const pos = [];
+  const tri = (a, b, c) => pos.push(...a, ...b, ...c);
+  for (let r = 0; r < rings.length - 1; r++) {
+    const A = rings[r];
+    const B = rings[r + 1];
+    for (let i = 0; i < samples; i++) {
+      const j = (i + 1) % samples;
+      const a0 = P(A.at, A.pts[i]);
+      const a1 = P(A.at, A.pts[j]);
+      const b0 = P(B.at, B.pts[i]);
+      const b1 = P(B.at, B.pts[j]);
+      tri(a0, b0, b1);
+      tri(a0, b1, a1);
+    }
+  }
+  if (caps) {
+    const first = rings[0];
+    const last = rings[rings.length - 1];
+    for (const [a, b, c] of capTriangles(first.pts)) tri(P(first.at, first.pts[a]), P(first.at, first.pts[b]), P(first.at, first.pts[c]));
+    for (const [a, b, c] of capTriangles(last.pts)) tri(P(last.at, last.pts[a]), P(last.at, last.pts[c]), P(last.at, last.pts[b]));
+  }
+  let g = outward(soupGeometry(pos));
+  g = boxUV(g, { scale: uvScale });
+  return finish(crease(g, creaseAngle));
+}
+
+/**
+ * Sweep a 2D section along a smooth 3D path (rails, curved handles, cables, coils). The
+ * section's y follows "up" (world +Y projected off the path), x points to the path's side.
+ * Frames are parallel-transported, so the section never flips on straight runs.
+ */
+export function sweep(shape, path, { segments = 48, caps = true, tension = 0.5, uvScale = 1, crease: creaseAngle = 35 } = {}) {
+  if (!Array.isArray(path) || path.length < 2) throw new Error('k.geo.sweep: path needs at least 2 points [[x, y, z], …]');
+  const curve = new THREE.CatmullRomCurve3(path.map((p) => new THREE.Vector3(p[0], p[1], p[2])), false, 'catmullrom', tension);
+  if (curve.getLength() < 1e-6) throw new Error('k.geo.sweep: path too short');
+  const section = outlinePoints(shape);
+  const loop = loopArea(section) < 0 ? section.slice().reverse() : section;
+  const ts = Array.from({ length: segments + 1 }, (_, i) => i / segments);
+  const T = curve.getTangentAt(0).normalize();
+  let up = new THREE.Vector3(0, 1, 0);
+  if (Math.abs(T.dot(up)) > 0.95) up = new THREE.Vector3(0, 0, 1);
+  let N = up.clone().sub(T.clone().multiplyScalar(up.dot(T))).normalize();
+  let prevT = T.clone();
+  const rings = [];
+  for (const t of ts) {
+    const P0 = curve.getPointAt(t);
+    const Ti = curve.getTangentAt(t).normalize();
+    const axis = prevT.clone().cross(Ti);
+    const s = axis.length();
+    if (s > 1e-9) N.applyAxisAngle(axis.divideScalar(s), Math.atan2(s, prevT.dot(Ti)));
+    N = N.sub(Ti.clone().multiplyScalar(N.dot(Ti))).normalize();
+    const side = Ti.clone().cross(N).normalize();
+    prevT = Ti;
+    rings.push(loop.map(([sx, sy]) => P0.clone().addScaledVector(side, sx).addScaledVector(N, sy).toArray()));
+  }
+  const pos = [];
+  const tri = (a, b, c) => pos.push(...a, ...b, ...c);
+  const n = loop.length;
+  for (let r = 0; r < rings.length - 1; r++) {
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n;
+      tri(rings[r][i], rings[r][j], rings[r + 1][j]);
+      tri(rings[r][i], rings[r + 1][j], rings[r + 1][i]);
+    }
+  }
+  if (caps) {
+    const tris = capTriangles(loop);
+    const a0 = rings[0];
+    const a1 = rings[rings.length - 1];
+    for (const [a, b, c] of tris) tri(a0[a], a0[c], a0[b]);
+    for (const [a, b, c] of tris) tri(a1[a], a1[b], a1[c]);
+  }
+  let g = outward(soupGeometry(pos));
+  g = boxUV(g, { scale: uvScale });
+  return finish(crease(g, creaseAngle));
+}
+
+/**
+ * Blueprint modeling: the solid that matches 2–3 orthographic views.
+ *   side: outline in the XY plane (x along the object, y up)       → extruded across Z
+ *   top:  outline in the XZ plane ([x, z], +z toward the viewer)   → extruded along Y
+ *   end:  outline in the ZY plane ([z, y], seen from +X), optional → extruded along X
+ * The extrusions are intersected (CSG), so the agent draws views instead of 3D coordinates.
+ * Give the outlines their chamfers/fillets (k.shape.chamfered / rounded).
+ */
+/** Drop zero-area and needle triangles that CSG leaves on coplanar seams (they break tangents). */
+function dropSlivers(g, minHeight = 1e-5, minEdge = 1e-4) {
+  const pos = g.attributes.position;
+  const keep = [];
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  for (let t = 0; t < pos.count; t += 3) {
+    a.fromBufferAttribute(pos, t);
+    b.fromBufferAttribute(pos, t + 1);
+    c.fromBufferAttribute(pos, t + 2);
+    const edges = [a.distanceTo(b), b.distanceTo(c), c.distanceTo(a)];
+    const longest = Math.max(...edges);
+    const area2 = b.clone().sub(a).cross(c.clone().sub(a)).length();
+    // Needles (tiny height) and triangles with a near-zero edge, which welding collapses.
+    if (longest > 0 && area2 / longest > minHeight && Math.min(...edges) > minEdge) keep.push(t);
+  }
+  if (keep.length * 3 === pos.count) return g;
+  const out = new THREE.BufferGeometry();
+  for (const [name, attr] of Object.entries(g.attributes)) {
+    const n = attr.itemSize;
+    const arr = new attr.array.constructor(keep.length * 3 * n);
+    keep.forEach((t, i) => arr.set(attr.array.subarray(t * n, (t + 3) * n), i * 3 * n));
+    out.setAttribute(name, new THREE.BufferAttribute(arr, n));
+  }
+  return out;
+}
+
+export function dualProfile({ side, top, end = null, crease: creaseAngle = 35 } = {}) {
+  if (!side || !top) throw new Error('k.geo.dualProfile: pass at least { side, top } outlines');
+  const bb = (pts) => pts.reduce((b, [x, y]) => ({ x0: Math.min(b.x0, x), x1: Math.max(b.x1, x), y0: Math.min(b.y0, y), y1: Math.max(b.y1, y) }), { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity });
+  const sb = bb(outlinePoints(side));
+  const tb = bb(outlinePoints(top));
+  const pad = 0.01 + Math.max(sb.x1 - sb.x0, sb.y1 - sb.y0, tb.y1 - tb.y0) * 0.1;
+  const zDepth = (tb.y1 - tb.y0) + pad * 2;
+  const yDepth = (sb.y1 - sb.y0) + pad * 2;
+  const raw = (shape, depth) => {
+    const eg = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false, curveSegments: 12, steps: 1 });
+    eg.clearGroups();
+    eg.translate(0, 0, -depth / 2);
+    return nonIndexed(eg);
+  };
+  const sideG = raw(side, zDepth);
+  sideG.translate(0, 0, (tb.y0 + tb.y1) / 2);
+  const topG = raw(top, yDepth);
+  topG.rotateX(Math.PI / 2);
+  topG.translate(0, (sb.y0 + sb.y1) / 2, 0);
+  const solids = [sideG, topG];
+  if (end) {
+    const eb = bb(outlinePoints(end));
+    const endG = raw(end, (sb.x1 - sb.x0) + pad * 2);
+    endG.rotateY(-Math.PI / 2);
+    endG.translate((sb.x0 + sb.x1) / 2, 0, 0);
+    void eb;
+    solids.push(endG);
+  }
+  for (const s of solids) {
+    const uv = new Float32Array(s.attributes.position.count * 2);
+    s.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    s.computeVertexNormals();
+  }
+  let g = dropSlivers(csgIntersect(solids[0], ...solids.slice(1)));
+  g = boxUV(g, { scale: 1 });
+  return finish(crease(g, creaseAngle));
 }

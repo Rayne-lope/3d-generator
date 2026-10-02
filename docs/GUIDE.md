@@ -283,9 +283,20 @@ explained in the report. The full list, with a fix for each id, is in
 | **Triangles** (`scene.mesh-triangles`, `scene.triangle-budget`) | Roblox rejects meshes over 20,000 triangles. The profile first splits big meshes by connected pieces. A single piece over the limit is an error (or decimated with `--allow-decimate`). The asset's own budget (`meta.budget`) gives a warning. |
 | **Geometry** | Inverted or inside-out faces, degenerate or duplicate triangles, bad normals, NaN. |
 | **Materials** | Only portable PBR; metalness 0 or 1; albedo in a sane range; polished metal that turns black without reflections; emissive on Roblox (unverified). |
-| **Scene** | Origin at the base center, plausible size for the category, mesh count, materials per mesh. |
+| **Scene** | Origin at the base center, plausible size for the category, mesh count, materials per mesh. Pieces that touch nothing and float above the ground are listed (`scene.floating-part`, info only). |
 | **Parity** | `review` renders the original scene and the exported GLB from the same cameras. A difference means the export changed something (open `parity/` to see source, GLB and diff). |
 | **Source lint** | `Math.random`, `Date`, Node APIs, double-sided or negative-scale tricks in asset code. |
+
+Besides the contact sheet, every `review` writes three debug images in the same folder
+(`.studio/shots/<slug>/<profile>/`), which the agent opens when something looks off:
+
+| Image | Shows |
+| --- | --- |
+| `parts.png` | Each `k.part` in its own flat color (front, top, iso) with a legend: which code made which piece. |
+| `blueprint.png` | Orthographic front/top/right views with a metric grid, rulers and overall dimensions. |
+| `reference.png` | Only when the asset has a reference image: reference \| model \| overlay (red = model only, cyan = reference only) and the silhouette match (IoU). |
+
+`--no-parts` and `--no-blueprint` skip the first two.
 
 ## 8. Exporting to Godot, Roblox Studio and others
 
@@ -309,7 +320,7 @@ preview byte for byte.
    or crisp detail, set the texture import to Lossless.
 5. Runtime loading: `GLTFDocument.append_from_file()` + `generate_scene()`.
 
-Godot is verified automatically: `node studio engine-verify godot` (42/42 golden items on Godot
+Godot is verified automatically: `node studio engine-verify godot` (44/44 golden items on Godot
 4.7.2; see section 10).
 
 ### Roblox Studio
@@ -487,6 +498,8 @@ windows with frames, a chimney, cozy stylized look
   hands rub, grime in cavities. One material and one atlas per weapon keeps Roblox at one
   MeshPart per part and makes skins possible.
 - **Budgets:** pickups 1.5k–5k triangles, first-person 5k–15k; 1024 px atlas for Roblox.
+- **Futuristic designs** use the complex-shapes tools below; `assets/energy-rifle` is the
+  example.
 
 ```
 /asset AK-47 style assault rifle with a detachable curved magazine
@@ -494,13 +507,36 @@ windows with frames, a chimney, cozy stylized look
 /asset-publish ak-rifle skins
 ```
 
+### Complex shapes and reference images
+
+For sci-fi gear, vehicles, gadgets and other designed shapes (`rules/17-complex-shapes.md`):
+
+- **Give the agent a picture.** Save a side view on a plain background as
+  `assets/<slug>/reference.png` (or just paste it and ask the agent to). The asset declares
+  `meta.reference`, and every review overlays the model on it and prints the match, e.g.
+  `silhouette IoU 88.1%`. The agent traces outlines from the picture and fixes the largest
+  mismatch each round.
+- **The kit draws designed outlines:** chamfered or filleted corners per point, smooth splines,
+  bands that follow a path (glow strips, trims), insets for layered panels, lofts between
+  cross-sections, sweeps along curves, and solids from two blueprint views.
+- **Not stiff:** chamfer most corners, layer plates in 2–4 depths, use openings instead of solid
+  slabs, and give each part a finish.
+
+```
+/asset futuristic energy rifle like reference.png
+/asset sci-fi hover bike, side and top view in reference.png
+/asset-revise energy-rifle make the stock opening larger and the muzzle longer
+```
+
+![Energy rifle: reference overlay](demos/img/complex-reference.png)
+
 ## 10. Golden set and engine tests
 
 These are for maintainers: run them when you change the kit, the exporter, a profile or a golden
 asset.
 
 ```bash
-node studio golden                         # 42 items × 3 profiles, ~5 minutes
+node studio golden                         # 44 items × 3 profiles, ~7 minutes
 open golden/report/index.html              # checks + baseline/current/diff images
 node studio golden --update-baselines      # approve an intentional visual change (then commit)
 ```
@@ -657,9 +693,9 @@ workflow from plain requests.
 | Item | Status |
 | --- | --- |
 | All 22 demo assets (+ variants) build in all three profiles with 0 errors | ✔ verified (build + validator) |
-| Golden suite: 126/126 checks (validate, determinism, structure, regression, parity) | ✔ verified, also in CI |
+| Golden suite: 132/132 checks (validate, determinism, structure, regression, parity) | ✔ verified, also in CI |
 | Viewport live reload, panels, profile switching, UV overlay, versions panel | ✔ verified with Playwright screenshots |
-| Godot 4.7.2: 42/42 golden items load with the expected size, triangles, pivots, materials; rendered side by side | ✔ verified headless (`engine-verify godot`), also in CI |
+| Godot 4.7.2: 44/44 golden items load with the expected size, triangles, pivots, materials; rendered side by side | ✔ verified headless (`engine-verify godot`), also in CI |
 | Roblox Studio import of the golden set | ☐ **needs your machine**: `node studio engine-pack roblox` + [CHECKLIST.md](../engines/roblox/CHECKLIST.md) (Studio has no headless mode) |
 | Roblox emissive and alpha-blend mapping | ☐ unverified, covered by the checklist |
 | Skins: lock check, stable Roblox palette, skin packs, `KHR_materials_variants` GLB (Khronos validator: 0 errors) | ✔ verified (tests + the AK demo's 8 looks × 3 profiles) |

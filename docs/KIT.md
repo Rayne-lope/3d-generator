@@ -136,6 +136,9 @@ unless noted). Common options: `base: true` puts the bottom at y = 0 (otherwise 
 | `k.geo.rock(r, { detail, roughness, squash: [x, y, z], seed, flat, frequency, base })` | Noise-displaced icosphere. |
 | `k.geo.plank(w, h, d, { bevel, seed, warp, base })` | A board with a tiny random warp, so rows don't look cloned. |
 | `k.geo.terrain(opts)` | See [Terrain](#terrain). |
+| `k.geo.loft(sections, { samples, caps, uvScale, crease })` | Skin a solid through 2D cross-sections along X: `[{ at: x, shape }, …]` (shape x → −Z, y → Y). Sections are resampled to `samples` points by arc length and start at 12 o'clock, so a square flows into a circle without twisting. Shrouds, noses, tapered housings, bottles. |
+| `k.geo.sweep(shape, path, { segments, caps, tension, uvScale, crease })` | Move a 2D section along a smooth 3D path `[[x, y, z], …]` (section y stays "up", x points sideways; parallel-transport frames, no flips). Rails, curved handles, cables, trims with a profile. |
+| `k.geo.dualProfile({ side, top, end, crease })` | Solid from blueprint views: `side` (XY outline) ∩ `top` (points `[x, z]`) ∩ optional `end` (points `[z, y]`), via CSG. Draw what you see in two views instead of 3D coordinates. Chamfer or round **one** view; keep the other a plain polygon (crossing chamfers make tiny CSG faces that break UV padding). |
 
 ## 2D shapes
 
@@ -148,6 +151,25 @@ For `k.geo.extrude` (units in meters):
 
 ```js
 const sign = k.geo.extrude(k.shape.withHoles(k.shape.rect(0.6, 0.4, { radius: 0.05 }), k.shape.circle(0.05)), 0.03, { bevel: 0.004 });
+```
+
+**Hard-surface and smooth outlines** (complex shapes; see [rule 17](../rules/17-complex-shapes.md)):
+
+| Function | Notes |
+| --- | --- |
+| `k.shape.rounded(points, { size, corner, segments })` | Outline with a fillet (`'fillet'`, circular arc) or 45° cut (`'chamfer'`) per corner. Points are `[x, y]`, `[x, y, size]` or `[x, y, size, 'fillet' \| 'chamfer']`; `size`/`corner` set the default. Sizes are clamped to half the shorter neighbouring edge; collinear and duplicate points are removed (no zero-area caps). |
+| `k.shape.chamfered(points, { size })` | `rounded` with chamfers: the sci-fi armor plate look. |
+| `k.shape.spline(points, { segments, tension })` | Smooth closed Catmull-Rom outline through the points: grips, shells, guitar bodies. |
+| `k.shape.polyline(points, { width, size, corner })` | An open path turned into a band `width` wide with chamfered (or filleted) bends: glow strips, trims, piping that follow an outline. |
+| `k.shape.offset(shape, distance)` | Grow (> 0) or shrink (< 0) an outline: inset panels and plate layers. Edges too short for the inset are dropped; throws if the shape collapses. |
+| `k.shape.outlinePoints(shape)` | The outline as `[[x, y], …]`. |
+
+```js
+// A chamfered plate with a chamfered opening, a 3 mm inset layer on top, and a glow strip.
+const outline = k.shape.chamfered([[0, 0], [0.3, 0], [0.3, 0.12, 0.03], [0, 0.12]], { size: 0.01 });
+const plate = k.geo.extrude(k.shape.withHoles(outline, k.shape.chamfered([[0.05, 0.03], [0.2, 0.03], [0.2, 0.09], [0.05, 0.09]], { size: 0.008 })), 0.02, { axis: 'z', bevel: 0.001 });
+const layer = k.op.translate(k.geo.extrude(k.shape.offset(outline, -0.003), 0.004, { axis: 'z' }), 0, 0, 0.011);
+const strip = k.geo.extrude(k.shape.polyline([[0.22, 0.02], [0.28, 0.02], [0.28, 0.1]], { width: 0.004, size: 0.01 }), 0.022, { axis: 'z' });
 ```
 
 ## Operators
@@ -409,4 +431,8 @@ Then: `node studio review wooden-stool`, open the sheet, fix, and
 | `texture … uses offset/repeat/rotation` | Scale the UVs instead (`k.uv.scale`); texture transforms are not portable. |
 | `k.arch.wall: opening … outside the wall` / `openings overlap` | Keep 5 cm between openings and edges. |
 | `k.geo.terrain: … too dense` | Lower `segments` or split into tiles. |
+| `k.shape.rounded: needs at least 3 points that are not on one line` | The outline is degenerate: check the point list (after collinear points are removed). |
+| `k.shape.offset: offset … collapses the shape` | The inset is larger than the shape allows: use a smaller distance. |
+| `k.geo.loft: pass at least 2 sections` / `every section needs at least 3 points` | Give two or more `{ at, shape }` sections. |
+| `k.geo.sweep: path too short` | The path needs two or more distinct points. |
 | Validator issue ids (`uv.padding`, `scene.mesh-triangles`, `texture.low-density`…) | See `rules/07-export-hygiene.md`, which has a fix for every id. |

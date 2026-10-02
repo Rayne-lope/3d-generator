@@ -68,6 +68,7 @@ switcher shows exactly that file.
 | `scene.triangles-total` | Many triangles for the whole asset on this engine | Lower segments on small parts; split big environment pieces into tiles |
 | `scene.materials-per-mesh` | A mesh has more materials than the engine allows | Normally handled by the profile (split / palette); merge similar materials |
 | `scene.node-scale` | A node has scale left after baking | Don't scale separate parts' roots; scale geometry instead |
+| `scene.floating-part` (info) | A piece touches no other piece and does not rest on the ground | Overlap it 1–2 mm with what it attaches to (find it in `parts.png`); ignore it when it floats on purpose (sparks, flames, glow) |
 | `material.double-sided` | Double-sided materials are not portable | Model thickness, or add a back face with `k.op.flipWinding` |
 | `material.emissive-strength` | Emissive intensity > 1 needs an extension the engine ignores | Keep `emissiveIntensity` ≤ 1 for Roblox; brighten the emissive color instead |
 | `texture.density-below-target` | Sharpness below the profile's target (above its minimum) | Fine for secondary parts; raise resolution or reduce repeats on hero surfaces |

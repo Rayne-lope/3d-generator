@@ -4,7 +4,9 @@
 
 - After `node studio review`, open the printed `sheet.png` with the Read tool and actually look
   at it before deciding the asset is done. With `--skins`, also open the printed `skins.png`. Use the per-view PNGs in the same folder for close-ups
-  and the `parity/` images (source | GLB | diff) when a parity warning appears.
+  and the `parity/` images (source | GLB | diff) when a parity warning appears. Open `parts.png`
+  and `blueprint.png` when structure or proportions look off, and `reference.png` when the asset
+  has `meta.reference`.
 - Slash commands wrap the workflows: `/asset <prompt>`, `/asset-revise <slug> <change>`,
   `/asset-variants <slug> <what>`, `/asset-skins <slug> <which skins>`, `/asset-set <prompt>`,
   `/asset-review <slug>`, `/asset-export <slug> <profile>`, `/asset-publish <slug> [skins]`,
