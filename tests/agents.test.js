@@ -6,7 +6,7 @@ import path from 'node:path';
 import { ROOT } from './helpers.js';
 import { syncAgents, loadSkills, parseFrontmatter, renderClaude, renderGemini, GENERATED_MARK } from '../studio/core/agents.js';
 
-const EXPECTED = ['asset', 'asset-export', 'asset-review', 'asset-revise', 'asset-set', 'asset-undo', 'asset-variants'];
+const EXPECTED = ['asset', 'asset-export', 'asset-publish', 'asset-review', 'asset-revise', 'asset-set', 'asset-skins', 'asset-undo', 'asset-variants'];
 
 test('the agent skills are valid Agent Skills', () => {
   const { skills, problems } = loadSkills(ROOT);

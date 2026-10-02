@@ -218,7 +218,9 @@ export function makeDimensions(box, unitsPerMeter, { studs = false } = {}) {
     const metric = m < 1 ? `${(m * 100).toFixed(m < 0.1 ? 1 : 0)} cm` : `${m.toFixed(2)} m`;
     return studs ? `${metric} · ${(m / 0.28).toFixed(1)} st` : metric;
   };
-  const s = Math.max(size.x, size.y, size.z) * 0.06;
+  // Label size follows the middle dimension too, so long thin assets (rifles, poles) don't get huge labels.
+  const dims = [size.x, size.y, size.z].sort((m, n) => m - n);
+  const s = dims[1] * 0.06 + dims[2] * 0.02;
   const x = labelSprite(fmt(size.x), s);
   x.position.set((box.min.x + box.max.x) / 2, box.min.y, box.max.z + s);
   const y = labelSprite(fmt(size.y), s);

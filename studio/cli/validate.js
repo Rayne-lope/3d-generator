@@ -5,22 +5,24 @@ import { resolveTargets } from '../core/targets.js';
 import { resolveProfiles } from '../profiles/index.js';
 import { buildItem, describeError } from '../core/build.js';
 import { loadConfig } from '../core/config.js';
+import { itemId } from '../core/paths.js';
 import { c, sym } from '../core/log.js';
 
-const USAGE = `Usage: node studio validate <slug | set:<name> | --all> [--profile <id|all>] [--verbose] [--json]
+const USAGE = `Usage: node studio validate <slug | slug@skin | set:<name> | --all> [--profile <id|all>] [--variant v] [--skin s|all] [--verbose] [--json]
 
 Runs the export preflight (Khronos glTF validator + studio checks) on the exact file that
-'export' would write, and exits with code 1 if anything would block the export.`;
+'export' would write, and exits with code 1 if anything would block the export.
+--skin all also checks every skin against the base look (skin lock).`;
 
 export async function run(argv) {
-  const { args, opts } = parse(argv, { profile: { type: 'string' }, variant: { type: 'string' }, all: { type: 'boolean', default: false } }, USAGE);
+  const { args, opts } = parse(argv, { profile: { type: 'string' }, variant: { type: 'string' }, skin: { type: 'string' }, all: { type: 'boolean', default: false } }, USAGE);
   const profiles = resolveProfiles(opts.profile, loadConfig().defaultProfile);
-  const items = await resolveTargets(args, { all: opts.all, variant: opts.variant });
+  const items = await resolveTargets(args, { all: opts.all, variant: opts.variant, skin: opts.skin });
   const results = [];
   let blocked = 0;
   for (const item of items) {
     for (const profileId of profiles) {
-      const id = item.variant ? `${item.slug}--${item.variant}` : item.slug;
+      const id = itemId(item.slug, item.variant, item.skin);
       try {
         const { report } = await buildItem({ ...item, profileId });
         const shown = report.issues.filter((i) => opts.verbose || i.severity !== 'info');

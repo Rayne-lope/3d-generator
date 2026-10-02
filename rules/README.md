@@ -35,6 +35,8 @@ first version, and let revisions refine it.
 | [12-environments-and-terrain.md](12-environments-and-terrain.md) | Terrain tiles, cliffs, paths, dioramas, scattering |
 | [13-buildings-and-houses.md](13-buildings-and-houses.md) | Houses, walls, roofs, doors, windows, modular kits |
 | [14-nature-rocks-vegetation.md](14-nature-rocks-vegetation.md) | Rocks, trees, bushes, grass, crystals |
+| [15-weapons.md](15-weapons.md) | Guns, melee weapons, bows, shields: game-ready weapon props |
+| [16-skins-and-textures.md](16-skins-and-textures.md) | Skins (many looks on one mesh), 3D-painted atlas textures, patterns, wear |
 | [checklists/review.md](checklists/review.md) | After every `node studio review` |
 
 The kit API itself is documented in [docs/KIT.md](../docs/KIT.md).

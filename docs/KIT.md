@@ -8,7 +8,7 @@ Units are **meters**. **+Y is up** and the asset's **front faces +Z**. By defaul
 the **base center**: the lowest point at y = 0, and x/z at the center of the footprint.
 
 - [Asset module](#asset-module) · [Structure](#structure) · [Materials](#materials) · [Color](#color)
-- [Geometry](#geometry) · [2D shapes](#2d-shapes) · [Operators](#operators) · [UVs](#uvs) · [Textures](#textures)
+- [Geometry](#geometry) · [2D shapes](#2d-shapes) · [Operators](#operators) · [UVs](#uvs) · [Textures](#textures) · [3D painting and skins](#3d-painting-and-skins)
 - [CSG](#csg) · [Terrain](#terrain) · [Architecture](#architecture) · [Units](#units) · [Randomness and noise](#randomness-and-noise)
 - [Sets](#sets-shared-style) · [Complete example](#complete-example) · [Errors you may see](#errors-you-may-see)
 
@@ -38,7 +38,10 @@ export default defineAsset({
     small: { height: 0.6 },
     other: { seed: 99 },       // seed-only variant
   },
-  build({ p, k, rng, noise, THREE, variant }) {
+  skins: {                     // surface-only looks on the same mesh: <slug>@<name>.glb
+    dark: { woodColor: '#4a2c18' },
+  },
+  build({ p, k, rng, noise, THREE, variant, skin }) {
     const asset = k.asset('barrel');
     // ... add parts and meshes ...
     return asset;              // must return the k.asset() root
@@ -48,12 +51,13 @@ export default defineAsset({
 
 | `build()` argument | What it is |
 | --- | --- |
-| `p` | frozen params, with the variant's overrides applied |
+| `p` | frozen params: defaults ← variant ← skin overrides |
 | `k` | the kit namespace (this document) |
 | `rng` | seeded random generator. Use **named streams** per part: `rng.stream('planks')` |
 | `noise` | seeded noise (`noise.fbm2(x, y)`, …) |
 | `THREE` | three.js, for vectors and matrices (not for materials or geometry generators) |
 | `variant` | the variant name or `null` |
+| `skin` | the skin name or `null` (the default look). Read params instead of branching on the name |
 
 ## Structure
 
@@ -220,6 +224,54 @@ const wood = k.mat.pbr({ name: 'pine', color: '#ffffff', map: color, normalMap: 
 
 Keep the base color in the texture with `color: '#ffffff'` on the material. Texture size:
 pick for ≥ 128 px/m on generic/Godot and ≥ 90 px/m on Roblox (the report shows the density).
+
+## 3D painting and skins
+
+Paint atlas textures as functions of the 3D surface instead of 2D UV space: patterns run across
+UV seams and from part to part, and wear follows the real edges of the mesh. This is how skins
+are made (see `rules/16-skins-and-textures.md` and the complete example in `assets/ak-rifle`).
+
+```js
+const U = { stock: k.uv.unwrap(stockGeo), receiver: k.uv.unwrap(receiverGeo) };   // merge each zone first
+k.uv.atlas(U, { size: 1024, padding: 12 });
+const bake = k.bake.surface(U)                       // per-texel 3D position, normal, entry
+  .edges({ angle: 25, width: 0.0035 })               // p.edge (convex: wear), p.cavity (concave: grime)
+  .ao({ distance: 0.03, samples: 16, size: 192 });   // p.ao (1 = open)
+const camo = k.tex.pattern.camo({ colors: ['#c9b287', '#a08159', '#73603f'], scale: 0.06, seed: 7 });
+const color = k.tex.create(1024, 1024, { layout: 'atlas', name: 'color' }).fill('#444444');
+color.paint3d(bake, (p) => {
+  const base = p.entry === 'stock' ? camo(p) : [0.3, 0.32, 0.35];
+  const worn = p.edge * 0.8;                          // bare steel on edges
+  return [base[0] + (0.6 - base[0]) * worn, base[1] + (0.62 - base[1]) * worn, base[2] + (0.65 - base[2]) * worn];
+});
+```
+
+| Call | What it does |
+| --- | --- |
+| `k.bake.surface(entries, { size, padding, transforms })` | Rasterizes the atlas UVs of `entries` (the map passed to `k.uv.atlas`) into texels: `mask`, `pos`, `normal`, `entry`. Gutter texels within `padding` px copy their nearest island texel. `size` defaults to the atlas size. Cached by content: skins of one model share it. |
+| `bake.edges({ angle, width, sameEntry })` | Edge masks from the mesh: faces meeting at more than `angle`° form sharp edges; `p.edge` is 1 on convex edges fading to 0 at `width` m, `p.cavity` the same for concave edges. |
+| `bake.ao({ samples, distance, size, bias, blur })` | Ambient occlusion by ray casting (three-mesh-bvh) at a low resolution, upsampled. |
+| `bake.forEach((p) => …)` | Visit every baked texel (precompute arrays, then paint several painters from them). |
+| `painter.paint3d(bake, (p) => color \| null, { alpha, mode })` | Paint every baked texel. `p = { pos, normal, entry, edge, cavity, ao, gutter, i, x, y, u, v }` (reused between calls). Return `[r, g, b]` in painter space, `[r, g, b, a]`, a color, or `null` to keep. The painter must be the bake's size. |
+
+Patterns (`k.tex.pattern.*`) return `(p) => [r, g, b]` and can be passed straight to `paint3d`.
+Discrete ones also have `.index(p)` and `.colors`.
+
+| Pattern | Options |
+| --- | --- |
+| `camo({ colors, scale, coverage, warp, detail, seed })` | organic blobs: `colors[0]` is the ground, each next color a layer on top; `scale` = blob size (m); `coverage` = share per layer |
+| `digital({ colors, cell, scale, coverage, warp, seed })` | camo sampled on `cell`-sized cubes (pixel camo on every face) |
+| `tiger({ colors, spacing, width, scale, axis, seed })` | brush-stroke stripes over a two-tone ground |
+| `hex({ colors, size, line, accent, seed })` | hexagon grid projected per face; `accent` = share of cells in `colors[2]` |
+| `carbon({ colors, size })` | carbon-fibre 2×2 twill projected per face |
+| `brushed({ color, axis, amount, scale, seed })` | brushed-metal streaks along `axis` |
+
+**Skins** are `skins: { name: { ...param overrides } }` next to `variants`. They may only change
+the surface: each skin build is compared with the default look, and a different mesh, UVs or
+material slots is an error (`skin.geometry-changed`, `skin.materials-changed`). Assets with skins
+keep every material apart (even identical ones) and get one Roblox palette swatch per flat
+material, so UVs never depend on colors. Build, review and export skins with `--skin <name|all>`,
+`review --skins` (skin sheet) and `export --skins` (per-skin GLBs and skin packs).
 
 ## CSG
 

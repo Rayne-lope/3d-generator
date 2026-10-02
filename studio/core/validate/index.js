@@ -7,6 +7,7 @@ import { checkGeometry } from './checks/geometry.js';
 import { checkTexturesAndUVs } from './checks/texture-uv.js';
 import { checkMaterials } from './checks/material.js';
 import { checkSource } from './checks/source.js';
+import { checkSkinLock } from './checks/skin.js';
 import { issue, sortIssues, countIssues } from './issues.js';
 
 const KHRONOS_SEVERITY = ['error', 'warning', 'info', 'info'];
@@ -27,9 +28,10 @@ export async function runKhronos(glb) {
 }
 
 /**
- * @param {{glb: Uint8Array, info: any, ir: any, profile: any, meta: any, sourceFiles: string[]}} ctx
+ * @param {{glb: Uint8Array, info: any, ir: any, profile: any, meta: any, sourceFiles: string[], skinBase?: {skin: string, report: any}|null}} ctx
+ *   skinBase: for a skin build, the report of the base look it must match (skin lock)
  */
-export async function validate({ glb, info, ir, profile, meta, sourceFiles = [] }) {
+export async function validate({ glb, info, ir, profile, meta, sourceFiles = [], skinBase = null }) {
   const khronos = await runKhronos(glb);
   const tex = checkTexturesAndUVs({ info, profile });
   const all = [
@@ -40,6 +42,7 @@ export async function validate({ glb, info, ir, profile, meta, sourceFiles = [] 
     ...tex.issues,
     ...checkMaterials({ info, profile, sourceMaterials: ir.sourceMaterials || ir.materials }),
     ...checkSource({ files: sourceFiles }),
+    ...(skinBase ? checkSkinLock({ info, base: skinBase }) : []),
   ];
   const issues = sortIssues(all);
   return { issues, counts: countIssues(issues), khronos: khronos.summary, textures: tex.textures };

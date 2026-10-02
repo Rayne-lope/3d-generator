@@ -25,16 +25,21 @@ export function loadGolden() {
   return readJson(goldenFile());
 }
 
-/** Expand golden.json entries into build items (base + variants). */
+/** Expand golden.json entries into build items (base + variants + skins of the base). */
 export async function goldenItems(golden, { only = null, variants = true } = {}) {
   const items = [];
   for (const entry of golden.items) {
     if (only && !only.includes(entry.slug)) continue;
-    items.push({ slug: entry.slug, variant: null, entry });
+    items.push({ slug: entry.slug, variant: null, skin: null, entry });
+    if (entry.skins) {
+      const def = await loadAssetDef(entry.slug);
+      const list = Array.isArray(entry.skins) ? entry.skins : Object.keys(def.skins || {});
+      for (const s of list) items.push({ slug: entry.slug, variant: null, skin: s, entry });
+    }
     if (!variants || entry.variants === 'none') continue;
     const def = await loadAssetDef(entry.slug);
     const list = Array.isArray(entry.variants) ? entry.variants : Object.keys(def.variants || {});
-    for (const v of list) items.push({ slug: entry.slug, variant: v, entry });
+    for (const v of list) items.push({ slug: entry.slug, variant: v, skin: null, entry });
   }
   if (only) {
     const missing = only.filter((s) => !golden.items.some((e) => e.slug === s));
@@ -96,9 +101,9 @@ export async function runGolden(api, { profiles, update = false, only = null, on
   for (const profileId of profiles) {
     const allowed = new Set(golden.allowWarnings?.[profileId] || []);
     for (const it of items) {
-      const id = itemId(it.slug, it.variant);
+      const id = itemId(it.slug, it.variant, it.skin);
       const key = `${profileId}/${id}`;
-      const row = { id, slug: it.slug, variant: it.variant, profile: profileId, type: it.entry.type, style: it.entry.style, checks: {}, ok: true, problems: [] };
+      const row = { id, slug: it.slug, variant: it.variant, skin: it.skin, profile: profileId, type: it.entry.type, style: it.entry.style, checks: {}, ok: true, problems: [] };
       const fail = (check, detail) => {
         row.checks[check] = { ok: false, detail };
         row.ok = false;
@@ -108,7 +113,7 @@ export async function runGolden(api, { profiles, update = false, only = null, on
         row.checks[check] = { ok: true, detail };
       };
       try {
-        const { report } = await buildItem({ slug: it.slug, variant: it.variant, profileId });
+        const { report } = await buildItem({ slug: it.slug, variant: it.variant, skin: it.skin, profileId });
         row.triangles = report.triangles.total;
         row.sizeMeters = report.dimensions.meters;
         // validate
@@ -119,8 +124,8 @@ export async function runGolden(api, { profiles, update = false, only = null, on
         else if (warns.length) fail('validate', `unexpected warning(s): ${[...new Set(warns.map((w) => w.id))].join(', ')}`);
         else pass('validate', `0 errors${report.counts.warning ? `, ${report.counts.warning} allowed warning(s)` : ''}`);
         // determinism (Preview = Export)
-        const fresh = await buildItem({ slug: it.slug, variant: it.variant, profileId, write: false, force: true });
-        const previewHash = sha256(fs.readFileSync(previewGlb(it.slug, it.variant, profileId)));
+        const fresh = await buildItem({ slug: it.slug, variant: it.variant, skin: it.skin, profileId, write: false, force: true });
+        const previewHash = sha256(fs.readFileSync(previewGlb(it.slug, it.variant, profileId, it.skin)));
         const freshHash = sha256(fresh.glb);
         if (previewHash === freshHash) pass('determinism', freshHash.slice(0, 12));
         else fail('determinism', `preview ${previewHash.slice(0, 12)} ≠ fresh ${freshHash.slice(0, 12)}`);
@@ -159,7 +164,7 @@ export async function runGolden(api, { profiles, update = false, only = null, on
           }
         }
         // parity
-        const par = await parityCheck(api, { slug: it.slug, variant: it.variant, profileId, size: golden.paritySize });
+        const par = await parityCheck(api, { slug: it.slug, variant: it.variant, skin: it.skin, profileId, size: golden.paritySize });
         row.parity = par.max;
         if (par.ok) pass('parity', `${(par.max * 100).toFixed(2)}%`);
         else fail('parity', `${(par.max * 100).toFixed(2)}% (limit ${(par.threshold * 100).toFixed(1)}%)`);

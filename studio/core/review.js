@@ -10,8 +10,8 @@ import { dataUrlToBuffer, diffImages, readPNG, writeDataUrl, writePNG, sideBySid
 
 export const PARITY_VIEWS = ['front', 'right', 'top', 'iso'];
 
-export function shotsDir(slug, variant, profileId) {
-  return path.join(paths.shots, itemId(slug, variant), profileId);
+export function shotsDir(slug, variant, profileId, skin = null) {
+  return path.join(paths.shots, itemId(slug, variant, skin), profileId);
 }
 
 function headerLines(report) {
@@ -20,29 +20,62 @@ function headerLines(report) {
   return [report.prompt ? `Prompt: ${report.prompt}` : '', stats].filter(Boolean);
 }
 
+const previewUrl = (api, slug, variant, profileId, skin) => `${api.url}files/preview/${itemId(slug, variant, skin)}/${profileId}.glb`;
+
 /**
  * Render a contact sheet (and optionally parity) for one item. Requires an open capture api.
  */
-export async function reviewItem(api, { slug, variant = null, profileId = 'generic', parity = true, views, size, force = false }) {
+export async function reviewItem(api, { slug, variant = null, skin = null, profileId = 'generic', parity = true, views, size, force = false }) {
   const config = loadConfig();
   const viewList = views || config.review.views;
   const tile = size || config.review.size;
-  const { report } = await buildItem({ slug, variant, profileId, force });
-  const dir = shotsDir(slug, variant, profileId);
+  const { report } = await buildItem({ slug, variant, skin, profileId, force });
+  const dir = shotsDir(slug, variant, profileId, skin);
   ensureDir(dir);
-  const glbUrl = `${api.url}files/preview/${itemId(slug, variant)}/${profileId}.glb`;
-  const glb = await api.renderGLB({ url: glbUrl, views: viewList, size: tile });
+  const glb = await api.renderGLB({ url: previewUrl(api, slug, variant, profileId, skin), views: viewList, size: tile });
   for (const [v, img] of Object.entries(glb.images)) writeDataUrl(path.join(dir, `${v}.png`), img);
   const sheet = await api.sheet({
     tiles: viewList.map((v) => ({ image: glb.images[v], label: v })),
     columns: 3,
     tileSize: tile,
-    title: `${report.title}${variant ? ` — ${variant}` : ''}`,
+    title: `${report.title}${variant ? ` — ${variant}` : ''}${skin ? ` · skin ${skin}` : ''}`,
     lines: headerLines(report),
   });
   const sheetFile = writeDataUrl(path.join(dir, 'sheet.png'), sheet);
-  const parityResult = parity ? await parityCheck(api, { slug, variant, profileId, size: tile }) : null;
-  return { slug, variant, profile: profileId, report: readJson(previewReport(slug, variant, profileId)), sheet: rel(sheetFile), dir: rel(dir), parity: parityResult, glb: rel(previewGlb(slug, variant, profileId)) };
+  const parityResult = parity ? await parityCheck(api, { slug, variant, skin, profileId, size: tile }) : null;
+  return { slug, variant, skin, profile: profileId, report: readJson(previewReport(slug, variant, profileId, skin)), sheet: rel(sheetFile), dir: rel(dir), parity: parityResult, glb: rel(previewGlb(slug, variant, profileId, skin)) };
+}
+
+/**
+ * Skin sheet: the base look and every skin of one item from the same cameras, labeled, so
+ * looks can be compared side by side. Every look must already be built.
+ * Writes .studio/shots/<item>/<profile>/skins.png.
+ */
+export async function skinSheet(api, { slug, variant = null, profileId = 'generic', skins, views = ['iso', 'front'], size = 384 }) {
+  const looks = [null, ...skins];
+  const reports = looks.map((s) => readJson(previewReport(slug, variant, profileId, s)));
+  const box = await api.boxGLB({ url: previewUrl(api, slug, variant, profileId, null) });
+  const tiles = [];
+  for (const v of views) {
+    for (let i = 0; i < looks.length; i++) {
+      const r = await api.renderGLB({ url: previewUrl(api, slug, variant, profileId, looks[i]), views: [v], size, frameBox: box });
+      const errs = reports[i].counts.error;
+      tiles.push({ image: r.images[v], label: `${looks[i] || 'default'}${views.length > 1 ? ` · ${v}` : ''}${errs ? ` · ${errs} error(s)` : ''}` });
+    }
+  }
+  const base = reports[0];
+  const columns = Math.min(4, looks.length);
+  const sheet = await api.sheet({
+    tiles,
+    columns,
+    tileSize: size,
+    title: `${base.title}${variant ? ` — ${variant}` : ''} · ${looks.length} looks (default + ${skins.length} skin${skins.length === 1 ? '' : 's'})`,
+    lines: [
+      `${base.triangles.total.toLocaleString('en-US')} tris · ${base.meshCount} mesh · ${base.materials.length} mat · same mesh for every look (skin lock) · ${base.profile.label}`,
+    ],
+  });
+  const file = path.join(shotsDir(slug, variant, profileId), 'skins.png');
+  return rel(writeDataUrl(file, sheet));
 }
 
 /**
@@ -50,13 +83,12 @@ export async function reviewItem(api, { slug, variant = null, profileId = 'gener
  * exported GLB from identical cameras and compare them. Writes source | GLB | diff images and
  * attaches the result to the preview report (a mismatch adds a 'parity.mismatch' warning).
  */
-export async function parityCheck(api, { slug, variant = null, profileId = 'generic', size }) {
+export async function parityCheck(api, { slug, variant = null, skin = null, profileId = 'generic', size }) {
   const config = loadConfig();
   const tile = size || config.review.size;
-  const dir = shotsDir(slug, variant, profileId);
-  const glbUrl = `${api.url}files/preview/${itemId(slug, variant)}/${profileId}.glb`;
-  const src = await api.renderSource({ slug, variant, views: PARITY_VIEWS, size: tile });
-  const glbP = await api.renderGLB({ url: glbUrl, views: PARITY_VIEWS, size: tile });
+  const dir = shotsDir(slug, variant, profileId, skin);
+  const src = await api.renderSource({ slug, variant, skin, views: PARITY_VIEWS, size: tile });
+  const glbP = await api.renderGLB({ url: previewUrl(api, slug, variant, profileId, skin), views: PARITY_VIEWS, size: tile });
   const perView = {};
   let max = 0;
   for (const v of PARITY_VIEWS) {
@@ -69,7 +101,7 @@ export async function parityCheck(api, { slug, variant = null, profileId = 'gene
   }
   const result = { views: perView, max: +max.toFixed(4), threshold: config.parity.maxDiffRatio, ok: max <= config.parity.maxDiffRatio, images: rel(path.join(dir, 'parity')) };
   writeJson(path.join(dir, 'parity.json'), result);
-  const reportFile = previewReport(slug, variant, profileId);
+  const reportFile = previewReport(slug, variant, profileId, skin);
   const r = readJson(reportFile, null);
   if (r) {
     r.parity = result;
@@ -88,7 +120,7 @@ export async function parityCheck(api, { slug, variant = null, profileId = 'gene
 /** Lineup of several items (set members or variants) at true relative scale. */
 export async function lineup(api, items, profileId, file) {
   const img = await api.lineup({
-    items: items.map((it) => ({ url: `${api.url}files/preview/${itemId(it.slug, it.variant)}/${profileId}.glb`, label: it.variant ? `${it.slug} — ${it.variant}` : it.slug })),
+    items: items.map((it) => ({ url: previewUrl(api, it.slug, it.variant, profileId, it.skin || null), label: `${it.slug}${it.variant ? ` — ${it.variant}` : ''}${it.skin ? ` @${it.skin}` : ''}` })),
   });
   return rel(writeDataUrl(file, img));
 }

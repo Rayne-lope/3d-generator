@@ -19,10 +19,10 @@ async function loadGLB(url) {
   return { object: gltf.scene, units: unitsPerMeter(gltf) };
 }
 
-async function loadSource(slug, variant) {
+async function loadSource(slug, variant, skin) {
   const kit = await import('/studio/kit/index.js');
   const mod = await import(`/assets/${slug}/asset.js?t=${Date.now()}`);
-  const { root } = kit.runAsset(mod.default, { variant: variant || null });
+  const { root } = kit.runAsset(mod.default, { variant: variant || null, skin: skin || null });
   return { object: root, units: 1 };
 }
 
@@ -106,8 +106,8 @@ window.studioCapture = {
     return { min: box.min.toArray(), max: box.max.toArray(), units };
   },
 
-  async renderSource({ slug, variant = null, views, size = 512, lighting = 'neutral', frameBox = null }) {
-    const { object } = await loadSource(slug, variant);
+  async renderSource({ slug, variant = null, skin = null, views, size = 512, lighting = 'neutral', frameBox = null }) {
+    const { object } = await loadSource(slug, variant, skin);
     return renderViews(object, { views, size, lighting, frameBox });
   },
 

@@ -31,6 +31,13 @@ re-review, then save.
 - [ ] Moving parts are separate with the pivot on the hinge/axle (06).
 - [ ] Triangle count within `meta.budget`; no wasted segments on tiny parts (05).
 
+## Skins (assets with `skins`)
+
+- [ ] `review --skins` skin sheet checked: every look reads as its request; the default look is unchanged.
+- [ ] Pattern scale fits the object; 3–4 values with clear contrast; no seams at UV borders.
+- [ ] Metal stays metal (barrels, bores, moving parts) unless the skin is a full plating (16).
+- [ ] 0 errors in every look (no `skin.geometry-changed` / `skin.materials-changed`).
+
 ## Export
 
 - [ ] 0 errors in the report; warnings understood.

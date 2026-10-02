@@ -17,7 +17,8 @@ Follow **Workflow C** (`AGENTS.md`) and `rules/09-sets-and-variants.md`:
    overrides, seed? } }`. If a variant needs a new axis (color scheme, damage, size class), add a
    param with a default that keeps the base asset unchanged, then override it in the variant.
 2. Keep the family recognizable: same construction, same materials logic, different values.
-   Seed-only variants are fine for natural assets (rocks, trees).
+   Seed-only variants are fine for natural assets (rocks, trees). Looks that only change textures
+   or colors on the same mesh (camos, finishes, colorways) are skins: use `/asset-skins`.
 3. `node studio review <slug>` renders every variant plus a lineup → open the lineup and each
    variant sheet with your image tool; fix problems (0 errors on every variant).
 4. `node studio diff <slug>` must show no change to the base asset unless the user asked for one.

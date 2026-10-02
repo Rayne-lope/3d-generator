@@ -31,14 +31,15 @@ export function createIO() {
 
 /**
  * @param {any} ir
- * @param {{profileId: string, allowEmissiveStrength?: boolean, extras?: object}} opts
+ * @param {{profileId: string, allowEmissiveStrength?: boolean, keepMaterialNames?: boolean, extras?: object}} opts
+ *   keepMaterialNames: never merge materials with different names (assets with skins).
  * @returns {Promise<{glb: Uint8Array, document: Document}>}
  */
-export async function irToGLB(ir, { profileId, allowEmissiveStrength = true, extras = {} } = {}) {
+export async function irToGLB(ir, { profileId, allowEmissiveStrength = true, keepMaterialNames = false, extras = {} } = {}) {
   const doc = new Document();
   doc.getRoot().getAsset().generator = 'AI 3D Asset Studio';
   doc.getRoot().getAsset().extras = {
-    studio: { asset: ir.asset.slug, variant: ir.asset.variant || null, profile: profileId, units: ir.units, ...extras },
+    studio: { asset: ir.asset.slug, variant: ir.asset.variant || null, ...(ir.asset.skin ? { skin: ir.asset.skin } : {}), profile: profileId, units: ir.units, ...extras },
   };
   const buffer = doc.createBuffer();
 
@@ -118,7 +119,10 @@ export async function irToGLB(ir, { profileId, allowEmissiveStrength = true, ext
   doc.getRoot().setDefaultScene(scene);
 
   // keepSolidTextures: solid-color textures carry baked colors for engines that ignore factors (Roblox).
-  await doc.transform(weld(), dedup({ propertyTypes: [PropertyType.ACCESSOR, PropertyType.MATERIAL, PropertyType.TEXTURE] }), prune({ keepLeaves: true, keepAttributes: true, keepExtras: true, keepSolidTextures: true }));
+  const dedupSteps = keepMaterialNames
+    ? [dedup({ propertyTypes: [PropertyType.ACCESSOR, PropertyType.TEXTURE] }), dedup({ propertyTypes: [PropertyType.MATERIAL], keepUniqueNames: true })]
+    : [dedup({ propertyTypes: [PropertyType.ACCESSOR, PropertyType.MATERIAL, PropertyType.TEXTURE] })];
+  await doc.transform(weld(), ...dedupSteps, prune({ keepLeaves: true, keepAttributes: true, keepExtras: true, keepSolidTextures: true }));
   const glb = await createIO().writeBinary(doc);
   return { glb, document: doc };
 }

@@ -9,6 +9,8 @@ import * as shape from './shapes.js';
 import * as op from './ops.js';
 import * as uvTools from './uv.js';
 import { createTexture, normalFromHeight, packORM } from './texture.js';
+import { pattern } from './patterns.js';
+import { surface } from './bake.js';
 import { subtract, union, intersect } from './csg.js';
 import { terrain } from './terrain.js';
 import * as arch from './arch.js';
@@ -16,7 +18,7 @@ import { units } from './units.js';
 import { createRng } from './rng.js';
 import { createNoise } from './noise.js';
 
-export const KIT_VERSION = '1.0.0';
+export const KIT_VERSION = '1.1.0';
 
 export const k = {
   version: KIT_VERSION,
@@ -71,7 +73,8 @@ export const k = {
     unwrap: uvTools.unwrap,
     atlas: uvTools.atlas,
   },
-  tex: { create: createTexture, normalFromHeight, orm: packORM },
+  tex: { create: createTexture, normalFromHeight, orm: packORM, pattern },
+  bake: { surface },
   csg: { subtract, union, intersect },
   arch,
   units,

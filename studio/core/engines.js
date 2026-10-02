@@ -42,13 +42,13 @@ async function packItems(profileId, outDir, { variants }) {
   const entries = [];
   const skipped = [];
   for (const it of items) {
-    const id = itemId(it.slug, it.variant);
-    const { report } = await buildItem({ slug: it.slug, variant: it.variant, profileId });
+    const id = itemId(it.slug, it.variant, it.skin);
+    const { report } = await buildItem({ slug: it.slug, variant: it.variant, skin: it.skin, profileId });
     if (report.counts.error) {
       skipped.push({ id, reason: `${report.counts.error} validation error(s)` });
       continue;
     }
-    fs.copyFileSync(previewGlb(it.slug, it.variant, profileId), path.join(outDir, `${id}.glb`));
+    fs.copyFileSync(previewGlb(it.slug, it.variant, profileId, it.skin), path.join(outDir, `${id}.glb`));
     entries.push({ id, file: `${id}.glb`, rootNode: report.nodes.find((n) => n.parent === null)?.name || id, type: it.entry.type, style: it.entry.style, ...fingerprint(report) });
   }
   return { entries, skipped };

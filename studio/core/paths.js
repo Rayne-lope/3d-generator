@@ -32,9 +32,16 @@ export const paths = {
   config: path.join(ROOT, 'studio.config.json'),
 };
 
-/** '<slug>' or '<slug>--<variant>' */
-export function itemId(slug, variant) {
-  return variant ? `${slug}--${variant}` : slug;
+/** '<slug>', '<slug>--<variant>', '<slug>@<skin>' or '<slug>--<variant>@<skin>' */
+export function itemId(slug, variant, skin = null) {
+  return `${slug}${variant ? `--${variant}` : ''}${skin ? `@${skin}` : ''}`;
+}
+
+/** Inverse of itemId(). Slugs never contain '--' or '@'. */
+export function parseItemId(id) {
+  const m = /^([a-z0-9][a-z0-9-]*?)(?:--([a-z0-9][a-z0-9-]*?))?(?:@([a-z0-9][a-z0-9-]*))?$/.exec(id);
+  if (!m) return null;
+  return { slug: m[1], variant: m[2] || null, skin: m[3] || null };
 }
 
 export function assetDir(slug) {
@@ -45,16 +52,16 @@ export function assetFile(slug) {
   return path.join(paths.assets, slug, 'asset.js');
 }
 
-export function previewDir(slug, variant) {
-  return path.join(paths.preview, itemId(slug, variant));
+export function previewDir(slug, variant, skin = null) {
+  return path.join(paths.preview, itemId(slug, variant, skin));
 }
 
-export function previewGlb(slug, variant, profile) {
-  return path.join(previewDir(slug, variant), `${profile}.glb`);
+export function previewGlb(slug, variant, profile, skin = null) {
+  return path.join(previewDir(slug, variant, skin), `${profile}.glb`);
 }
 
-export function previewReport(slug, variant, profile) {
-  return path.join(previewDir(slug, variant), `${profile}.report.json`);
+export function previewReport(slug, variant, profile, skin = null) {
+  return path.join(previewDir(slug, variant, skin), `${profile}.report.json`);
 }
 
 export function rel(p) {

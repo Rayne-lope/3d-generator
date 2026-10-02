@@ -71,4 +71,7 @@ switcher shows exactly that file.
 | `material.double-sided` | Double-sided materials are not portable | Model thickness, or add a back face with `k.op.flipWinding` |
 | `material.emissive-strength` | Emissive intensity > 1 needs an extension the engine ignores | Keep `emissiveIntensity` ≤ 1 for Roblox; brighten the emissive color instead |
 | `texture.density-below-target` | Sharpness below the profile's target (above its minimum) | Fine for secondary parts; raise resolution or reduce repeats on hero surfaces |
+| `skin.geometry-changed` | A skin changes nodes, triangles, normals or UVs compared with the default look | Skins may only change surface params. Move shape changes into a variant; keep `k.uv.unwrap`/`k.uv.atlas` independent of skin params (rule 16) |
+| `skin.materials-changed` | A skin changes the material list or which maps a material has | Same materials, same order, same maps in every look; change colors/textures instead (a material cannot be flat in one skin and textured in another) |
+| `khronos.ACCESSOR_VECTOR3_NON_UNIT` on `TANGENT` | A zero-area triangle got a zero tangent (normal-mapped material) | Usually three collinear points in a `k.shape.polygon` outline: nudge one point |
 | `khronos.*` | glTF validator finding | Report as a studio bug if it comes from kit-made geometry |

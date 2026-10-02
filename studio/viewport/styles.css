@@ -116,7 +116,11 @@ button.on { background: #3b4450; border-color: var(--accent); color: var(--accen
 .banner.error { border-color: var(--err); color: #ffd2d6; white-space: pre-wrap; font-family: ui-monospace, monospace; text-align: left; }
 .hidden { display: none !important; }
 
-.variant-bar { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; background: rgba(30,33,37,0.85); padding: 6px; border-radius: 8px; }
+.bars { position: absolute; bottom: 10px; left: 16px; right: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+.bars > * { pointer-events: auto; }
+.variant-bar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px; background: rgba(30,33,37,0.85); padding: 6px; border-radius: 8px; }
+.variant-bar.hidden { display: none; }
+.bar-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; padding: 0 4px; }
 
 .empty {
   position: absolute;

@@ -18,10 +18,10 @@ and ask for changes. When it is right, you export a GLB that looks the same in *
 3. [Talking to the agent](#3-talking-to-the-agent)
 4. [The viewport](#4-the-viewport)
 5. [Revisions, versions and undo](#5-revisions-versions-and-undo)
-6. [Sets and variants](#6-sets-and-variants)
+6. [Sets, variants and skins](#6-sets-variants-and-skins)
 7. [Quality checks: what they mean](#7-quality-checks-what-they-mean)
 8. [Exporting to Godot, Roblox Studio and others](#8-exporting-to-godot-roblox-studio-and-others)
-9. [Making good environments, houses and nature (the essentials)](#9-making-good-environments-houses-and-nature-the-essentials)
+9. [Making good environments, houses, nature and weapons (the essentials)](#9-making-good-environments-houses-nature-and-weapons-the-essentials)
 10. [Golden set and engine tests](#10-golden-set-and-engine-tests)
 11. [CLI reference](#11-cli-reference)
 12. [Project structure](#12-project-structure)
@@ -96,14 +96,16 @@ it looks right: *"/asset-export stylized-barrel roblox"* (or `godot`, `generic`,
 | --- | --- |
 | `/asset <prompt>` | Create a new asset |
 | `/asset-revise <slug> <change>` | Change an existing asset (smallest change, verified with a visual diff) |
-| `/asset-variants <slug> <what>` | Add variants (sizes, colors, damage states, seeds) |
+| `/asset-variants <slug> <what>` | Add variants (sizes, shapes, damage states, seeds) |
+| `/asset-skins <slug> <which skins>` | Add skins: new textures and finishes on the exact same mesh (camos, gold, neon…) |
 | `/asset-set <prompt>` | A set of matching assets from one prompt |
 | `/asset-review <slug> [profile]` | A critical review with fixes |
 | `/asset-export <slug> <profile>` | Export for an engine |
+| `/asset-publish <slug> [skins]` | Upload to Roblox with Open Cloud (no manual import) |
 | `/asset-undo <slug>` | Go back one step |
 
 The names all start with `asset` so they never clash with an agent's built-in commands (Claude
-Code has its own `/review` and `/export`), and typing `/asset` lists all seven.
+Code has its own `/review` and `/export`), and typing `/asset` lists all nine.
 
 Plain sentences work too ("make the barrel taller"): every agent that reads `AGENTS.md` follows
 the same workflow.
@@ -176,7 +178,7 @@ files, so it is also your export preview.
 | **Grid / Dims / Human** | 1 m grid, dimensions in m (and studs on the Roblox profile), and a 1.75 m human for scale. |
 | **Front / Side / Top / 3/4** | Camera presets. Drag to orbit, right-drag to pan, wheel to zoom. |
 | **PNG** | Saves a screenshot. |
-| **Variant bar** (bottom) | Switch between the base asset and its variants. |
+| **Variant bar / Skin bar** (bottom) | Switch between the base asset and its variants, and between the default look and its skins (same mesh, different textures). |
 | **Report** tab | Size, triangles vs budget, meshes, materials with swatches, textures, the engine conversions the profile made, and import hints. |
 | **Issues** tab | Validator issues with fix hints. |
 | **UV** tab | Each texture at export resolution with the UV wireframe on top. Padding violations are circled in red. Shows texel density and minimum padding. |
@@ -220,7 +222,7 @@ change (a new param if needed, e.g. `damage`), keeps the seeds, checks the diff,
 saves. It never rebuilds the asset from scratch for a revision. See
 [docs/demos/phase4.md](demos/phase4.md).
 
-## 6. Sets and variants
+## 6. Sets, variants and skins
 
 **Variants** are versions of one asset that differ in params or seed: sizes, colors, states
 (open/closed, broken), or random shapes (trees, rocks). Each exports as `<slug>--<variant>.glb`.
@@ -237,6 +239,35 @@ node studio save set:tavern -m "…"       # one version for the whole set
 ```
 
 ![Tavern set](demos/img/phase2-tavern-set.png)
+
+### Skins: many looks on one model
+
+**Skins** keep the exact same mesh and change only the surface: camos, platings, colorways,
+wear. Ask for them on any asset:
+
+```
+/asset-skins ak-rifle desert camo, tiger stripe, digital urban, arctic, neon and gold
+```
+
+- Each skin is a set of surface param overrides (`skins: { desert: { … } }`) and builds as
+  `<slug>@<skin>` (`node studio build ak-rifle@desert`).
+- The validator compares every skin with the default look. If a skin changes the mesh, the UVs
+  or the material slots, the build fails (`skin.geometry-changed`, `skin.materials-changed`),
+  so every skin is guaranteed to fit the same model in the engine.
+- Textures are **painted in 3D** (`k.bake.surface` + `painter.paint3d`): camo runs across UV
+  seams and from part to part, and wear follows the real edges.
+- `node studio review ak-rifle --skins` renders every look and a **skin sheet** with all looks
+  from the same cameras. In the viewport, the **Skin bar** switches looks.
+
+![AK skins](demos/img/skins-ak-sheet.png)
+
+Engines use skins differently, so `export --skins` writes what each one needs:
+
+| Engine | What you get | How to switch |
+| --- | --- | --- |
+| Roblox | `exports/roblox/<slug>.skins/`: ColorMap, MetalnessMap, RoughnessMap, NormalMap per look and MeshPart, `skins.json`, `SkinSwitcher.lua` | SurfaceAppearance textures can't be changed by scripts, so each skin is a premade SurfaceAppearance per MeshPart; `SkinSwitcher.apply(model, "desert", skins)` swaps them. `publish --skins` uploads the maps and writes the ready-made `.skins.rbxmx`. |
+| Godot | one GLB per look + the maps | instance the look you need, or set `surface_material_override` with the pack's PNGs |
+| Blender, three.js, Babylon.js, model-viewer | `exports/generic/<slug>.skins.glb`: every look in one file (`KHR_materials_variants`) | the viewer's variant switch |
 
 ## 7. Quality checks: what they mean
 
@@ -278,7 +309,7 @@ preview byte for byte.
    or crisp detail, set the texture import to Lossless.
 5. Runtime loading: `GLTFDocument.append_from_file()` + `generate_scene()`.
 
-Godot is verified automatically: `node studio engine-verify godot` (38/38 golden items on Godot
+Godot is verified automatically: `node studio engine-verify godot` (42/42 golden items on Godot
 4.7.2; see section 10).
 
 ### Roblox Studio
@@ -307,11 +338,55 @@ emissive clamping. The preview shows the result.
 Generic exports are not verified per engine; a dedicated profile can be added
 ([section 13](#13-customizing-rules-profiles-settings-new-engines)).
 
-## 9. Making good environments, houses and nature (the essentials)
+### Publish to Roblox without importing (Open Cloud)
 
-The agent follows `rules/12-environments-and-terrain.md`, `rules/13-buildings-and-houses.md`
-and `rules/14-nature-rocks-vegetation.md`. These are the core ideas, so you know what to ask
-for and what to expect.
+`node studio publish` uploads straight to your Roblox account, so the asset shows up in your
+Toolbox (Inventory → My Models) without File > Import 3D:
+
+```bash
+node studio publish ak-rifle --roblox --dry-run      # export + plan, no upload
+node studio publish ak-rifle --roblox                # upload the model (or a new version of it)
+node studio publish ak-rifle --roblox --skins        # + every skin: maps as Images + .skins.rbxmx
+```
+
+**One-time setup (2 minutes):**
+
+1. Open the [Creator Dashboard](https://create.roblox.com/dashboard/credentials) → **Open Cloud →
+   API Keys → Create API Key**.
+2. Under access permissions, add **Assets** and allow **Read** and **Write**. To publish as a group,
+   create the key on the group's credentials page instead.
+3. Under security, add your IP address (or `0.0.0.0/0` while testing) and an expiration date.
+4. Put the key and your creator in a `.env` file in the project root. It is gitignored; never
+   commit the key or paste it into a chat:
+
+```bash
+ROBLOX_API_KEY=your-key-here
+ROBLOX_CREATOR=user:123456789      # your user id (profile URL), or group:<groupId>
+```
+
+What publishing does:
+
+- Runs the **strict Roblox export** first (blocked by errors, like `export`).
+- Uploads the GLB as a **Model**. Publishing again uploads a **new version of the same asset**
+  only when the file changed; ids live in `.studio/roblox/published.json`.
+- With `--skins`: uploads each SurfaceAppearance map once as an **Image** (maps shared by several
+  looks, like a common normal map, upload once) and writes `exports/roblox/<slug>.skins.rbxmx`:
+  a folder with `SkinSwitcher` and `Skins/<look>/<MeshPart>` SurfaceAppearances.
+- Prints the asset ids and the insert steps, and writes `exports/roblox/<slug>.publish.json`.
+
+Then in Studio: insert the model from Toolbox → My Models (or
+`game:GetService("InsertService"):LoadAsset(<id>).Parent = workspace` in the command bar), drag the
+`.skins.rbxmx` in, and call `require(skins.SkinSwitcher).apply(model, "desert", skins.Skins)`.
+
+Good to know: new images go through **moderation** and render blank until approved (usually a few
+minutes). Open Cloud allows 60 requests per minute per key; the command spaces its calls and
+retries when it is rate limited. Files over 20 MB are refused before uploading.
+
+## 9. Making good environments, houses, nature and weapons (the essentials)
+
+The agent follows `rules/12-environments-and-terrain.md`, `rules/13-buildings-and-houses.md`,
+`rules/14-nature-rocks-vegetation.md` and `rules/15-weapons.md`. These are the core ideas, so
+you know what to ask for and what to expect.
 
 ### Environments and terrain
 
@@ -399,20 +474,41 @@ windows with frames, a chimney, cozy stylized look
 /asset-variants lowpoly-pine-tree two more seeds, one shorter and one taller
 ```
 
+### Weapons
+
+- **Silhouette and angles first:** stock drop, grip angle (15–25°), magazine curve, blade taper.
+  The side profile should identify the weapon at a glance. Long weapons lie along X with the
+  muzzle toward +X, so the review's front view is the side profile.
+- **Real sizes:** pistol ~0.2 m, assault rifle 0.85–1.0 m, sniper rifle 1.1–1.3 m, one-handed
+  sword 0.9–1.0 m. Thin parts stay readable (barrels ≥ 1.5 cm, levers ≥ 2 mm).
+- **Parts that animate are separate** with the right pivot: magazine at the well, bolt or slide
+  at rest, trigger at its pin, break-action barrels at the hinge.
+- **Materials:** gunmetal (not black) steel, wood grain along each piece, wear on edges where
+  hands rub, grime in cavities. One material and one atlas per weapon keeps Roblox at one
+  MeshPart per part and makes skins possible.
+- **Budgets:** pickups 1.5k–5k triangles, first-person 5k–15k; 1024 px atlas for Roblox.
+
+```
+/asset AK-47 style assault rifle with a detachable curved magazine
+/asset-skins ak-rifle desert camo, woodland, tiger stripe and gold
+/asset-publish ak-rifle skins
+```
+
 ## 10. Golden set and engine tests
 
 These are for maintainers: run them when you change the kit, the exporter, a profile or a golden
 asset.
 
 ```bash
-node studio golden                         # 38 items × 3 profiles, ~2 minutes
+node studio golden                         # 42 items × 3 profiles, ~5 minutes
 open golden/report/index.html              # checks + baseline/current/diff images
 node studio golden --update-baselines      # approve an intentional visual change (then commit)
 ```
 
 Each item must pass five checks: validate (0 errors, allowed warnings only), determinism (a fresh
 build equals the preview), structure (matches `golden/manifest.json`), regression (renders match
-the committed baselines) and parity (source vs GLB).
+the committed baselines) and parity (source vs GLB). A golden entry can list `skins` to check
+those looks too (the AK rifle checks its default look plus three skins).
 
 **Godot (automatic):**
 
@@ -432,25 +528,26 @@ pass rates and revisions per asset.
 
 ## 11. CLI reference
 
-All commands accept `--help` and most accept `--json`. Targets are `<slug>`, `<slug>--<variant>`
-(where noted), `set:<name>` or `--all`.
+All commands accept `--help` and most accept `--json`. Targets are `<slug>`, `<slug>--<variant>`,
+`<slug>@<skin>` (where noted), `set:<name>` or `--all`.
 
 | Command | Purpose |
 | --- | --- |
 | `dev [--port n] [--open]` | Live viewport with file watching and auto rebuild |
 | `new <slug> --prompt "…" [--category c] [--style a,b] [--set s]` | Scaffold an asset |
 | `new-set <set> --members a,b,c --prompt "…" [--style a,b]` | Scaffold a set + members |
-| `build <target> [--profile p\|all] [--variant v] [--force] [--strict] [--allow-decimate]` | Build preview GLBs and validate |
-| `validate <target> --profile p` | Preflight only |
-| `review <target> [--profile p] [--views …] [--size px] [--no-parity]` | Contact sheets + parity + lineups |
+| `build <target> [--profile p\|all] [--variant v] [--skin s\|all] [--force] [--strict] [--allow-decimate]` | Build preview GLBs and validate (skins are checked against the default look) |
+| `validate <target> --profile p [--skin s\|all]` | Preflight only |
+| `review <target> [--profile p] [--views …] [--size px] [--no-parity] [--skins \| --skin s]` | Contact sheets + parity + lineups (+ skin sheet) |
 | `compare <a> <b> [--views …] [--out file]` | A/B side-by-side render |
 | `save <target> -m "…" [--pin] [--force] [--no-thumb]` | Save a version |
 | `history <target>` | List versions |
 | `diff <target> [vA] [vB] [--views …] [--out file]` | Visual + stats + source diff |
 | `undo <target>` / `revert <target> <vNNN>` | Go back (auto-saves unsaved work) |
 | `pin <target> <vNNN>` / `unpin …` | Protect a version from pruning |
-| `export <target> --profile p\|all [--no-parity]` | Strict export to `exports/` |
-| `report <slug[--variant]> [--profile p] [--export] [--md]` | Full build or export report |
+| `export <target> --profile p\|all [--no-parity] [--skins \| --skin s]` | Strict export to `exports/` (+ per-skin GLBs and skin packs) |
+| `publish <target> --roblox [--skins] [--dry-run] [--user id \| --group id] [--force]` | Upload to Roblox with Open Cloud |
+| `report <slug[--variant][@skin]> [--profile p] [--export] [--md]` | Full build or export report |
 | `list` | Assets and sets |
 | `stats` | Project statistics and success metrics |
 | `golden [--profile p] [--only a,b] [--update-baselines]` | Golden suite |
@@ -519,6 +616,9 @@ toys). Large landscapes belong in the engine's terrain tools; the studio makes t
 | Golden regression after a kit change | Open `golden/report/index.html`. If the change is intended, run `--update-baselines` and commit; otherwise fix the code. |
 | Roblox model is huge or tiny | Scale Unit must be **Stud** when importing. |
 | Roblox parts are white | Textures did not upload: sign in to Studio, then re-import. |
+| Published skins render blank in Roblox | New images are still in moderation; wait a few minutes. |
+| `publish` says 401/403 | The key is wrong, expired, lacks Assets API read + write for that creator, or its IP list blocks you (see "Publish to Roblox"). |
+| `skin.geometry-changed` | The skin changed the shape or UVs: move that change into a variant (rule 16). |
 | Godot not found | Put Godot 4.3+ on PATH as `godot`, or set `GODOT_BIN`. |
 | Port 5178 in use | `node studio dev --port 5180`. |
 
@@ -543,8 +643,12 @@ because they are generated; commit the asset code instead.
 **Can it make several assets at once?** Yes: sets from one prompt (`/asset-set`) and variants of
 one asset (`/asset-variants`). Arranging assets into a scene is out of scope.
 
+**Can I make many skins for one model (e.g. weapon camos)?** Yes: `/asset-skins <slug> <skins>`.
+Every skin is checked to keep the exact same mesh, and `export --skins` / `publish --skins`
+deliver them in the form each engine uses (see [Skins](#skins-many-looks-on-one-model)).
+
 **Can I use Codex, Gemini CLI or another agent instead of Claude Code?** Yes. See
-[Using Codex or Gemini CLI](#using-codex-or-gemini-cli): the same seven shortcuts are available
+[Using Codex or Gemini CLI](#using-codex-or-gemini-cli): the same nine shortcuts are available
 (`$asset …` in Codex, `/asset …` in Gemini CLI), and any agent that reads `AGENTS.md` follows the
 workflow from plain requests.
 
@@ -552,12 +656,14 @@ workflow from plain requests.
 
 | Item | Status |
 | --- | --- |
-| All 21 demo assets (+ variants) build in all three profiles with 0 errors | ✔ verified (build + validator) |
-| Golden suite: 114/114 checks (validate, determinism, structure, regression, parity) | ✔ verified, also in CI |
+| All 22 demo assets (+ variants) build in all three profiles with 0 errors | ✔ verified (build + validator) |
+| Golden suite: 126/126 checks (validate, determinism, structure, regression, parity) | ✔ verified, also in CI |
 | Viewport live reload, panels, profile switching, UV overlay, versions panel | ✔ verified with Playwright screenshots |
-| Godot 4.7.2: 38/38 golden items load with the expected size, triangles, pivots, materials; rendered side by side | ✔ verified headless (`engine-verify godot`), also in CI |
+| Godot 4.7.2: 42/42 golden items load with the expected size, triangles, pivots, materials; rendered side by side | ✔ verified headless (`engine-verify godot`), also in CI |
 | Roblox Studio import of the golden set | ☐ **needs your machine**: `node studio engine-pack roblox` + [CHECKLIST.md](../engines/roblox/CHECKLIST.md) (Studio has no headless mode) |
 | Roblox emissive and alpha-blend mapping | ☐ unverified, covered by the checklist |
+| Skins: lock check, stable Roblox palette, skin packs, `KHR_materials_variants` GLB (Khronos validator: 0 errors) | ✔ verified (tests + the AK demo's 8 looks × 3 profiles) |
+| `publish --roblox`: multipart uploads, polling, model versions, image reuse, `.rbxmx` | ✔ verified against a local fake Open Cloud server (tests); ☐ a real upload needs your API key |
 | Unity / Unreal | ☐ generic GLB only; no dedicated profile yet |
 
 More background: [ARCHITECTURE.md](ARCHITECTURE.md), [KIT.md](KIT.md),

@@ -96,6 +96,19 @@ If something fails, open an issue with the item, the Output line and a screensho
 into `studio/profiles/roblox.json` or a profile transform, and then the golden suite is re-run
 (`node studio golden --profile roblox`).
 
+## 6. Skins and Open Cloud publishing (optional)
+
+Skip the import with `node studio publish ak-rifle --roblox --skins` (API key setup:
+[docs/GUIDE.md → Publish to Roblox](../../docs/GUIDE.md#publish-to-roblox-without-importing-open-cloud)). Then check:
+
+- [ ] Toolbox → My Models shows the model; inserted, it has the MeshParts `body` and `magazine`
+      with SurfaceAppearances (textures visible once moderation approves them).
+- [ ] Insert `exports/roblox/ak-rifle.skins.rbxmx`; run
+      `require(folder.SkinSwitcher).apply(model, "desert", folder.Skins)` in the command bar: the
+      rifle turns desert camo and `SkinSwitcher.apply` returns 2. Try `gold` and `default`.
+- [ ] If the MeshParts got other names than `body`/`magazine`, rename the SurfaceAppearances in
+      each skin folder to match and report it.
+
 ## Troubleshooting
 
 - **The model is huge or tiny:** the Scale Unit was not *Stud*. Re-import.

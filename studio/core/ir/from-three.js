@@ -62,7 +62,7 @@ function textureEntry(tex, slot, textures, issues) {
   return entry.id;
 }
 
-function materialEntry(mat, materials, textures, issues) {
+function materialEntry(mat, materials, textures, issues, keepNames = false) {
   if (Array.isArray(mat)) throw new ExportError('multi-material meshes are not supported', 'Split the geometry into one k.mesh() per material.');
   if (!mat?.isMeshStandardMaterial || mat.isMeshPhysicalMaterial) {
     throw new ExportError(`material '${mat?.name || mat?.type}' is a ${mat?.type}`, 'Only k.mat.pbr()/k.mat.physical() (glTF metallic-roughness) can be exported.');
@@ -100,7 +100,8 @@ function materialEntry(mat, materials, textures, issues) {
     occlusionStrength: mat.aoMap ? round(mat.aoMapIntensity) : 1,
     emissiveTexture: textureEntry(mat.emissiveMap, 'emissive', textures, issues),
   };
-  const signature = JSON.stringify({ ...desc, name: undefined });
+  // Materials that only differ by name are merged, unless names must be kept (assets with skins).
+  const signature = JSON.stringify(keepNames ? desc : { ...desc, name: undefined });
   if (materials.has(signature)) return materials.get(signature).id;
   const entry = { id: materials.size, ...desc };
   materials.set(signature, entry);
@@ -109,9 +110,10 @@ function materialEntry(mat, materials, textures, issues) {
 
 /**
  * @param {THREE.Object3D} root asset root returned by runAsset()
- * @param {{slug: string, variant?: string|null, meta?: object}} info
+ * @param {{slug: string, variant?: string|null, skin?: string|null, meta?: object, keepMaterials?: boolean}} info
+ *   keepMaterials: keep materials with different names apart even when they look the same.
  */
-export function sceneToIR(root, { slug, variant = null, meta = {} }) {
+export function sceneToIR(root, { slug, variant = null, skin = null, meta = {}, keepMaterials = false }) {
   root.updateMatrixWorld(true);
   const issues = [];
   const materials = new Map();
@@ -139,7 +141,7 @@ export function sceneToIR(root, { slug, variant = null, meta = {} }) {
   const bodyNode = makeNode('body', rootNode.id, new THREE.Matrix4());
 
   const addGeometry = (node, geometry, material, world, partName) => {
-    const matId = materialEntry(material, materials, textures, issues);
+    const matId = materialEntry(material, materials, textures, issues, keepMaterials);
     const local = node.frameInv.clone().multiply(world);
     const det = local.determinant();
     if (Math.abs(det) < 1e-12) throw new ExportError(`a mesh in '${partName}' has zero scale`);
@@ -272,7 +274,7 @@ export function sceneToIR(root, { slug, variant = null, meta = {} }) {
   for (const t of texList) t.slots = [...t.slots];
 
   return {
-    asset: { slug, variant, title: meta.title || slug, category: meta.category || 'prop', origin: meta.origin || 'base-center', budget: meta.budget || null, style: meta.style || [] },
+    asset: { slug, variant, skin, title: meta.title || slug, category: meta.category || 'prop', origin: meta.origin || 'base-center', budget: meta.budget || null, style: meta.style || [] },
     units: { name: 'm', metersPerUnit: 1 },
     nodes: irNodes,
     materials: matList,

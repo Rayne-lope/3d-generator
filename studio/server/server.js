@@ -116,6 +116,7 @@ async function assetSummaries() {
     // when available and fall back to importing.
     let meta = null;
     let variants = [];
+    let skins = [];
     const report = readJson(previewReport(slug, null, 'generic'), null);
     if (report) {
       meta = { title: report.title, category: report.category, style: report.style, set: report.set, prompt: report.prompt };
@@ -125,10 +126,12 @@ async function assetSummaries() {
       const def = fresh.default;
       meta = { title: def.meta.title, category: def.meta.category, style: def.meta.style, set: def.meta.set || null, prompt: def.meta.prompt || '' };
       variants = Object.keys(def.variants || {});
+      skins = Object.keys(def.skins || {});
     } catch {
       try {
         const def = await loadAssetDef(slug);
         variants = Object.keys(def.variants || {});
+        skins = Object.keys(def.skins || {});
       } catch {
         // broken module: still list it so the viewport can show the error
       }
@@ -138,7 +141,7 @@ async function assetSummaries() {
       const r = readJson(previewReport(slug, null, p), null);
       if (r) profiles[p] = { ok: r.ok, counts: r.counts, triangles: r.triangles.total, builtAt: r.builtAt };
     }
-    out.push({ slug, ...(meta || { title: slug }), variants, profiles });
+    out.push({ slug, ...(meta || { title: slug }), variants, skins, profiles });
   }
   return out;
 }
@@ -151,6 +154,11 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
   const queue = [];
   let running = null;
   const lastErrors = new Map();
+  // The look (variant/skin) the viewport shows per asset, rebuilt along with the base on edits.
+  const activeLook = new Map();
+  const noteLook = (slug, variant, skin) => {
+    if (slug) activeLook.set(slug, { variant: variant || null, skin: skin || null });
+  };
 
   const broadcast = (event, data) => {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
@@ -161,14 +169,15 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
     const args = [path.join(ROOT, 'studio', 'index.js'), 'build', job.slug, '--profile', job.profile, '--json'];
     if (job.variant) args.push('--variant', job.variant);
     else args.push('--variant', 'base');
-    broadcast('build-start', { slug: job.slug, variant: job.variant || null, profile: job.profile });
+    if (job.skin) args.push('--skin', job.skin);
+    broadcast('build-start', { slug: job.slug, variant: job.variant || null, skin: job.skin || null, profile: job.profile });
     const child = spawn(process.execPath, args, { cwd: ROOT, env: { ...process.env, STUDIO_NO_NOTIFY: '1' } });
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (d) => (stdout += d));
     child.stderr.on('data', (d) => (stderr += d));
     child.on('close', () => {
-      let result = { slug: job.slug, variant: job.variant || null, profile: job.profile, ok: false };
+      let result = { slug: job.slug, variant: job.variant || null, skin: job.skin || null, profile: job.profile, ok: false };
       try {
         const parsed = JSON.parse(stdout.slice(stdout.indexOf('{')));
         const r = parsed.results?.[0];
@@ -176,7 +185,7 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
       } catch {
         result.error = (stderr || stdout).trim().split('\n').slice(-6).join('\n') || 'build failed';
       }
-      const key = `${itemId(job.slug, job.variant)}|${job.profile}`;
+      const key = `${itemId(job.slug, job.variant, job.skin)}|${job.profile}`;
       if (result.error) lastErrors.set(key, result.error);
       else lastErrors.delete(key);
       broadcast('built', result);
@@ -194,10 +203,10 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
     pump();
   };
 
-  const enqueue = (slug, variant, profile) => new Promise((resolve) => {
-    const existing = queue.find((j) => j.slug === slug && j.variant === variant && j.profile === profile);
+  const enqueue = (slug, variant, profile, skin = null) => new Promise((resolve) => {
+    const existing = queue.find((j) => j.slug === slug && j.variant === variant && j.skin === skin && j.profile === profile);
     if (existing) existing.waiters.push(resolve);
-    else queue.push({ slug, variant, profile, waiters: [resolve] });
+    else queue.push({ slug, variant, skin, profile, waiters: [resolve] });
     pump();
   });
 
@@ -207,7 +216,11 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
     clearTimeout(timers.get(slug));
     timers.set(slug, setTimeout(() => {
       timers.delete(slug);
-      for (const profile of activeProfiles) enqueue(slug, null, profile);
+      const look = activeLook.get(slug);
+      for (const profile of activeProfiles) {
+        enqueue(slug, null, profile);
+        if (look && (look.variant || look.skin)) enqueue(slug, look.variant, profile, look.skin);
+      }
     }, 250));
   };
   const watchers = [];
@@ -253,16 +266,18 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
           sets: listSets().map((n) => loadSet(n)),
           profiles: listProfiles().map((id) => ({ id, label: loadProfile(id).label, units: loadProfile(id).units })),
           config,
-          building: running ? { slug: running.slug, variant: running.variant || null, profile: running.profile } : null,
+          building: running ? { slug: running.slug, variant: running.variant || null, skin: running.skin || null, profile: running.profile } : null,
         });
       }
       if (p === '/api/report') {
         const slug = url.searchParams.get('slug');
         const variant = url.searchParams.get('variant') || null;
+        const skin = url.searchParams.get('skin') || null;
         const profile = url.searchParams.get('profile') || 'generic';
         if (listProfiles().includes(profile)) activeProfiles.add(profile);
-        const report = readJson(previewReport(slug, variant, profile), null);
-        const error = lastErrors.get(`${itemId(slug, variant)}|${profile}`) || null;
+        noteLook(slug, variant, skin);
+        const report = readJson(previewReport(slug, variant, profile, skin), null);
+        const error = lastErrors.get(`${itemId(slug, variant, skin)}|${profile}`) || null;
         return send(res, report || error ? 200 : 404, { report, error });
       }
       if (p === '/api/history') {
@@ -276,7 +291,8 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
         const profile = body.profile || 'generic';
         loadProfile(profile);
         activeProfiles.add(profile);
-        const result = await enqueue(body.slug, body.variant || null, profile);
+        noteLook(body.slug, body.variant, body.skin);
+        const result = await enqueue(body.slug, body.variant || null, profile, body.skin || null);
         return send(res, 200, result);
       }
       if (p === '/api/notify' && req.method === 'POST') {

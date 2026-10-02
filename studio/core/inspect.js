@@ -1,6 +1,7 @@
 // Read a GLB back and describe exactly what is inside it. Reports and validation always
 // look at the written file (never at the source scene): Preview = Export.
 
+import crypto from 'node:crypto';
 import * as THREE from 'three';
 import { PNG } from 'pngjs';
 import { createIO } from './ir/to-gltf.js';
@@ -11,6 +12,28 @@ export function decodePNG(bytes) {
 }
 
 const WRAP_NAME = { 10497: 'REPEAT', 33071: 'CLAMP_TO_EDGE', 33648: 'MIRRORED_REPEAT' };
+
+const hashOf = (...parts) => {
+  const h = crypto.createHash('sha1');
+  for (const p of parts) h.update(typeof p === 'string' ? p : Buffer.from(p.buffer, p.byteOffset, p.byteLength));
+  return h.digest('hex').slice(0, 16);
+};
+
+/**
+ * Geometry fingerprint: per mesh, hashes of positions + indices, normals and UVs (and the
+ * material slot each primitive uses), plus one hash over the node tree. Two builds with the
+ * same fingerprint have the same mesh, so their textures can be swapped (skins).
+ */
+function geometryFingerprint(nodes, meshes) {
+  const list = meshes.map((m) => {
+    const pos = hashOf(...m.primitives.flatMap((p) => [`m${p.material}|`, p.positions, p.indices]));
+    const nrm = hashOf(...m.primitives.map((p) => p.normals || new Float32Array(0)));
+    const uv = hashOf(...m.primitives.map((p) => p.uvs || new Float32Array(0)));
+    return { node: m.node, triangles: m.triangles, pos, nrm, uv, hash: hashOf(pos, nrm, uv) };
+  });
+  const tree = nodes.map((n) => `${n.name}|${n.parent}|${n.translation.join(',')}|${n.rotation.join(',')}|${n.scale.join(',')}`).join(';');
+  return { hash: hashOf(tree, ...list.map((m) => m.hash)), meshes: list };
+}
 
 function texInfo(material, getter, infoGetter, texIndex) {
   const tex = material[getter]();
@@ -134,6 +157,7 @@ export async function inspectGLB(glb) {
     materials,
     nodes,
     meshes,
+    geometry: geometryFingerprint(nodes, meshes),
     triangles,
     bbox: bbox.isEmpty() ? { min: [0, 0, 0], max: [0, 0, 0], size: [0, 0, 0] } : { min: bbox.min.toArray(), max: bbox.max.toArray(), size: bbox.getSize(new THREE.Vector3()).toArray() },
     /** Decoded RGBA pixels of a texture (cached). */

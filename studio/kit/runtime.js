@@ -4,12 +4,14 @@ import * as THREE from 'three';
 import { k } from './k.js';
 import { createRng } from './rng.js';
 import { createNoise } from './noise.js';
+import { resetPainterNames } from './texture.js';
 
 /**
+ * Params merge in this order: defaults ← variant ← skin ← explicit overrides.
  * @param {any} def asset definition (default export of an asset module)
- * @param {{variant?: string|null, params?: object}} [opts]
+ * @param {{variant?: string|null, skin?: string|null, params?: object}} [opts]
  */
-export function runAsset(def, { variant = null, params: overrides = {} } = {}) {
+export function runAsset(def, { variant = null, skin = null, params: overrides = {} } = {}) {
   if (!def || !def.__studioAsset) throw new Error('asset module must `export default defineAsset({...})`');
   let p = { ...def.params };
   let seed = def.seed;
@@ -20,14 +22,22 @@ export function runAsset(def, { variant = null, params: overrides = {} } = {}) {
     p = { ...p, ...vParams };
     if (vSeed !== undefined) seed = vSeed;
   }
+  if (skin) {
+    const skins = def.skins || {};
+    const s = skins[skin];
+    if (!s) throw new Error(`unknown skin '${skin}' (available: ${Object.keys(skins).join(', ') || 'none'})`);
+    p = { ...p, ...s };
+  }
   p = Object.freeze({ ...p, ...overrides });
   const rng = createRng(seed);
   const noise = createNoise(seed);
-  const root = def.build({ p, k, rng, noise, THREE, variant });
+  // Unnamed painters are numbered per build, so a build gives the same bytes whatever ran before it.
+  resetPainterNames();
+  const root = def.build({ p, k, rng, noise, THREE, variant, skin });
   if (!root || !root.isObject3D) throw new Error('build() must return the asset root (k.asset())');
   applyOrigin(root, def.meta.origin);
   root.updateMatrixWorld(true);
-  return { root, params: p, seed, meta: def.meta, variant };
+  return { root, params: p, seed, meta: def.meta, variant, skin };
 }
 
 /** Height band (from the lowest point) that counts as the footprint an asset stands on. */

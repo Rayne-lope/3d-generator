@@ -1,0 +1,32 @@
+# Generated from .agents/skills/asset-skins/SKILL.md by `node studio agents`. Edit that file, not this one.
+description = "Add skins to an existing studio asset (texture/finish looks on the exact same mesh, e.g. desert camo, gold, neon), review them side by side and export skin packs for Roblox, Godot and glTF. Use when the user asks for skins, camos, finishes, colorways or texture variants that must keep the same model."
+prompt = '''
+Request: {{args}}
+
+# Add skins
+
+Input: the asset slug followed by the skins to make (names, colors, patterns, finishes).
+
+Skins change only the surface. Every skin is checked against the default look: same nodes,
+triangles, UVs and material slots, or the build fails with `skin.geometry-changed` /
+`skin.materials-changed`. Shape changes belong in variants (`/asset-variants`).
+Follow **Workflow F** (`AGENTS.md`) and `rules/16-skins-and-textures.md`.
+
+1. Read `assets/<slug>/asset.js`. If its textures are not painted in 3D yet (one atlas painted with
+   `k.bake.surface` + `painter.paint3d`), convert the skinnable zones first: `k.uv.unwrap` every
+   zone, one `k.uv.atlas`, then paint color/ORM from params. Keep every material and its maps the
+   same in every look; the default params are the default look.
+2. Add one entry per skin to `skins: { name: { ...surface param overrides } }`. Reuse the
+   asset's finish params (pattern, colors, scale, roughness, wear); add a param only when a skin
+   needs a new kind of finish, with a default that keeps the default look unchanged.
+3. `node studio review <slug> --skins` → open the printed skin sheet (`skins.png`, every look from
+   the same cameras) with your image tool (Claude Code `Read`, Codex `view_image`, Gemini CLI
+   `read_file`; no image tool: use `--json` and ask the user to check the viewport's Skin bar).
+   Check: each skin reads as the request, patterns are scaled to the object, metal stays metal
+   unless asked, the default look did not change, 0 errors in every look.
+4. `node studio save <slug> -m "<the request verbatim>"`.
+5. Reply with the skin names and what each looks like. They build as `<slug>@<skin>`, export with
+   `node studio export <slug> --skins --profile <engine>` (per-skin GLBs + a skin pack:
+   Roblox SurfaceAppearance maps + SkinSwitcher, glTF `<slug>.skins.glb` with every look) and
+   publish with `/asset-publish <slug> skins`.
+'''

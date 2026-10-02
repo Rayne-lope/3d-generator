@@ -33,7 +33,7 @@ prompt ──► agent writes assets/<slug>/asset.js (kit code)
 | Path | Role |
 | --- | --- |
 | `studio/index.js` | CLI entry. Dispatches `node studio <command>` to `studio/cli/<command>.js`. |
-| `studio/kit/` | The asset toolkit (isomorphic: Node + browser, no Node built-ins). `k.js` is the namespace; geo, ops, uv, texture painter, materials, terrain, arch, csg, rng, noise, units. `runtime.js` runs an asset definition. |
+| `studio/kit/` | The asset toolkit (isomorphic: Node + browser, no Node built-ins). `k.js` is the namespace; geo, ops, uv, texture painter, 3D surface bake (`bake.js`) and patterns (`patterns.js`), materials, terrain, arch, csg, rng, noise, units. `runtime.js` runs an asset definition (params: defaults ← variant ← skin). |
 | `studio/core/ir/` | `from-three.js`: three.js scene → IR (rejects anything non-portable with a fix hint). `to-gltf.js`: IR → glTF-Transform document → GLB. |
 | `studio/core/transforms/` | Engine profile transforms on the IR (`index.js`) and pixel helpers (`pixels.js`). |
 | `studio/core/validate/` | Khronos glTF validator + studio checks (`checks/geometry, texture-uv, material, scene, source`). Issues are `{ id, severity, message, hint, where }`. |
@@ -44,6 +44,9 @@ prompt ──► agent writes assets/<slug>/asset.js (kit code)
 | `studio/core/diff.js` | Version diffs: shared-camera renders, two-level change map, stats delta, source diff. |
 | `studio/core/export.js` | Strict export (error gate, fresh-rebuild byte check, parity, reports). |
 | `studio/core/golden.js` | Golden suite (validate, determinism, structure, regression, parity) + HTML report. |
+| `studio/core/skins.js` | Skin packs (maps per look, `skins.json`, Roblox SurfaceAppearance maps + SkinSwitcher, `KHR_materials_variants` GLB). |
+| `studio/core/roblox-cloud.js`, `studio/core/publish.js` | Open Cloud client (create/update/poll, retries, credentials) and `publish --roblox` (registry, image reuse, `.skins.rbxmx`). |
+| `studio/core/validate/checks/skin.js` | Skin lock: a skin must keep the default look's mesh and material slots. |
 | `studio/core/engines.js` | Godot/Roblox packs, Godot discovery, headless verification and capture. |
 | `studio/profiles/*.json` | Engine profiles: units, limits, material/texture/UV policy, import hints, verification notes. |
 | `studio/server/server.js` | Dev server: static mounts, import map, `/api/*`, SSE events, recursive file watching, rebuilds in child processes. |
@@ -106,6 +109,7 @@ parent, so undo follows the real edit chain. Restores always auto-save unsaved w
   mesh and part, materials, textures with density and padding, issues, notes, parity, hashes,
   import hints). `export` writes the same report next to the exported GLB, plus a Markdown
   version.
+- Item ids: `<slug>`, `<slug>--<variant>`, `<slug>@<skin>` (and `<slug>--<variant>@<skin>`); preview, shots and export paths all use the item id. Reports carry `skin`, `skins` and a `geometry` fingerprint (per-mesh hashes) used by the skin lock.
 - `golden/manifest.json`: the structural fingerprint per profile/item (triangles, meshes, node
   pivots, materials with colors and factors, textures, size, bounds). The golden suite and both
   engine checks compare against it.

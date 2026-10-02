@@ -1,19 +1,20 @@
-// node studio review <slug|set:name|--all> [--profile p] [--no-parity] [--variant v]
+// node studio review <slug|set:name|--all> [--profile p] [--no-parity] [--variant v] [--skins | --skin s]
 
 import path from 'node:path';
 import { parse } from './args.js';
 import { resolveTargets } from '../core/targets.js';
 import { resolveProfiles } from '../profiles/index.js';
 import { withCapture } from '../core/render/capture.js';
-import { reviewItem, lineup } from '../core/review.js';
+import { reviewItem, lineup, skinSheet } from '../core/review.js';
 import { formatReport } from '../core/report.js';
 import { describeError } from '../core/build.js';
 import { loadConfig } from '../core/config.js';
-import { paths } from '../core/paths.js';
+import { paths, itemId } from '../core/paths.js';
+import { loadAssetDef } from '../core/load-asset.js';
 import { c, sym } from '../core/log.js';
 import { notifyServer } from './notify.js';
 
-const USAGE = `Usage: node studio review <slug | set:<name> | --all> [options]
+const USAGE = `Usage: node studio review <slug | slug@skin | set:<name> | --all> [options]
 
 Builds, then renders the exported GLB from several angles into one contact sheet
 (.studio/shots/<item>/<profile>/sheet.png) and compares it against the source scene
@@ -22,6 +23,9 @@ Builds, then renders the exported GLB from several angles into one contact sheet
 Options:
   --profile <id>    generic | godot | roblox | all (default: config.defaultProfile)
   --variant <name>  only this variant ('base' = no variant)
+  --skins           also review every skin, and write a skin sheet with all looks from the
+                    same cameras (.studio/shots/<item>/<profile>/skins.png)
+  --skin <name>     review one skin ('default' = base look)
   --views <list>    comma list (default: front,right,back,top,iso,iso-wire)
   --size <px>       tile size (default 512)
   --no-parity       skip the source-vs-GLB comparison
@@ -32,6 +36,8 @@ export async function run(argv) {
   const { args, opts } = parse(argv, {
     profile: { type: 'string' },
     variant: { type: 'string' },
+    skin: { type: 'string' },
+    skins: { type: 'boolean', default: false },
     views: { type: 'string' },
     size: { type: 'string' },
     'no-parity': { type: 'boolean', default: false },
@@ -40,8 +46,9 @@ export async function run(argv) {
   }, USAGE);
   const config = loadConfig();
   const profiles = resolveProfiles(opts.profile, config.defaultProfile);
-  const items = await resolveTargets(args, { all: opts.all, variant: opts.variant });
+  const items = await resolveTargets(args, { all: opts.all, variant: opts.variant, skin: opts.skins ? 'all' : opts.skin });
   const results = [];
+  results.skinSheets = [];
   let failed = 0;
   await withCapture(async (api) => {
     for (const profileId of profiles) {
@@ -57,10 +64,24 @@ export async function run(argv) {
         } catch (err) {
           failed++;
           results.push({ ...item, profile: profileId, error: err.message });
-          if (!opts.json) console.log(`${sym.fail} ${item.slug}${item.variant ? `--${item.variant}` : ''} [${profileId}]\n  ${describeError(err, item.slug).split('\n').join('\n  ')}`);
+          if (!opts.json) console.log(`${sym.fail} ${itemId(item.slug, item.variant, item.skin)} [${profileId}]\n  ${describeError(err, item.slug).split('\n').join('\n  ')}`);
         }
       }
-      const ok = results.filter((r) => r.profile === profileId && !r.error);
+      if (opts.skins) {
+        // One skin sheet per reviewed (asset, variant) that has skins and built without crashing.
+        const groups = new Map();
+        for (const r of results) if (r.profile === profileId && !r.error) groups.set(`${r.slug}|${r.variant || ''}`, r);
+        for (const r of groups.values()) {
+          const skins = Object.keys((await loadAssetDef(r.slug)).skins || {});
+          const built = skins.filter((s) => results.some((x) => x.profile === profileId && !x.error && x.slug === r.slug && x.variant === r.variant && x.skin === s));
+          if (!built.length) continue;
+          const file = await skinSheet(api, { slug: r.slug, variant: r.variant, profileId, skins: built });
+          results.skinSheets.push({ slug: r.slug, variant: r.variant, profile: profileId, file });
+          if (!opts.json) console.log(`\n${c.bold('skin sheet:')} ${c.cyan(file)}`);
+        }
+      }
+      // Lineups compare different assets or variants; skins have their own sheet.
+      const ok = results.filter((r) => r.profile === profileId && !r.error && !r.skin);
       if (ok.length > 1) {
         const name = args.length === 1 ? args[0].replace(':', '-') : 'lineup';
         const file = await lineup(api, ok, profileId, path.join(paths.shots, `_lineup-${name}`, `${profileId}.png`));
@@ -69,7 +90,7 @@ export async function run(argv) {
       }
     }
   });
-  await notifyServer({ type: 'built', items: results.filter((r) => !r.error).map((r) => ({ slug: r.slug, variant: r.variant, profile: r.profile, ok: r.report.ok })) });
-  if (opts.json) console.log(JSON.stringify({ results: results.map((r) => ({ ...r, report: r.report ? { ok: r.report.ok, counts: r.report.counts, triangles: r.report.triangles.total, issues: r.report.issues } : undefined })), lineup: results.lineup || null }, null, 2));
+  await notifyServer({ type: 'built', items: results.filter((r) => !r.error).map((r) => ({ slug: r.slug, variant: r.variant, skin: r.skin || null, profile: r.profile, ok: r.report.ok })) });
+  if (opts.json) console.log(JSON.stringify({ results: results.map((r) => ({ ...r, report: r.report ? { ok: r.report.ok, counts: r.report.counts, triangles: r.report.triangles.total, issues: r.report.issues } : undefined })), lineup: results.lineup || null, skinSheets: results.skinSheets }, null, 2));
   return failed ? 1 : 0;
 }

@@ -21,6 +21,8 @@ export default defineAsset({
   },
   // Named param overrides, each exported as its own GLB: <slug>--<variant>.glb
   variants: {},
+  // Surface-only looks on the same mesh (see rules/16): <slug>@<skin>.glb
+  skins: {},
   build({ p, k }) {
     const asset = k.asset('{{SLUG_NAME}}');
     const body = k.part('body');

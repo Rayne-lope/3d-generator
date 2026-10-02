@@ -1,5 +1,5 @@
 {
-  "description": "Golden set: assets covering the main asset types and styles. Every item must pass validation (0 errors, only allowed warnings), determinism (a fresh build reproduces the preview), source-vs-GLB parity, structure (manifest) and visual regression (baselines) in every profile. Run: node studio golden --profile all",
+  "description": "Golden set: assets covering the main asset types and styles (skins listed per entry are checked too). Every item must pass validation (0 errors, only allowed warnings), determinism (a fresh build reproduces the preview), source-vs-GLB parity, structure (manifest) and visual regression (baselines) in every profile. Run: node studio golden --profile all",
   "profiles": ["generic", "godot", "roblox"],
   "views": ["front", "right", "top", "iso"],
   "tileSize": 192,
@@ -26,6 +26,7 @@
     { "slug": "tavern-stool", "type": "set member", "style": "cozy (set: tavern)", "variants": "all" },
     { "slug": "tavern-mug", "type": "set member", "style": "cozy (set: tavern)", "variants": "all" },
     { "slug": "tavern-candle-holder", "type": "set member (emissive)", "style": "cozy (set: tavern)", "variants": "all" },
-    { "slug": "tavern-shelf", "type": "set member (back-center origin)", "style": "cozy (set: tavern)", "variants": "all" }
+    { "slug": "tavern-shelf", "type": "set member (back-center origin)", "style": "cozy (set: tavern)", "variants": "all" },
+    { "slug": "ak-rifle", "type": "weapon (detachable magazine part, skins)", "style": "realistic (3D-painted atlas)", "variants": "all", "skins": ["desert", "digital", "gold"] }
   ]
 }

@@ -18,6 +18,9 @@ Follow **Workflow E** (`AGENTS.md`) and `rules/07-export-hygiene.md`:
    material per mesh, 1024 px textures, 20k triangles per mesh). Make sure it still looks right.
 2. Fix every error in the asset code (the fix guide per issue id is in `rules/07`). Never weaken
    a check. Re-run the review.
-3. `node studio export <target> --profile <profile>`. It is blocked while errors remain.
+3. `node studio export <target> --profile <profile>`. It is blocked while errors remain. For an
+   asset with skins, add `--skins`: every look exports as `<slug>@<skin>.glb` plus a skin pack
+   (`exports/<profile>/<slug>.skins/`; generic also writes `<slug>.skins.glb` with every look).
 4. Reply with the exported file paths (`exports/<profile>/<slug>.glb`), the key numbers from the
    `.report.md` (size, triangles, meshes, textures) and the engine import steps from the report.
+   For Roblox, mention `/asset-publish` uploads it without a manual import.

@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { toSRGB } from './color.js';
 import { createNoise } from './noise.js';
 import { createRng, hashString } from './rng.js';
+import { fillPoint } from './bake.js';
 
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const smoothstep = (e0, e1, x) => {
@@ -20,6 +21,11 @@ const smoothstep = (e0, e1, x) => {
 const BLEND_MODES = new Set(['normal', 'multiply', 'add', 'screen', 'overlay', 'subtract', 'max', 'min']);
 
 let painterCounter = 0;
+
+/** Restart the numbering of unnamed painters (runAsset calls this before every build). */
+export function resetPainterNames() {
+  painterCounter = 0;
+}
 
 export class TexturePainter {
   /**
@@ -154,6 +160,40 @@ export class TexturePainter {
         d[i + 2] = clamp01(out[2]);
         if (out.length > 3) d[i + 3] = clamp01(out[3]);
       }
+    }
+    return this;
+  }
+
+  /**
+   * Paint in 3D on a surface bake (k.bake.surface) of the same size. fn(p) runs for every texel
+   * the bake covers, gutter included, with p = { pos, normal, entry, edge, cavity, ao, gutter,
+   * i, x, y, u, v } (p is reused: copy what you keep) and returns [r, g, b] (painter space),
+   * [r, g, b, a], a color ('#hex', number gray) or null to keep the texel. Patterns from
+   * k.tex.pattern are valid fns. Texels outside the bake are not touched.
+   */
+  paint3d(bake, fn, { alpha = 1, mode = 'normal' } = {}) {
+    if (!bake || !bake.mask) throw new Error('paint3d: pass a bake from k.bake.surface()');
+    if (bake.width !== this.width || bake.height !== this.height) {
+      throw new Error(`paint3d: painter '${this.name}' is ${this.width}x${this.height} but the bake is ${bake.width}x${bake.height} (bake with { size: ${this.width} })`);
+    }
+    const m = this._mode(mode);
+    const d = this.data;
+    const W = this.width;
+    const p = { i: 0, x: 0, y: 0, u: 0, v: 0, pos: [0, 0, 0], normal: [0, 0, 0], entry: '', gutter: false, edge: 0, cavity: 0, ao: 1 };
+    const direct = m === 'normal' && alpha === 1;
+    for (let i = 0; i < bake.mask.length; i++) {
+      if (!bake.mask[i]) continue;
+      fillPoint(bake, p, i, W);
+      let out = fn(p);
+      if (out === null || out === undefined) continue;
+      if (!Array.isArray(out) && !(out instanceof Float32Array)) out = this._rgb(out);
+      const o = i * 4;
+      if (direct) {
+        d[o] = clamp01(out[0]);
+        d[o + 1] = clamp01(out[1]);
+        d[o + 2] = clamp01(out[2]);
+      } else this._blendAt(o, out[0], out[1], out[2], alpha, m);
+      if (out.length > 3) d[o + 3] = clamp01(out[3]);
     }
     return this;
   }

@@ -59,7 +59,7 @@ automatically by `node studio engine-verify godot`).
 - Godot 4 imports glTF 2.0 natively (editor import, or runtime `GLTFDocument.append_from_file` + `generate_scene`). Meters, +Y up; models face +Z (`Vector3.MODEL_FRONT`), so no conversion is needed. Latest stable at the time of writing: 4.7.2.
 - `baseColorFactor` → `StandardMaterial3D.albedo_color` (converted to sRGB by the importer); metallic-roughness, normal (with tangents), occlusion, emissive and alpha modes map directly.
 - Godot imports 3D textures as **VRAM Compressed** by default (lossy). For pixel-exact palettes set the texture import mode to Lossless; the default is fine for most assets.
-- **Verified (2026-10-01):** `node studio engine-verify godot` on the official Godot 4.7.2 Linux build: **38/38** golden items load through `GLTFDocument` with the expected size and bounds, triangles, mesh/surface counts, node pivots, albedo, alpha, metallic/roughness, texture slots, emission, transparency and culling. Deliberately corrupted expectations fail as they should. `--capture` renders every item in Godot next to the studio view (`docs/demos/phase5.md`). CI repeats the check on every push.
+- **Verified (2026-10-01):** `node studio engine-verify godot` on the official Godot 4.7.2 Linux build: **42/42** golden items (re-verified 2026-10-02 with the AK skins) load through `GLTFDocument` with the expected size and bounds, triangles, mesh/surface counts, node pivots, albedo, alpha, metallic/roughness, texture slots, emission, transparency and culling. Deliberately corrupted expectations fail as they should. `--capture` renders every item in Godot next to the studio view (`docs/demos/phase5.md`). CI repeats the check on every push.
 
 ## Quality gates the user asked for
 
@@ -74,10 +74,25 @@ Plus geometry (inverted faces, inside-out shells, degenerate/duplicate triangles
 ## Agents other than Claude Code
 
 - The workflow is tool-neutral: `AGENTS.md` is the entry point (Codex reads it natively; Gemini CLI loads it through `.gemini/settings.json` → `context.fileName`).
-- The seven shortcuts are **Agent Skills** in `.agents/skills/<name>/SKILL.md`, the open format that both **Codex** (repo skills; `$asset`, `/skills`, or automatic) and **Gemini CLI** (`.agents/skills` is an alias of `.gemini/skills`) read directly.
+- The nine shortcuts are **Agent Skills** in `.agents/skills/<name>/SKILL.md`, the open format that both **Codex** (repo skills; `$asset`, `/skills`, or automatic) and **Gemini CLI** (`.agents/skills` is an alias of `.gemini/skills`) read directly.
 - Codex custom prompts (`~/.codex/prompts`, `/prompts:name`) are deprecated and live in the user's home folder, so they are not used. Codex can't run skills as `/asset` yet (openai/codex#50068); `$asset` is the Codex form.
 - Real slash commands are generated from the skills by `node studio agents`: `.claude/commands/<name>.md` (`$ARGUMENTS`) and `.gemini/commands/<name>.toml` (`{{args}}`). A test fails when they drift.
 - All names start with `asset` because Claude Code's built-in `/review` and `/export` win name collisions with project commands.
+
+## Skins (one model, many looks)
+
+- A skin is a set of surface param overrides (`skins`). Every skin build is compared with the default look in the same profile: per-mesh hashes of positions/indices, normals and UVs plus the material slots (`skin.geometry-changed`, `skin.materials-changed`). This is what lets engines swap skins on one model.
+- Assets with skins keep identically looking materials apart and get one Roblox palette swatch per flat material in declaration order, so UVs never depend on colors. Assets without skins are byte-identical to before (golden unchanged).
+- Textures for skins are painted in 3D (`k.bake.surface` + `paint3d`): patterns are functions of the surface position, so they continue across UV seams; edge/cavity masks come from the real mesh, AO from three-mesh-bvh ray casts. Bakes are cached by content.
+- Roblox SurfaceAppearance textures are not scriptable at runtime, so each skin is a premade SurfaceAppearance per MeshPart, swapped by `SkinSwitcher` (plain Lua 5.1 syntax, so it parses everywhere). Metalness and roughness are separate maps there, split from the glTF metallicRoughness texture.
+- Generic exports get one extra GLB with every look as `KHR_materials_variants` (passes the Khronos validator); Godot uses per-look GLBs.
+
+## Roblox Open Cloud publishing
+
+- Research (2026-10): the Assets API creates Models from `.glb` (`model/gltf-binary`, ≤ 20 MB per call) and Images/Decals from `.png`; `PATCH /assets/v1/assets/{id}` uploads new versions of Models only; results are operations polled at `/assets/v1/operations/{id}`; auth is the `x-api-key` header; 60 requests per minute per key. `.rbxm/.rbxmx` uploads exist but files written outside Studio "might not upload or function", so the skins `.rbxmx` is written locally for Insert from File.
+- Credentials only from `ROBLOX_API_KEY` / `ROBLOX_CREATOR` (environment or gitignored `.env`); never logged, stored in reports, or put in error messages (tested).
+- `.studio/roblox/published.json` keeps asset ids per item and per image hash per creator: unchanged models are skipped, changed ones become versions, identical maps upload once.
+- Verified against a local fake Open Cloud server in the tests. A real upload needs the user's key.
 
 ## Tooling choices
 
@@ -90,6 +105,6 @@ Plus geometry (inverted faces, inside-out shells, degenerate/duplicate triangles
 ## Reliability
 
 - **Preview = Export** is enforced, not assumed: `export` rebuilds from scratch and refuses to write a file whose bytes differ from the preview the user approved.
-- **Golden suite** (`node studio golden`): 19 assets / 38 items × 3 profiles, checked for validation, determinism, structure (`golden/manifest.json`), visual regression against committed baselines and source-vs-GLB parity. Baselines change only through `--update-baselines`, so an unnoticed visual change cannot slip in.
+- **Golden suite** (`node studio golden`): 20 assets / 42 items × 3 profiles (skins included), checked for validation, determinism, structure (`golden/manifest.json`), visual regression against committed baselines and source-vs-GLB parity. Baselines change only through `--update-baselines`, so an unnoticed visual change cannot slip in.
 - The viewport environment map (PMREM) is built once per renderer: on software WebGL each rebuild cost about 2 s, so caching it made every render command 10–20× faster without changing a pixel.
 - **History** stores each version's parent, so `undo` follows the edits actually made, even after a revert; unsaved work is auto-saved before any restore.

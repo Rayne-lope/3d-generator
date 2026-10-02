@@ -23,8 +23,8 @@ export function sourceDirsFor(slug, setName) {
   return [assetDir(slug), setName ? path.join(paths.sets, setName) : null].filter(Boolean);
 }
 
-export function computeSourceHash(slug, variant, profileId, setName) {
-  return hashDirs([...sourceDirsFor(slug, setName), ...PIPELINE_DIRS], `${KIT_VERSION}|${profileId}|${variant || ''}`);
+export function computeSourceHash(slug, variant, profileId, setName, skin = null) {
+  return hashDirs([...sourceDirsFor(slug, setName), ...PIPELINE_DIRS], `${KIT_VERSION}|${profileId}|${variant || ''}${skin ? `|@${skin}` : ''}`);
 }
 
 function recordMetrics(slug) {
@@ -43,37 +43,43 @@ function recordMetrics(slug) {
 }
 
 /**
- * @param {{slug: string, variant?: string|null, profileId?: string, write?: boolean, force?: boolean, allowDecimate?: boolean}} opts
+ * @param {{slug: string, variant?: string|null, skin?: string|null, profileId?: string, write?: boolean, force?: boolean, allowDecimate?: boolean}} opts
  * @returns {Promise<{glb: Uint8Array, report: any, cached: boolean, info?: any, ir?: any}>}
  */
-export async function buildItem({ slug, variant = null, profileId = 'generic', write = true, force = false, allowDecimate = false }) {
+export async function buildItem({ slug, variant = null, skin = null, profileId = 'generic', write = true, force = false, allowDecimate = false }) {
   const t0 = performance.now();
   const profile = loadProfile(profileId);
   const def = await loadAssetDef(slug);
   const setName = def.meta.set || setOfAsset(slug);
-  const sourceHash = computeSourceHash(slug, variant, profileId, setName) + (allowDecimate ? ':dec' : '');
-  const glbFile = previewGlb(slug, variant, profileId);
-  const reportFile = previewReport(slug, variant, profileId);
+  const sourceHash = computeSourceHash(slug, variant, profileId, setName, skin) + (allowDecimate ? ':dec' : '');
+  const glbFile = previewGlb(slug, variant, profileId, skin);
+  const reportFile = previewReport(slug, variant, profileId, skin);
   if (!force && write && fs.existsSync(glbFile) && fs.existsSync(reportFile)) {
     const prev = readJson(reportFile, null);
     if (prev && prev.hashes?.source === sourceHash) {
       return { glb: new Uint8Array(fs.readFileSync(glbFile)), report: prev, cached: true };
     }
   }
-  const run = runAsset(def, { variant });
-  const ir = sceneToIR(run.root, { slug, variant, meta: def.meta });
-  await applyProfile(ir, profile, { allowDecimate });
+  // Assets with skins keep every declared material and palette swatch, so all skins share
+  // one mesh layout (same materials, same UVs) and engines can swap their textures.
+  const skinned = Object.keys(def.skins || {}).length > 0;
+  const run = runAsset(def, { variant, skin });
+  const ir = sceneToIR(run.root, { slug, variant, skin, meta: def.meta, keepMaterials: skinned });
+  await applyProfile(ir, profile, { allowDecimate, stablePalette: skinned });
   const { glb } = await irToGLB(ir, {
     profileId,
     allowEmissiveStrength: profile.materials.emissiveStrength,
+    keepMaterialNames: skinned,
     extras: { title: def.meta.title, sourceHash, kit: KIT_VERSION },
   });
   const info = await inspectGLB(glb);
   const sourceFiles = sourceDirsFor(slug, setName).flatMap((dir) => listFiles(dir).filter((f) => f.endsWith('.js')).map((f) => path.join(dir, f)));
-  const validation = await validate({ glb, info, ir, profile, meta: def.meta, sourceFiles });
+  // A skin is checked against the base look of the same item and profile (skin lock).
+  const skinBase = skin ? { skin, report: (await buildItem({ slug, variant, profileId, allowDecimate })).report } : null;
+  const validation = await validate({ glb, info, ir, profile, meta: def.meta, sourceFiles, skinBase });
   const glbHash = sha256(glb);
   const report = makeReport({
-    slug, variant, id: itemId(slug, variant), def, setName, profile, glbPath: rel(glbFile), glbBytes: glb.byteLength, glbHash,
+    slug, variant, skin, id: itemId(slug, variant, skin), def, setName, profile, glbPath: rel(glbFile), glbBytes: glb.byteLength, glbHash,
     info, ir, validation, sourceHash, buildMs: performance.now() - t0,
   });
   if (write) {

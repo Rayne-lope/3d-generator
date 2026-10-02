@@ -19,6 +19,7 @@ const state = {
   profiles: [],
   slug: null,
   variant: null,
+  skin: null,
   profile: localStorage.getItem('studio.profile') || 'generic',
   lighting: 'neutral',
   viewMode: 'shaded',
@@ -127,8 +128,16 @@ async function api(path, opts) {
   return res.json();
 }
 
-function itemKey(slug = state.slug, variant = state.variant) {
-  return variant ? `${slug}--${variant}` : slug;
+function itemKey(slug = state.slug, variant = state.variant, skin = state.skin) {
+  return `${slug}${variant ? `--${variant}` : ''}${skin ? `@${skin}` : ''}`;
+}
+
+function lookQuery() {
+  return `slug=${state.slug}${state.variant ? `&variant=${state.variant}` : ''}${state.skin ? `&skin=${state.skin}` : ''}&profile=${state.profile}`;
+}
+
+function titleText(asset) {
+  return `${asset?.title || state.slug}${state.variant ? ` — ${state.variant}` : ''}${state.skin ? ` · ${state.skin}` : ''}`;
 }
 
 async function refreshState() {
@@ -165,7 +174,7 @@ function renderAssetList() {
     for (const a of bySet.get(key)) {
       const p = a.profiles?.[state.profile] || a.profiles?.generic;
       const dot = !p ? '' : p.counts?.error ? 'err' : p.counts?.warning ? 'warn' : 'ok';
-      const meta = [a.variants?.length ? `${a.variants.length} var` : '', p ? `${(p.triangles || 0).toLocaleString()}△` : 'not built'].filter(Boolean).join(' · ');
+      const meta = [a.variants?.length ? `${a.variants.length} var` : '', a.skins?.length ? `${a.skins.length} skin${a.skins.length === 1 ? '' : 's'}` : '', p ? `${(p.triangles || 0).toLocaleString()}△` : 'not built'].filter(Boolean).join(' · ');
       html.push(`<div class="asset ${a.slug === state.slug ? 'on' : ''}" data-slug="${a.slug}"><span class="dot ${dot}"></span><span class="name" title="${esc(a.prompt || a.title)}">${esc(a.title || a.slug)}</span><span class="meta">${meta}</span></div>`);
     }
   }
@@ -176,12 +185,13 @@ function renderAssetList() {
 async function selectAsset(slug, variant = null) {
   state.slug = slug;
   state.variant = variant;
+  state.skin = null;
   state.version = null;
   state.cameraSet = false;
   localStorage.setItem('studio.asset', slug);
   renderAssetList();
   const asset = state.assets.find((a) => a.slug === slug);
-  $('title').textContent = asset ? `${asset.title}${variant ? ` — ${variant}` : ''}` : slug;
+  $('title').textContent = asset ? titleText(asset) : slug;
   renderVariantBar(asset);
   await showCurrent({ keepCamera: false });
   loadVersions();
@@ -189,23 +199,29 @@ async function selectAsset(slug, variant = null) {
 
 function renderVariantBar(asset) {
   const bar = $('variantBar');
-  if (!asset || !asset.variants?.length) {
-    bar.classList.add('hidden');
-    return;
+  if (!asset || !asset.variants?.length) bar.classList.add('hidden');
+  else {
+    bar.classList.remove('hidden');
+    bar.innerHTML = `<span class="bar-label">Variant</span>${[null, ...asset.variants].map((v) => `<button data-variant="${v ?? ''}" class="${(v ?? null) === state.variant ? 'on' : ''}">${v ?? 'base'}</button>`).join('')}`;
   }
-  bar.classList.remove('hidden');
-  bar.innerHTML = [null, ...asset.variants].map((v) => `<button data-variant="${v ?? ''}" class="${(v ?? null) === state.variant ? 'on' : ''}">${v ?? 'base'}</button>`).join('');
+  // Skins: same mesh, different textures (every skin passes the skin lock against 'default').
+  const skins = $('skinBar');
+  if (!asset || !asset.skins?.length) skins.classList.add('hidden');
+  else {
+    skins.classList.remove('hidden');
+    skins.innerHTML = `<span class="bar-label">Skin</span>${[null, ...asset.skins].map((s) => `<button data-skin="${s ?? ''}" class="${(s ?? null) === state.skin ? 'on' : ''}">${s ?? 'default'}</button>`).join('')}`;
+  }
 }
 
 async function showCurrent({ keepCamera = true } = {}) {
   if (!state.slug) return;
   hideBanner();
   setStatus(`Loading ${itemKey()} [${state.profile}]…`);
-  let { report, error } = await api(`/api/report?slug=${state.slug}${state.variant ? `&variant=${state.variant}` : ''}&profile=${state.profile}`).catch(() => ({}));
+  let { report, error } = await api(`/api/report?${lookQuery()}`).catch(() => ({}));
   if (!report && !error) {
     setStatus(`Building ${itemKey()} [${state.profile}]…`);
-    const result = await api('/api/build', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ slug: state.slug, variant: state.variant, profile: state.profile }) });
-    ({ report, error } = await api(`/api/report?slug=${state.slug}${state.variant ? `&variant=${state.variant}` : ''}&profile=${state.profile}`).catch(() => ({})));
+    const result = await api('/api/build', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile }) });
+    ({ report, error } = await api(`/api/report?${lookQuery()}`).catch(() => ({})));
     if (result.error) error = result.error;
   }
   state.report = report || null;
@@ -413,10 +429,19 @@ $('filter').addEventListener('input', renderAssetList);
 $('variantBar').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
-  const v = b.dataset.variant || null;
-  state.variant = v;
-  renderVariantBar(state.assets.find((a) => a.slug === state.slug));
-  $('title').textContent = `${state.assets.find((a) => a.slug === state.slug)?.title || state.slug}${v ? ` — ${v}` : ''}`;
+  state.variant = b.dataset.variant || null;
+  const asset = state.assets.find((a) => a.slug === state.slug);
+  renderVariantBar(asset);
+  $('title').textContent = titleText(asset);
+  showCurrent();
+});
+$('skinBar').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  state.skin = b.dataset.skin || null;
+  const asset = state.assets.find((a) => a.slug === state.slug);
+  renderVariantBar(asset);
+  $('title').textContent = titleText(asset);
   showCurrent();
 });
 $('profile').addEventListener('change', (e) => {
@@ -491,7 +516,7 @@ function connect() {
   es.addEventListener('built', async (e) => {
     const d = JSON.parse(e.data);
     await refreshState();
-    if (d.slug === state.slug && (d.variant || null) === state.variant && d.profile === state.profile && !state.version) {
+    if (d.slug === state.slug && (d.variant || null) === state.variant && (d.skin || null) === state.skin && d.profile === state.profile && !state.version) {
       if (d.error) {
         showBanner(`Build failed:\n${d.error}`, true);
         setStatus(`Build failed for ${d.slug}`);

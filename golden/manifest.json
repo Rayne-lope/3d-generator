@@ -1,8 +1,364 @@
 {
   "schema": 1,
-  "kit": "1.0.0",
-  "updatedAt": "2026-10-01T21:21:09.244Z",
+  "kit": "1.1.0",
+  "updatedAt": "2026-10-02T06:18:25.690Z",
   "items": {
+    "generic/ak-rifle": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00092,
+            0.19122,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.49392,
+        0,
+        -0.025
+      ],
+      "sha256": "89dec7779d0f15b1511c4f7664c73088c25a61eb6ddb2723619d09a63ea434db"
+    },
+    "generic/ak-rifle@desert": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00092,
+            0.19122,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.49392,
+        0,
+        -0.025
+      ],
+      "sha256": "887fa0a7c504e074aed30215cd470ee71aa53958fdf79679030471e6a751965a"
+    },
+    "generic/ak-rifle@digital": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00092,
+            0.19122,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.49392,
+        0,
+        -0.025
+      ],
+      "sha256": "1cc4cee8bcd86f66c9d24d5468a5587ea358a7df48164c1c9dac48df6a8f7a58"
+    },
+    "generic/ak-rifle@gold": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00092,
+            0.19122,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.49392,
+        0,
+        -0.025
+      ],
+      "sha256": "e1c6ac31f70a02dbc98e655010ad10f351075eea25c16e435c96346706f12714"
+    },
     "generic/cartoon-mailbox": {
       "title": "Cartoon Mailbox",
       "triangles": 1108,
@@ -3709,6 +4065,362 @@
       ],
       "sha256": "418a98a1ae63d5f35f752636e585439e307d10d70a2fc614a92b4d555453dacf"
     },
+    "godot/ak-rifle": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00092,
+            0.19122,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.49392,
+        0,
+        -0.025
+      ],
+      "sha256": "250f0e04cb00c97078b61f2c6893c63539e4f5ac4f0afaf08e2390d3e84133ea"
+    },
+    "godot/ak-rifle@desert": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00092,
+            0.19122,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.49392,
+        0,
+        -0.025
+      ],
+      "sha256": "fc96ef368ea7a58633a15e75e803d5c9a5d0c9dfd2af53906b20879295cb0cff"
+    },
+    "godot/ak-rifle@digital": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00092,
+            0.19122,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.49392,
+        0,
+        -0.025
+      ],
+      "sha256": "74a7d4a658b824457b210f0385b01cec8eebbb96791d98163f53819555746ea5"
+    },
+    "godot/ak-rifle@gold": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00092,
+            0.19122,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -0.49392,
+        0,
+        -0.025
+      ],
+      "sha256": "03a2dfaffd30e36f9a53bad3f511c0c68ad3345980649028e8db53fe2d160ff1"
+    },
     "godot/cartoon-mailbox": {
       "title": "Cartoon Mailbox",
       "triangles": 1108,
@@ -7414,6 +8126,362 @@
         -0.295
       ],
       "sha256": "0d1fde5bc31356f6679626bbc4d10f9fbbf13a4ae4ab30d2ed75f708e0813488"
+    },
+    "roblox/ak-rifle": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00328,
+            0.68292,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-color_tinted",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        3.1929,
+        0.9936,
+        0.2432
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -1.764,
+        0,
+        -0.08929
+      ],
+      "sha256": "e4a69b745cf9f7e721d205a0682dc25141aaa6412bd0547d21de590895c7c94f"
+    },
+    "roblox/ak-rifle@desert": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00328,
+            0.68292,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-color_tinted",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        3.1929,
+        0.9936,
+        0.2432
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -1.764,
+        0,
+        -0.08929
+      ],
+      "sha256": "17ceb2ff0d8a1d9e1474b7489309a6a977c11d7b76c5450e29b30e0fb538256a"
+    },
+    "roblox/ak-rifle@digital": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00328,
+            0.68292,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-color_tinted",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        3.1929,
+        0.9936,
+        0.2432
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -1.764,
+        0,
+        -0.08929
+      ],
+      "sha256": "109c2d0936f86e2ba5200c92989832782f2d32828deb17ff202a8db70a9d682d"
+    },
+    "roblox/ak-rifle@gold": {
+      "title": "AK-47 style assault rifle",
+      "triangles": 3048,
+      "meshes": 2,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2744,
+          "materials": [
+            "rifle"
+          ]
+        },
+        {
+          "node": "magazine",
+          "triangles": 304,
+          "materials": [
+            "rifle"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "magazine",
+          "translation": [
+            -0.00328,
+            0.68292,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "rifle",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "ak-orm",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-normal",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "ak-color_tinted",
+          "width": 1024,
+          "height": 1024
+        }
+      ],
+      "sizeMeters": [
+        0.894,
+        0.2782,
+        0.0681
+      ],
+      "sizeUnits": [
+        3.1929,
+        0.9936,
+        0.2432
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -1.764,
+        0,
+        -0.08929
+      ],
+      "sha256": "b6bca43ad3417b85f42621b63d86024259e8db37d271a82214f2b4777a94e442"
     },
     "roblox/cartoon-mailbox": {
       "title": "Cartoon Mailbox",

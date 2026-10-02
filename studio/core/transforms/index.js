@@ -182,7 +182,9 @@ function bakeFactors(ir) {
 
 // ------------------------------------------------------------------ palette atlas
 
-function paletteAtlas(ir) {
+// stable: one swatch per material in IR order, no merging of equal colors. Assets with skins
+// use it so every skin gets the same swatch layout (same UVs) whatever its colors are.
+function paletteAtlas(ir, { stable = false } = {}) {
   const flat = ir.materials.filter((m) => !isTextured(m) && primsUsing(ir, m.id).length);
   if (!flat.length) return;
   const groups = new Map();
@@ -200,7 +202,7 @@ function paletteAtlas(ir) {
       const color = [to8(linearToSrgb(m.baseColor[0])), to8(linearToSrgb(m.baseColor[1])), to8(linearToSrgb(m.baseColor[2])), to8(m.baseColor[3])];
       const mr = [255, to8(m.roughness), to8(m.metallic), 255];
       const e = [to8(linearToSrgb(em[0])), to8(linearToSrgb(em[1])), to8(linearToSrgb(em[2])), 255];
-      const sig = `${color}|${mr}|${e}`;
+      const sig = stable ? `#${m.id}` : `${color}|${mr}|${e}`;
       let idx = swatches.findIndex((s) => s.sig === sig);
       if (idx < 0) {
         idx = swatches.length;
@@ -267,7 +269,7 @@ function paletteAtlas(ir) {
         p.material = pal.id;
       }
     }
-    ir.notes.push({ id: 'palette', message: `${mats.length} flat-color material(s) merged into '${pal.name}' (${swatches.length} swatches, ${size}×${size}, ${SWATCH}px swatches)` });
+    ir.notes.push({ id: 'palette', message: `${mats.length} flat-color material(s) merged into '${pal.name}' (${swatches.length} swatches, ${size}×${size}, ${SWATCH}px swatches${stable ? ', one per material so skins share UVs' : ''})` });
   }
   mergeSameMaterial(ir);
 }
@@ -562,7 +564,7 @@ function dropUnusedMaterials(ir) {
  * Apply an engine profile to an IR (mutates and returns it).
  * @param {any} ir
  * @param {any} profile
- * @param {{allowDecimate?: boolean}} [opts]
+ * @param {{allowDecimate?: boolean, stablePalette?: boolean}} [opts]
  */
 export async function applyProfile(ir, profile, opts = {}) {
   ir.sourceMaterials = ir.materials.map((m) => ({ ...m }));
@@ -571,7 +573,7 @@ export async function applyProfile(ir, profile, opts = {}) {
   if (profile.uv.tileBake) tileBake(ir, profile);
   textureLimits(ir, profile); // resize before per-pixel baking so big textures stay fast
   if (profile.materials.bakeFactorsIntoTextures) bakeFactors(ir);
-  if (profile.materials.paletteAtlas) paletteAtlas(ir);
+  if (profile.materials.paletteAtlas) paletteAtlas(ir, { stable: !!opts.stablePalette });
   if (profile.materials.maxMaterialsPerMesh === 1) splitByMaterial(ir);
   triangleLimit(ir, profile, opts);
   textureLimits(ir, profile);
