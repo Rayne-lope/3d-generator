@@ -71,6 +71,14 @@ The validator checks, before any export:
 
 Plus geometry (inverted faces, inside-out shells, degenerate/duplicate triangles), materials, scene (origin, dimensions, mesh count) and source lint.
 
+## Agents other than Claude Code
+
+- The workflow is tool-neutral: `AGENTS.md` is the entry point (Codex reads it natively; Gemini CLI loads it through `.gemini/settings.json` → `context.fileName`).
+- The seven shortcuts are **Agent Skills** in `.agents/skills/<name>/SKILL.md`, the open format that both **Codex** (repo skills; `$asset`, `/skills`, or automatic) and **Gemini CLI** (`.agents/skills` is an alias of `.gemini/skills`) read directly.
+- Codex custom prompts (`~/.codex/prompts`, `/prompts:name`) are deprecated and live in the user's home folder, so they are not used. Codex can't run skills as `/asset` yet (openai/codex#50068); `$asset` is the Codex form.
+- Real slash commands are generated from the skills by `node studio agents`: `.claude/commands/<name>.md` (`$ARGUMENTS`) and `.gemini/commands/<name>.toml` (`{{args}}`). A test fails when they drift.
+- All names start with `asset` because Claude Code's built-in `/review` and `/export` win name collisions with project commands.
+
 ## Tooling choices
 
 - Node ≥ 20, ESM, plain JavaScript with JSDoc (no build step). `node studio <command>` is the CLI.

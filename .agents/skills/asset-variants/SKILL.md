@@ -1,11 +1,13 @@
 ---
-description: Add variants of an asset (param/seed overrides exported as separate GLBs)
-argument-hint: <slug> <what variants to make>
-allowed-tools: Bash(node studio:*), Read, Write, Edit, Glob, Grep
+name: asset-variants
+description: Add variants to an existing studio asset (named param or seed overrides, each exported as its own GLB, e.g. small, broken, other colors). Use when the user asks for versions, sizes, colors, damage states or random variations of an asset.
+metadata:
+  argument-hint: "<slug> <what variants to make>"
 ---
 
-Add variants to an existing asset. Arguments: `$ARGUMENTS` (first word = asset slug, the rest
-= what the variants should be).
+# Add variants
+
+Input: the asset slug followed by what the variants should be.
 
 Follow **Workflow C** (`AGENTS.md`) and `rules/09-sets-and-variants.md`:
 
@@ -15,7 +17,7 @@ Follow **Workflow C** (`AGENTS.md`) and `rules/09-sets-and-variants.md`:
 2. Keep the family recognizable: same construction, same materials logic, different values.
    Seed-only variants are fine for natural assets (rocks, trees).
 3. `node studio review <slug>` renders every variant plus a lineup → open the lineup and each
-   variant sheet; fix problems (0 errors on every variant).
+   variant sheet with your image tool; fix problems (0 errors on every variant).
 4. `node studio diff <slug>` must show no change to the base asset unless the user asked for one.
 5. `node studio save <slug> -m "<the request verbatim>"`.
 6. Reply with the variant names and how each differs. They export as `<slug>--<variant>.glb`.

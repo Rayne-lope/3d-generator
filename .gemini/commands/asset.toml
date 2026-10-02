@@ -1,11 +1,7 @@
----
 # Generated from .agents/skills/asset/SKILL.md by `node studio agents`. Edit that file, not this one.
-description: "Create a new 3D game asset from a text prompt in the AI 3D Asset Studio (procedural Three.js code in assets/<slug>/asset.js, checked from rendered review sheets, exported as GLB for Godot, Roblox Studio and glTF). Use when the user asks to make, model or generate a new prop, building, terrain piece, plant or other object."
-argument-hint: "<prompt describing the asset>"
-allowed-tools: Bash(node studio:*), Read, Write, Edit, Glob, Grep
----
-
-Request: $ARGUMENTS
+description = "Create a new 3D game asset from a text prompt in the AI 3D Asset Studio (procedural Three.js code in assets/<slug>/asset.js, checked from rendered review sheets, exported as GLB for Godot, Roblox Studio and glTF). Use when the user asks to make, model or generate a new prop, building, terrain piece, plant or other object."
+prompt = '''
+Request: {{args}}
 
 # Create a new asset
 
@@ -28,3 +24,4 @@ Follow **Workflow A** in `AGENTS.md`:
 6. `node studio save <slug> -m "<the prompt verbatim>"`.
 7. Reply: what you built (parts, size in m, triangles), anything you could not do, and 2–3 useful
    next revisions. Mention that the viewport (`node studio dev`) shows it live.
+'''

@@ -10,7 +10,7 @@ you can go back to, and you can see what each revision changed.
 | `node studio save / history / revert / undo / pin / unpin` | `studio/core/history.js`, `studio/cli/*.js` |
 | `node studio diff`: shared-camera renders, change heatmap, stats delta, source diff | `studio/core/diff.js`, `studio/cli/diff.js` |
 | Versions panel in the viewport (thumbnails, read-only preview, revert command) | `studio/viewport/app.js` |
-| Slash commands `/asset /revise /variants /set /review /export /undo` | `.claude/commands/` |
+| Agent shortcuts `asset`, `asset-revise`, `asset-variants`, `asset-set`, `asset-review`, `asset-export`, `asset-undo` (`/asset…` in Claude Code and Gemini CLI, `$asset…` in Codex) | `.agents/skills/` → `node studio agents` generates `.claude/commands/`, `.gemini/commands/` |
 | Revision protocol for the agent | `rules/10-revisions.md`, `AGENTS.md` (Workflow B) |
 
 A version is a snapshot in `.studio/history/<slug>/vNNN/`: the asset source, the generic GLB,
@@ -21,7 +21,7 @@ made, even after a revert. `revert` and `undo` auto-save unsaved changes first.
 
 ## The demo: three revisions of the pirate chest
 
-Each step below is what the agent runs for a follow-up prompt (`/revise`): smallest change,
+Each step below is what the agent runs for a follow-up prompt (`/asset-revise`): smallest change,
 `node studio diff`, review, then `save -m "<the user's words>"`.
 
 In the diff sheets, rows are views and the columns are **A | B | changes**. Both GLBs are rendered

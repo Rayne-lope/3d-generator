@@ -26,6 +26,7 @@ const COMMANDS = {
   'engine-pack': ['Prepare golden exports + manifests for Godot/Roblox engine tests', () => import('./cli/engine-pack.js')],
   'engine-verify': ['Run the Godot headless verification (needs Godot 4.3+ on PATH)', () => import('./cli/engine-verify.js')],
   doctor: ['Check the environment (Node, Chromium/WebGL, folders)', () => import('./cli/doctor.js')],
+  agents: ['Regenerate the Claude Code / Gemini CLI commands from .agents/skills (Codex reads them directly)', () => import('./cli/agents.js')],
 };
 
 function help() {

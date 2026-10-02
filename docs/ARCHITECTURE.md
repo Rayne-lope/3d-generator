@@ -50,7 +50,8 @@ prompt ──► agent writes assets/<slug>/asset.js (kit code)
 | `studio/viewport/` | Browser viewport (`index.html`, `app.js`), the capture page (`capture.html/js`) and the rendering setup they share (`scene-setup.js`). |
 | `studio/templates/` | Scaffolds for `new` and `new-set`. |
 | `assets/`, `sets/` | Asset code (the only place the agent writes code) and shared set styles. |
-| `rules/`, `AGENTS.md`, `CLAUDE.md`, `.claude/commands/` | What the agent reads and the slash commands it runs. |
+| `rules/`, `AGENTS.md`, `CLAUDE.md` | What the agent reads. |
+| `.agents/skills/` | The workflow shortcuts as Agent Skills (read directly by Codex and Gemini CLI). `node studio agents` (`studio/core/agents.js`) generates `.claude/commands/` and `.gemini/commands/` from them; `.gemini/settings.json` makes Gemini CLI load `AGENTS.md`. |
 | `golden/` | `golden.json` (the set), `manifest.json` (expected structure), `baselines/` (expected renders), `report/` (generated). |
 | `engines/` | Godot reference project (verify script + gallery) and the Roblox verify script + checklist. |
 | `.studio/` | Local state (gitignored): previews, history, shots, metrics, server info. |

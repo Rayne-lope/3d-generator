@@ -19,14 +19,18 @@ node studio dev                     # terminal 1: live viewport → http://127.0
 claude                              # terminal 2: then type  /asset A stylized wooden barrel with chunky iron hoops
 ```
 
-Then ask for changes ("make the hoops thinner"), go back with `/undo`, and export with
-`/export stylized-barrel roblox`. The full walkthrough is in the **[User Guide](docs/GUIDE.md)**.
+Then ask for changes ("make the hoops thinner"), go back with `/asset-undo`, and export with
+`/asset-export stylized-barrel roblox`. The same shortcuts work in **Gemini CLI** (`/asset …`)
+and **Codex** (`$asset …`), and any agent that reads `AGENTS.md` follows the workflow from plain
+requests. The full walkthrough is in the **[User Guide](docs/GUIDE.md)**.
 
 ## What's inside
 
-- **Agent workflow:** `AGENTS.md` (any coding agent), `CLAUDE.md`, and slash commands
-  `/asset /revise /variants /set /review /export /undo`. The agent reviews its own work from
-  rendered contact sheets of the exported GLB.
+- **Agent workflow:** `AGENTS.md` (any coding agent), `CLAUDE.md`, and seven shortcuts written
+  once as Agent Skills (`.agents/skills/`): `asset`, `asset-revise`, `asset-variants`,
+  `asset-set`, `asset-review`, `asset-export`, `asset-undo`. Use them as `/asset …` in Claude Code
+  and Gemini CLI, or `$asset …` in Codex. The agent reviews its own work from rendered contact
+  sheets of the exported GLB.
 - **Kit** (`studio/kit`): geometry, operators, UV tools and atlas packing, a texture painter
   (wood, bricks, rust, panels…), PBR materials, CSG, terrain, architecture helpers, seeded
   randomness. See [docs/KIT.md](docs/KIT.md).
@@ -63,7 +67,7 @@ Then ask for changes ("make the hoops thinner"), go back with `/undo`, and expor
 
 | | |
 | --- | --- |
-| Tests | `npm test`: 37 tests |
+| Tests | `npm test`: 41 tests |
 | Golden suite | `node studio golden`: 114/114 |
 | Godot 4.7.2 | `node studio engine-verify godot`: 38/38 golden items import without manual fixes |
 | Roblox Studio | Prepared (`node studio engine-pack roblox`). The import is checked by hand with the [checklist](engines/roblox/CHECKLIST.md), because Studio has no headless mode |

@@ -40,6 +40,28 @@ node studio golden                      # golden suite (maintainers: after kit/e
 node studio engine-verify godot  |  node studio engine-pack roblox  |  node studio doctor
 ```
 
+## Shortcuts in your agent
+
+The workflows below also exist as ready-made shortcuts, written once as Agent Skills in
+`.agents/skills/<name>/SKILL.md` (asset, asset-revise, asset-variants, asset-set, asset-review,
+asset-export, asset-undo):
+
+| Agent | How the user runs them |
+| --- | --- |
+| Claude Code | `/asset <prompt>`, `/asset-revise <slug> <change>`, … (`.claude/commands/`, generated) |
+| Gemini CLI | `/asset <prompt>`, … (`.gemini/commands/`, generated); skills from `.agents/skills` |
+| Codex | `$asset <prompt>`, `$asset-revise …`, or the `/skills` menu (reads `.agents/skills`) |
+| Any other agent | plain words: follow the matching workflow below or `.agents/skills/<name>/SKILL.md` |
+
+Plain-language requests ("make a stylized barrel") work everywhere: skills activate from their
+descriptions, and the workflows below are the same steps. To change a shortcut, edit its
+`SKILL.md` and run `node studio agents` (it regenerates the Claude and Gemini files).
+
+**Looking at images.** Reviews and diffs print PNG paths. Open them with your image tool:
+Claude Code `Read`, Codex `view_image`, Gemini CLI `read_file`. If you cannot view images, say
+so, use the numbers from `node studio review <slug> --json`, and ask the user to check the
+viewport.
+
 ## Workflow A — new asset from a prompt
 
 1. **Interpret** (reply text, 1–2 sentences): style, real size, key parts. Flag limitations.
@@ -49,8 +71,8 @@ node studio engine-verify godot  |  node studio engine-pack roblox  |  node stud
 4. **Write `build()`**: primary forms → secondary → tertiary. Put every revisable number in
    `params`. Group meshes into named `k.part`s; moving pieces get `{ separate: true, pivot }`.
    Fill `meta.interpretation` and `meta.budget`.
-5. `node studio review <slug>` → **open the printed sheet PNG** and go through
-   `rules/checklists/review.md`. Fix errors and visible problems; repeat (usually 1–3 rounds).
+5. `node studio review <slug>` → **open the printed sheet PNG** (see *Looking at images*) and go
+   through `rules/checklists/review.md`. Fix errors and visible problems; repeat (usually 1–3 rounds).
 6. `node studio save <slug> -m "<user prompt>"`.
 7. **Reply**: interpretation, what you built (parts, size, triangles), anything you could not do,
    and 2–3 useful next revisions. Mention the viewport shows it live.
@@ -87,6 +109,7 @@ Roblox: textures and colors are baked automatically; watch texel density and tri
 ## Never
 
 - Edit files under `studio/`, `exports/` (generated), `.studio/` (state) or `golden/baselines/` by hand.
+- Edit `.claude/commands/` or `.gemini/commands/` by hand: they are generated from `.agents/skills/`.
 - Run `golden --update-baselines` to make a failing golden suite pass; a regression is fixed in
   code, and baselines change only when a maintainer approves the new look.
 - Use non-kit materials, double-sided faces, negative scale, `Math.random`, `Date`, `fetch`, Node APIs in assets.
@@ -95,5 +118,5 @@ Roblox: textures and colors are baked automatically; watch texel density and tri
 
 ## Where things are
 
-`rules/` modeling knowledge · `docs/KIT.md` kit API · `docs/GUIDE.md` user guide ·
+`rules/` modeling knowledge · `.agents/skills/` workflow shortcuts · `docs/KIT.md` kit API · `docs/GUIDE.md` user guide ·
 `studio/profiles/*.json` engine limits · `assets/` assets · `sets/` packs · `exports/` engine files.

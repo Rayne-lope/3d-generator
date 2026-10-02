@@ -19,6 +19,7 @@ jobs:
       # Same Chromium build as Playwright 1.56.1 everywhere: renders (parity, golden baselines)
       # use its SwiftShader WebGL, so they are deterministic across machines.
       - run: npx playwright install --with-deps chromium
+      - run: node studio agents --check
       - run: npm test
       - run: node studio doctor
       - run: node studio golden

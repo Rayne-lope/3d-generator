@@ -86,24 +86,52 @@ Meanwhile the viewport updates on every save. What you see is the exported GLB f
 preview approximation.
 
 Then ask for changes in plain language: *"make the hoops thinner and add a lid handle"*. When
-it looks right: *"/export stylized-barrel roblox"* (or `godot`, `generic`, `all`).
+it looks right: *"/asset-export stylized-barrel roblox"* (or `godot`, `generic`, `all`).
 
 ## 3. Talking to the agent
 
-### Slash commands (Claude Code)
+### Shortcuts
 
 | Command | Use |
 | --- | --- |
 | `/asset <prompt>` | Create a new asset |
-| `/revise <slug> <change>` | Change an existing asset (smallest change, verified with a visual diff) |
-| `/variants <slug> <what>` | Add variants (sizes, colors, damage states, seeds) |
-| `/set <prompt>` | A set of matching assets from one prompt |
-| `/review <slug> [profile]` | A critical review with fixes |
-| `/export <slug> <profile>` | Export for an engine |
-| `/undo <slug>` | Go back one step |
+| `/asset-revise <slug> <change>` | Change an existing asset (smallest change, verified with a visual diff) |
+| `/asset-variants <slug> <what>` | Add variants (sizes, colors, damage states, seeds) |
+| `/asset-set <prompt>` | A set of matching assets from one prompt |
+| `/asset-review <slug> [profile]` | A critical review with fixes |
+| `/asset-export <slug> <profile>` | Export for an engine |
+| `/asset-undo <slug>` | Go back one step |
 
-Plain sentences work too: the agent follows `AGENTS.md` either way. Other agents (Cursor,
-Codex, Aider…) can use the same workflow by reading `AGENTS.md`.
+The names all start with `asset` so they never clash with an agent's built-in commands (Claude
+Code has its own `/review` and `/export`), and typing `/asset` lists all seven.
+
+Plain sentences work too ("make the barrel taller"): every agent that reads `AGENTS.md` follows
+the same workflow.
+
+### Using Codex or Gemini CLI
+
+The shortcuts are written once as **Agent Skills** in `.agents/skills/<name>/SKILL.md`, the
+open format Codex and Gemini CLI both read. Nothing to install: open the repo in the agent.
+
+| Agent | Run a shortcut | Notes |
+| --- | --- | --- |
+| **Claude Code** | `/asset A stylized barrel` | Commands are generated into `.claude/commands/`. |
+| **Gemini CLI** | `/asset A stylized barrel` | Commands are generated into `.gemini/commands/`; skills come from `.agents/skills`; `.gemini/settings.json` makes Gemini load `AGENTS.md`. If you enabled *Trusted Folders*, trust this folder when Gemini asks (otherwise project commands and settings are ignored). `/skills` lists the skills. |
+| **Codex** | `$asset A stylized barrel` | Type `$` to pick a skill, or use `/skills`. Codex reads `AGENTS.md` and `.agents/skills` by itself. Codex skills don't run as `/asset` yet; Codex also picks a skill on its own when your request matches it. |
+| **Other agents** | ask in plain words | Agents that read `AGENTS.md` (or that you point at it) follow the same steps; `.agents/skills/<name>/SKILL.md` is the step list per task. |
+
+```bash
+gemini        # then:  /asset A low-poly pine tree, 3 m tall
+codex         # then:  $asset A low-poly pine tree, 3 m tall
+```
+
+The agent must be able to run shell commands (`node studio …`) and view images to judge its
+review sheets (Claude Code `Read`, Codex `view_image`, Gemini CLI `read_file`). Without image
+input it works from the review numbers and asks you to look at the viewport.
+
+To change a shortcut for every agent at once, edit `.agents/skills/<name>/SKILL.md` and run
+`node studio agents`. It regenerates the Claude Code and Gemini CLI files, and the test suite
+fails if they are out of date. To add a new shortcut, create a new skill folder the same way.
 
 ### Writing good prompts
 
@@ -125,8 +153,8 @@ Examples:
 /asset A post-apocalyptic oil drum: rusty, dented, faded hazard stripes
 /asset A low-poly pine tree, 3 m tall, for a cozy forest scene
 /asset A modular castle wall segment, 4 m wide, with crenellations, for Roblox
-/set Cozy fantasy tavern props: a trestle table, a stool, a wooden mug, a candle holder and a wall shelf
-/variants stylized-barrel a small one and a broken one
+/asset-set Cozy fantasy tavern props: a trestle table, a stool, a wooden mug, a candle holder and a wall shelf
+/asset-variants stylized-barrel a small one and a broken one
 ```
 
 If you ask for something procedural modeling does badly (realistic creatures, faces,
@@ -368,7 +396,7 @@ windows with frames, a chimney, cozy stylized look
 
 ```
 /asset A low-poly pine tree, 3 m tall, cozy palette
-/variants lowpoly-pine-tree two more seeds, one shorter and one taller
+/asset-variants lowpoly-pine-tree two more seeds, one shorter and one taller
 ```
 
 ## 10. Golden set and engine tests
@@ -429,6 +457,7 @@ All commands accept `--help` and most accept `--json`. Targets are `<slug>`, `<s
 | `engine-pack godot\|roblox\|all [--variants\|--no-variants]` | Prepare engine checks |
 | `engine-verify godot [--no-pack] [--capture]` | Run the Godot check |
 | `doctor` | Environment check |
+| `agents [--check]` | Regenerate the Claude Code / Gemini CLI shortcuts from `.agents/skills` |
 
 ## 12. Project structure
 
@@ -436,7 +465,9 @@ All commands accept `--help` and most accept `--json`. Targets are `<slug>`, `<s
 assets/<slug>/asset.js      your assets (the only place asset code lives)
 sets/<set>/                 set.json + style.js shared by set members
 rules/                      modeling knowledge the agent reads (01–14 + review checklist)
-AGENTS.md, CLAUDE.md        the agent workflow; .claude/commands/ = slash commands
+AGENTS.md, CLAUDE.md        the agent workflow (Codex reads AGENTS.md; Gemini via .gemini/settings.json)
+.agents/skills/             the shortcuts as Agent Skills (Codex, Gemini CLI); source for
+.claude/commands/, .gemini/commands/   generated per-tool slash commands (node studio agents)
 studio/                     the tool: kit, exporter, validator, viewport, CLI (don't edit while making assets)
 studio/profiles/*.json      engine profiles (limits, policies, import hints)
 golden/                     golden set, manifest, baselines (report/ is generated)
@@ -509,8 +540,13 @@ because they are generated; commit the asset code instead.
 **How many versions are kept?** The last 20 plus every pinned one, per asset or set
 (configurable).
 
-**Can it make several assets at once?** Yes: sets from one prompt (`/set`) and variants of one
-asset (`/variants`). Arranging assets into a scene is out of scope.
+**Can it make several assets at once?** Yes: sets from one prompt (`/asset-set`) and variants of
+one asset (`/asset-variants`). Arranging assets into a scene is out of scope.
+
+**Can I use Codex, Gemini CLI or another agent instead of Claude Code?** Yes. See
+[Using Codex or Gemini CLI](#using-codex-or-gemini-cli): the same seven shortcuts are available
+(`$asset …` in Codex, `/asset …` in Gemini CLI), and any agent that reads `AGENTS.md` follows the
+workflow from plain requests.
 
 ## 17. What has been verified, and where
 

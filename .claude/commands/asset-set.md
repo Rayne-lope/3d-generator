@@ -1,12 +1,15 @@
 ---
-description: Create a consistent set/pack of assets from one prompt
-argument-hint: <prompt describing the pack>
+# Generated from .agents/skills/asset-set/SKILL.md by `node studio agents`. Edit that file, not this one.
+description: "Create a set (pack) of matching studio assets from one prompt, sharing one style module (palette, materials, bevels, shared dimensions) in sets/<set>/style.js. Use when the user asks for several related assets at once, a kit, a pack or props for one theme."
+argument-hint: "<prompt describing the pack>"
 allowed-tools: Bash(node studio:*), Read, Write, Edit, Glob, Grep
 ---
 
-Create a set of assets that share one style, from this prompt:
+Request: $ARGUMENTS
 
-> $ARGUMENTS
+# Create a set from one prompt
+
+Input: the user's prompt for the pack.
 
 Follow **Workflow D** (`AGENTS.md`) and `rules/09-sets-and-variants.md`:
 
@@ -18,7 +21,7 @@ Follow **Workflow D** (`AGENTS.md`) and `rules/09-sets-and-variants.md`:
    duplicate style values inside members.
 4. Build each member (`rules/01`–`06` + the relevant type rules), reviewing as you go:
    `node studio review <member>`.
-5. `node studio review set:<set>` → open the lineup image: same palette, same bevels, believable
-   relative scale next to the 1.75 m figure. Fix outliers.
+5. `node studio review set:<set>` → open the lineup image with your image tool: same palette,
+   same bevels, believable relative scale next to the 1.75 m figure. Fix outliers.
 6. `node studio save set:<set> -m "<the prompt verbatim>"`.
 7. Reply with the members (size, triangles each) and how they share the style.
