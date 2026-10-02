@@ -33,7 +33,7 @@ first version, and let revisions refine it.
 | [10-revisions.md](10-revisions.md) | Every follow-up prompt on an existing asset |
 | [11-limitations.md](11-limitations.md) | Organic shapes, characters, anything outside our strengths |
 | [12-environments-and-terrain.md](12-environments-and-terrain.md) | Terrain tiles, cliffs, paths, dioramas, scattering |
-| [13-buildings-and-houses.md](13-buildings-and-houses.md) | Houses, walls, roofs, doors, windows, modular kits |
+| [13-buildings-and-houses.md](13-buildings-and-houses.md) | Houses, walls, roofs, doors, windows, modular kits; whole buildings up to manors with `k.arch.building`; building from a house photo |
 | [14-nature-rocks-vegetation.md](14-nature-rocks-vegetation.md) | Rocks, trees, bushes, grass, crystals |
 | [15-weapons.md](15-weapons.md) | Guns, melee weapons, bows, shields: game-ready weapon props |
 | [16-skins-and-textures.md](16-skins-and-textures.md) | Skins (many looks on one mesh), 3D-painted atlas textures, patterns, wear |

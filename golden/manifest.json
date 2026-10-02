@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "kit": "1.1.0",
-  "updatedAt": "2026-10-02T11:54:59.886Z",
+  "updatedAt": "2026-10-02T16:04:29.853Z",
   "items": {
     "generic/ak-rifle": {
       "title": "AK-47 style assault rifle",
@@ -358,6 +358,643 @@
         -0.025
       ],
       "sha256": "e1c6ac31f70a02dbc98e655010ad10f351075eea25c16e435c96346706f12714"
+    },
+    "generic/building-styles": {
+      "title": "Building Styles",
+      "triangles": 22848,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 22848,
+          "materials": [
+            "building_roof",
+            "building_trim",
+            "building_glass",
+            "building_metal",
+            "building_door",
+            "building_wall",
+            "building_frame"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.45,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_glass",
+          "baseColor": "#1e2832",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_metal",
+          "baseColor": "#1f2224",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_door",
+          "baseColor": "#2a3f35",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_frame",
+          "baseColor": "#ece9e1",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        16.47,
+        26.1699,
+        13.47
+      ],
+      "sizeUnits": [
+        16.47,
+        26.1699,
+        13.47
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -8.235,
+        0,
+        -7.005
+      ],
+      "sha256": "05a0ca043a54e7220f6feae1862857d50812abce4db0b98c3b101a8bde81ef51"
+    },
+    "generic/building-styles--georgian": {
+      "title": "Building Styles",
+      "triangles": 15440,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 15440,
+          "materials": [
+            "building_roof",
+            "building_wall",
+            "building_trim",
+            "building_glass",
+            "building_frame",
+            "building_door",
+            "building_metal"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.6,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.86,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_glass",
+          "baseColor": "#1c2630",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_frame",
+          "baseColor": "#f1eee6",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_door",
+          "baseColor": "#1f2b26",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        14.98,
+        16.6817,
+        12.77
+      ],
+      "sizeUnits": [
+        14.98,
+        16.6817,
+        12.77
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -7.49,
+        0,
+        -6.59
+      ],
+      "sha256": "c1b69433ba4a8977b9fb7cfd666198d2fc9f9606a0b2aa0f68b92927d3289391"
+    },
+    "generic/building-styles--medieval": {
+      "title": "Building Styles",
+      "triangles": 6864,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6864,
+          "materials": [
+            "building_roof",
+            "building_trim",
+            "building_timber",
+            "building_glass",
+            "building_metal",
+            "building_wall"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.78,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_timber",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.82,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "building_glass",
+          "baseColor": "#26303a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_timber_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        9.16,
+        15.2602,
+        9.26
+      ],
+      "sizeUnits": [
+        9.16,
+        15.2602,
+        9.26
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -4.58,
+        0,
+        -4.92
+      ],
+      "sha256": "c86e68d483606fe092b059d574523efc6116cda31c8e05af13e3cf0039fd0dc8"
+    },
+    "generic/building-styles--modern": {
+      "title": "Building Styles",
+      "triangles": 2492,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2492,
+          "materials": [
+            "building_roof",
+            "building_wall",
+            "building_frame",
+            "building_glass",
+            "building_door",
+            "building_trim",
+            "building_metal"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.9,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_frame",
+          "baseColor": "#2b2e33",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.4,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_glass",
+          "baseColor": "#22303a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_door",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.82,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.9,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_metal",
+          "baseColor": "#2b2e33",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_door_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        13.18,
+        6.65,
+        9.41
+      ],
+      "sizeUnits": [
+        13.18,
+        6.65,
+        9.41
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -6.59,
+        0,
+        -4.74
+      ],
+      "sha256": "b5a5d7c2c570adf1fcfe3ace33a3d6f3dfdb1f69e73ac10a09ed02958cc271dc"
     },
     "generic/cartoon-mailbox": {
       "title": "Cartoon Mailbox",
@@ -1309,6 +1946,326 @@
       ],
       "sha256": "5af7fdaa6f20b68c4a0edaaa78d1ce3f78e48108096632e4996ec661f3c360aa"
     },
+    "generic/georgian-manor": {
+      "title": "Georgian Manor",
+      "triangles": 28380,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 28380,
+          "materials": [
+            "manor_roof",
+            "manor_wall",
+            "manor_trim",
+            "manor_glass",
+            "manor_frame",
+            "manor_door",
+            "manor_metal"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "manor_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.6,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.86,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_glass",
+          "baseColor": "#1c2630",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_frame",
+          "baseColor": "#f1eee6",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_door",
+          "baseColor": "#1f2b26",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "manor_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_wall_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_trim_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "sizeUnits": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -19.99,
+        0,
+        -9.105
+      ],
+      "sha256": "27026e6b87671881c75f9ffbe49f5c5d94ebab2a1c4bbf33fadcf2fb2702bcc8"
+    },
+    "generic/georgian-manor@stucco": {
+      "title": "Georgian Manor",
+      "triangles": 28380,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 28380,
+          "materials": [
+            "manor_roof",
+            "manor_wall",
+            "manor_trim",
+            "manor_glass",
+            "manor_frame",
+            "manor_door",
+            "manor_metal"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "manor_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.6,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_glass",
+          "baseColor": "#1c2630",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_frame",
+          "baseColor": "#f1eee6",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_door",
+          "baseColor": "#2b3b5a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "manor_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_wall_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_trim_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "sizeUnits": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -19.99,
+        0,
+        -9.105
+      ],
+      "sha256": "e6213960e662560b01d5a9a15606423c586247f162d3626e81fafb75b9a303b8"
+    },
     "generic/lowpoly-pine-tree": {
       "title": "Low-poly Pine Tree",
       "triangles": 90,
@@ -1917,6 +2874,318 @@
         -0.21
       ],
       "sha256": "43ace0b9e6f310779324d4beae155a994ff3089e7995ec83fb56720e1b3403d4"
+    },
+    "generic/medieval-townhouse": {
+      "title": "Medieval Townhouse",
+      "triangles": 6864,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6864,
+          "materials": [
+            "townhouse_roof",
+            "townhouse_trim",
+            "townhouse_timber",
+            "townhouse_glass",
+            "townhouse_metal",
+            "townhouse_wall"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "townhouse_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.78,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_timber",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.82,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "townhouse_glass",
+          "baseColor": "#26303a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "townhouse_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "townhouse_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "townhouse_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_trim_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_timber_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_wall_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        8.66,
+        14.9402,
+        8.76
+      ],
+      "sizeUnits": [
+        8.66,
+        14.9402,
+        8.76
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -4.33,
+        0,
+        -4.67
+      ],
+      "sha256": "0d6ff53a6465009906adba47b044f8ab2a275ba0e09802c82a6e32d692b80232"
+    },
+    "generic/medieval-townhouse--narrow": {
+      "title": "Medieval Townhouse",
+      "triangles": 6120,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6120,
+          "materials": [
+            "townhouse_roof",
+            "townhouse_trim",
+            "townhouse_timber",
+            "townhouse_metal",
+            "townhouse_wall",
+            "townhouse_glass"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "townhouse_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.78,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_timber",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.82,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "townhouse_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "townhouse_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_glass",
+          "baseColor": "#26303a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "townhouse_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_trim_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_timber_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_wall_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        6.16,
+        15.9762,
+        9.56
+      ],
+      "sizeUnits": [
+        6.16,
+        15.9762,
+        9.56
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -3.08,
+        0,
+        -5.07
+      ],
+      "sha256": "649268a0632c6bb0adc5c4477167c9b0f78c9aa4d1c2a335e1c982c72615631a"
     },
     "generic/minimalist-chair": {
       "title": "Minimalist Oak Chair",
@@ -4621,6 +5890,643 @@
       ],
       "sha256": "03a2dfaffd30e36f9a53bad3f511c0c68ad3345980649028e8db53fe2d160ff1"
     },
+    "godot/building-styles": {
+      "title": "Building Styles",
+      "triangles": 22848,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 22848,
+          "materials": [
+            "building_roof",
+            "building_trim",
+            "building_glass",
+            "building_metal",
+            "building_door",
+            "building_wall",
+            "building_frame"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.45,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_glass",
+          "baseColor": "#1e2832",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_metal",
+          "baseColor": "#1f2224",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_door",
+          "baseColor": "#2a3f35",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_frame",
+          "baseColor": "#ece9e1",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        16.47,
+        26.1699,
+        13.47
+      ],
+      "sizeUnits": [
+        16.47,
+        26.1699,
+        13.47
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -8.235,
+        0,
+        -7.005
+      ],
+      "sha256": "f212941b7ae4ddd41b2de196f81cc9aa61bac2a8461b08d8dedb557448a25b47"
+    },
+    "godot/building-styles--georgian": {
+      "title": "Building Styles",
+      "triangles": 15440,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 15440,
+          "materials": [
+            "building_roof",
+            "building_wall",
+            "building_trim",
+            "building_glass",
+            "building_frame",
+            "building_door",
+            "building_metal"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.6,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.86,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_glass",
+          "baseColor": "#1c2630",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_frame",
+          "baseColor": "#f1eee6",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_door",
+          "baseColor": "#1f2b26",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        14.98,
+        16.6817,
+        12.77
+      ],
+      "sizeUnits": [
+        14.98,
+        16.6817,
+        12.77
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -7.49,
+        0,
+        -6.59
+      ],
+      "sha256": "45b041dc5105f7734a6f32f3eb629e9da27a4b4e5d23582083d44219f5bcb27a"
+    },
+    "godot/building-styles--medieval": {
+      "title": "Building Styles",
+      "triangles": 6864,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6864,
+          "materials": [
+            "building_roof",
+            "building_trim",
+            "building_timber",
+            "building_glass",
+            "building_metal",
+            "building_wall"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.78,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_timber",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.82,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "building_glass",
+          "baseColor": "#26303a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_timber_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        9.16,
+        15.2602,
+        9.26
+      ],
+      "sizeUnits": [
+        9.16,
+        15.2602,
+        9.26
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -4.58,
+        0,
+        -4.92
+      ],
+      "sha256": "40dc961a91ec1f8f9b6ae49d4f94a1c75959510af5a832d2958bfa7134cc2d31"
+    },
+    "godot/building-styles--modern": {
+      "title": "Building Styles",
+      "triangles": 2492,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 2492,
+          "materials": [
+            "building_roof",
+            "building_wall",
+            "building_frame",
+            "building_glass",
+            "building_door",
+            "building_trim",
+            "building_metal"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.9,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_frame",
+          "baseColor": "#2b2e33",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.4,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_glass",
+          "baseColor": "#22303a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "building_door",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.82,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.9,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_metal",
+          "baseColor": "#2b2e33",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_wall_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_door_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "building_trim_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        13.18,
+        6.65,
+        9.41
+      ],
+      "sizeUnits": [
+        13.18,
+        6.65,
+        9.41
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -6.59,
+        0,
+        -4.74
+      ],
+      "sha256": "2c848c6e1a620dd159a9729e7fb2dc898561bdd4ac22153d0cf03f28839e486b"
+    },
     "godot/cartoon-mailbox": {
       "title": "Cartoon Mailbox",
       "triangles": 1108,
@@ -5571,6 +7477,326 @@
       ],
       "sha256": "35779666230b3fe32ecf9002ab61d7fb7ff731ed2921cd0ed534363510e110e4"
     },
+    "godot/georgian-manor": {
+      "title": "Georgian Manor",
+      "triangles": 28380,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 28380,
+          "materials": [
+            "manor_roof",
+            "manor_wall",
+            "manor_trim",
+            "manor_glass",
+            "manor_frame",
+            "manor_door",
+            "manor_metal"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "manor_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.6,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.86,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_glass",
+          "baseColor": "#1c2630",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_frame",
+          "baseColor": "#f1eee6",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_door",
+          "baseColor": "#1f2b26",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "manor_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_wall_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_trim_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "sizeUnits": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -19.99,
+        0,
+        -9.105
+      ],
+      "sha256": "df1bd15c4787dc3b8fafd06a13681bf61eabec5ed6ac949b248e4f9b49abf44b"
+    },
+    "godot/georgian-manor@stucco": {
+      "title": "Georgian Manor",
+      "triangles": 28380,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 28380,
+          "materials": [
+            "manor_roof",
+            "manor_wall",
+            "manor_trim",
+            "manor_glass",
+            "manor_frame",
+            "manor_door",
+            "manor_metal"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "manor_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.6,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.8,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_glass",
+          "baseColor": "#1c2630",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_frame",
+          "baseColor": "#f1eee6",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_door",
+          "baseColor": "#2b3b5a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "manor_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "manor_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_wall_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "manor_trim_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "sizeUnits": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -19.99,
+        0,
+        -9.105
+      ],
+      "sha256": "adf4adeb86c41332140e79efd9e75a28ca950cf8679c400ffb9ce9135233fd16"
+    },
     "godot/lowpoly-pine-tree": {
       "title": "Low-poly Pine Tree",
       "triangles": 90,
@@ -6179,6 +8405,318 @@
         -0.21
       ],
       "sha256": "f1750a62451dad9d6152970a686c7517d1c357eed0087a59aae7c74f7e2c651d"
+    },
+    "godot/medieval-townhouse": {
+      "title": "Medieval Townhouse",
+      "triangles": 6864,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6864,
+          "materials": [
+            "townhouse_roof",
+            "townhouse_trim",
+            "townhouse_timber",
+            "townhouse_glass",
+            "townhouse_metal",
+            "townhouse_wall"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "townhouse_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.78,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_timber",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.82,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "townhouse_glass",
+          "baseColor": "#26303a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "townhouse_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "townhouse_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "townhouse_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_trim_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_timber_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_wall_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        8.66,
+        14.9402,
+        8.76
+      ],
+      "sizeUnits": [
+        8.66,
+        14.9402,
+        8.76
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -4.33,
+        0,
+        -4.67
+      ],
+      "sha256": "e3983ba0a64d26b1b4cab8e9bfff28bb6d3b8599e77a10012e555340b3f3de5c"
+    },
+    "godot/medieval-townhouse--narrow": {
+      "title": "Medieval Townhouse",
+      "triangles": 6120,
+      "meshes": 1,
+      "meshNodes": [
+        {
+          "node": "body",
+          "triangles": 6120,
+          "materials": [
+            "townhouse_roof",
+            "townhouse_trim",
+            "townhouse_timber",
+            "townhouse_metal",
+            "townhouse_wall",
+            "townhouse_glass"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "townhouse_roof",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.78,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_trim",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_timber",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.82,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor"
+          ]
+        },
+        {
+          "name": "townhouse_metal",
+          "baseColor": "#2d3033",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 0.55,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        },
+        {
+          "name": "townhouse_wall",
+          "baseColor": "#cccccc",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.92,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_glass",
+          "baseColor": "#26303a",
+          "alpha": 1,
+          "metallic": 0,
+          "roughness": 0.08,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": []
+        }
+      ],
+      "textures": [
+        {
+          "name": "townhouse_roof_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_roof_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_trim_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_trim_h-normal",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_timber_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_wall_color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "townhouse_wall_h-normal",
+          "width": 512,
+          "height": 512
+        }
+      ],
+      "sizeMeters": [
+        6.16,
+        15.9762,
+        9.56
+      ],
+      "sizeUnits": [
+        6.16,
+        15.9762,
+        9.56
+      ],
+      "unitName": "m",
+      "boundsMin": [
+        -3.08,
+        0,
+        -5.07
+      ],
+      "sha256": "f6bd85d25cf21e13016181dd5c55c3a4ec75c51d2bf9eb774b7406acbc71afe9"
     },
     "godot/minimalist-chair": {
       "title": "Minimalist Oak Chair",
@@ -8883,6 +11421,876 @@
       ],
       "sha256": "b6bca43ad3417b85f42621b63d86024259e8db37d271a82214f2b4777a94e442"
     },
+    "roblox/building-styles": {
+      "title": "Building Styles",
+      "triangles": 32080,
+      "meshes": 5,
+      "meshNodes": [
+        {
+          "node": "body_building_roof",
+          "triangles": 448,
+          "materials": [
+            "building_roof"
+          ]
+        },
+        {
+          "node": "body_building_trim_chunk1",
+          "triangles": 19996,
+          "materials": [
+            "building_trim"
+          ]
+        },
+        {
+          "node": "body_building_trim_chunk2",
+          "triangles": 4036,
+          "materials": [
+            "building_trim"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 4112,
+          "materials": [
+            "palette"
+          ]
+        },
+        {
+          "node": "body_building_wall",
+          "triangles": 3488,
+          "materials": [
+            "building_wall"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_building_roof",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_trim_chunk1",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_trim_chunk2",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_wall",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_trim_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_wall_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_roof_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_roof_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_trim_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_trim_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_wall_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "palette",
+          "width": 32,
+          "height": 32
+        },
+        {
+          "name": "palette_mr",
+          "width": 32,
+          "height": 32
+        }
+      ],
+      "sizeMeters": [
+        16.47,
+        26.1699,
+        13.47
+      ],
+      "sizeUnits": [
+        58.8214,
+        93.4638,
+        48.1071
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -29.41071,
+        0,
+        -25.01786
+      ],
+      "sha256": "84df9cc44bf7da174429a4ef28800ad5db7d602a1c3dbee5d57c6aad449afb5b"
+    },
+    "roblox/building-styles--georgian": {
+      "title": "Building Styles",
+      "triangles": 20066,
+      "meshes": 4,
+      "meshNodes": [
+        {
+          "node": "body_building_roof",
+          "triangles": 478,
+          "materials": [
+            "building_roof"
+          ]
+        },
+        {
+          "node": "body_building_wall",
+          "triangles": 2696,
+          "materials": [
+            "building_wall"
+          ]
+        },
+        {
+          "node": "body_building_trim",
+          "triangles": 12280,
+          "materials": [
+            "building_trim"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 4612,
+          "materials": [
+            "palette"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_building_roof",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_wall",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_trim",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_wall_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_trim_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_roof_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_roof_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_wall_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_wall_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_trim_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_trim_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "palette",
+          "width": 32,
+          "height": 32
+        },
+        {
+          "name": "palette_mr",
+          "width": 32,
+          "height": 32
+        }
+      ],
+      "sizeMeters": [
+        14.98,
+        16.6817,
+        12.77
+      ],
+      "sizeUnits": [
+        53.5,
+        59.5776,
+        45.6071
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -26.75,
+        0,
+        -23.53571
+      ],
+      "sha256": "e2686e4fa71a1819c124c2f624ce745a1ee4033046d68e7c4b7f4d777e1cb07e"
+    },
+    "roblox/building-styles--medieval": {
+      "title": "Building Styles",
+      "triangles": 11186,
+      "meshes": 5,
+      "meshNodes": [
+        {
+          "node": "body_building_roof",
+          "triangles": 180,
+          "materials": [
+            "building_roof"
+          ]
+        },
+        {
+          "node": "body_building_trim",
+          "triangles": 850,
+          "materials": [
+            "building_trim"
+          ]
+        },
+        {
+          "node": "body_building_timber",
+          "triangles": 8852,
+          "materials": [
+            "building_timber"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 428,
+          "materials": [
+            "palette"
+          ]
+        },
+        {
+          "node": "body_building_wall",
+          "triangles": 876,
+          "materials": [
+            "building_wall"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_building_roof",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_trim",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_timber",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_wall",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_timber",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_trim_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_wall_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_roof_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_roof_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_trim_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_trim_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_timber_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_timber_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_wall_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "palette",
+          "width": 32,
+          "height": 32
+        },
+        {
+          "name": "palette_mr",
+          "width": 32,
+          "height": 32
+        }
+      ],
+      "sizeMeters": [
+        9.16,
+        15.2602,
+        9.26
+      ],
+      "sizeUnits": [
+        32.7143,
+        54.5006,
+        33.0714
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -16.35714,
+        0,
+        -17.57143
+      ],
+      "sha256": "b2a57ff776f05faf894be5999c1ce8cca1fa79065acbc29073ab78d3742e52e2"
+    },
+    "roblox/building-styles--modern": {
+      "title": "Building Styles",
+      "triangles": 2948,
+      "meshes": 5,
+      "meshNodes": [
+        {
+          "node": "body_building_roof",
+          "triangles": 48,
+          "materials": [
+            "building_roof"
+          ]
+        },
+        {
+          "node": "body_building_wall",
+          "triangles": 744,
+          "materials": [
+            "building_wall"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 1780,
+          "materials": [
+            "palette"
+          ]
+        },
+        {
+          "node": "body_building_door",
+          "triangles": 144,
+          "materials": [
+            "building_door"
+          ]
+        },
+        {
+          "node": "body_building_trim",
+          "triangles": 232,
+          "materials": [
+            "building_trim"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_building_roof",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_wall",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_door",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_building_trim",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "building_roof",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_wall",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "building_door",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        },
+        {
+          "name": "building_trim",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "building_roof_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_wall_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_trim_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_roof_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_roof_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_wall_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_wall_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_door_color_x8x8_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "building_door_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "building_trim_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "palette",
+          "width": 32,
+          "height": 32
+        },
+        {
+          "name": "palette_mr",
+          "width": 32,
+          "height": 32
+        }
+      ],
+      "sizeMeters": [
+        13.18,
+        6.65,
+        9.41
+      ],
+      "sizeUnits": [
+        47.0714,
+        23.75,
+        33.6071
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -23.53572,
+        0,
+        -16.92857
+      ],
+      "sha256": "61e97c12a32728cd4d53d017588445db69e68208e5faf7ed911500afa43ae264"
+    },
     "roblox/cartoon-mailbox": {
       "title": "Cartoon Mailbox",
       "triangles": 1108,
@@ -9768,6 +13176,436 @@
       ],
       "sha256": "7d77ad6103fee5ac10db252fa5388092dcbec374822d786b8566dbd74c6f8bb7"
     },
+    "roblox/georgian-manor": {
+      "title": "Georgian Manor",
+      "triangles": 39048,
+      "meshes": 5,
+      "meshNodes": [
+        {
+          "node": "body_manor_roof",
+          "triangles": 1262,
+          "materials": [
+            "manor_roof"
+          ]
+        },
+        {
+          "node": "body_manor_wall",
+          "triangles": 6166,
+          "materials": [
+            "manor_wall"
+          ]
+        },
+        {
+          "node": "body_manor_trim_chunk1",
+          "triangles": 20000,
+          "materials": [
+            "manor_trim"
+          ]
+        },
+        {
+          "node": "body_manor_trim_chunk2",
+          "triangles": 3828,
+          "materials": [
+            "manor_trim"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 7792,
+          "materials": [
+            "palette"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_manor_roof",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_manor_wall",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_manor_trim_chunk1",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_manor_trim_chunk2",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "manor_roof",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_wall",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_trim",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "manor_roof_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_wall_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_trim_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_roof_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_roof_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "manor_wall_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_wall_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "manor_trim_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_trim_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "palette",
+          "width": 32,
+          "height": 32
+        },
+        {
+          "name": "palette_mr",
+          "width": 32,
+          "height": 32
+        }
+      ],
+      "sizeMeters": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "sizeUnits": [
+        142.7857,
+        61.6396,
+        63.5714
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -71.39285,
+        0,
+        -32.51786
+      ],
+      "sha256": "a427f78494349e97cdf041d97dbc135d76266bcef2daddf0e599433cef0c84e5"
+    },
+    "roblox/georgian-manor@stucco": {
+      "title": "Georgian Manor",
+      "triangles": 39048,
+      "meshes": 5,
+      "meshNodes": [
+        {
+          "node": "body_manor_roof",
+          "triangles": 1262,
+          "materials": [
+            "manor_roof"
+          ]
+        },
+        {
+          "node": "body_manor_wall",
+          "triangles": 6166,
+          "materials": [
+            "manor_wall"
+          ]
+        },
+        {
+          "node": "body_manor_trim_chunk1",
+          "triangles": 20000,
+          "materials": [
+            "manor_trim"
+          ]
+        },
+        {
+          "node": "body_manor_trim_chunk2",
+          "triangles": 3828,
+          "materials": [
+            "manor_trim"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 7792,
+          "materials": [
+            "palette"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_manor_roof",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_manor_wall",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_manor_trim_chunk1",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_manor_trim_chunk2",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "manor_roof",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_wall",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "manor_trim",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "manor_roof_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_wall_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_trim_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_roof_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_roof_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "manor_wall_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_wall_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "manor_trim_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "manor_trim_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "palette",
+          "width": 32,
+          "height": 32
+        },
+        {
+          "name": "palette_mr",
+          "width": 32,
+          "height": 32
+        }
+      ],
+      "sizeMeters": [
+        39.98,
+        17.2591,
+        17.8
+      ],
+      "sizeUnits": [
+        142.7857,
+        61.6396,
+        63.5714
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -71.39285,
+        0,
+        -32.51786
+      ],
+      "sha256": "f5d1e106a0ab2c12bc3df1b7a97dfc716407f4beb1df11b47b75495da8d4ddb1"
+    },
     "roblox/lowpoly-pine-tree": {
       "title": "Low-poly Pine Tree",
       "triangles": 90,
@@ -10249,6 +14087,472 @@
         -0.75
       ],
       "sha256": "d034afa703200de57f84d3ec7017d193c36d3c54b34cd6c302f7ac20f5fbc6bd"
+    },
+    "roblox/medieval-townhouse": {
+      "title": "Medieval Townhouse",
+      "triangles": 11234,
+      "meshes": 5,
+      "meshNodes": [
+        {
+          "node": "body_townhouse_roof",
+          "triangles": 180,
+          "materials": [
+            "townhouse_roof"
+          ]
+        },
+        {
+          "node": "body_townhouse_trim",
+          "triangles": 654,
+          "materials": [
+            "townhouse_trim"
+          ]
+        },
+        {
+          "node": "body_townhouse_timber",
+          "triangles": 9356,
+          "materials": [
+            "townhouse_timber"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 428,
+          "materials": [
+            "palette"
+          ]
+        },
+        {
+          "node": "body_townhouse_wall",
+          "triangles": 616,
+          "materials": [
+            "townhouse_wall"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_townhouse_roof",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_townhouse_trim",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_townhouse_timber",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_townhouse_wall",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "townhouse_roof",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_trim",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_timber",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        },
+        {
+          "name": "townhouse_wall",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "townhouse_roof_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_trim_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_wall_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_roof_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_roof_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "townhouse_trim_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_trim_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "townhouse_timber_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_timber_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "townhouse_wall_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "palette",
+          "width": 32,
+          "height": 32
+        },
+        {
+          "name": "palette_mr",
+          "width": 32,
+          "height": 32
+        }
+      ],
+      "sizeMeters": [
+        8.66,
+        14.9402,
+        8.76
+      ],
+      "sizeUnits": [
+        30.9286,
+        53.3577,
+        31.2857
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -15.46429,
+        0,
+        -16.67857
+      ],
+      "sha256": "35cb686382eb40263da95e5c1d5a7dab508a484a1469e9738416ef39ab2ef463"
+    },
+    "roblox/medieval-townhouse--narrow": {
+      "title": "Medieval Townhouse",
+      "triangles": 8764,
+      "meshes": 5,
+      "meshNodes": [
+        {
+          "node": "body_townhouse_roof",
+          "triangles": 164,
+          "materials": [
+            "townhouse_roof"
+          ]
+        },
+        {
+          "node": "body_townhouse_trim",
+          "triangles": 560,
+          "materials": [
+            "townhouse_trim"
+          ]
+        },
+        {
+          "node": "body_townhouse_timber",
+          "triangles": 6712,
+          "materials": [
+            "townhouse_timber"
+          ]
+        },
+        {
+          "node": "body_palette",
+          "triangles": 356,
+          "materials": [
+            "palette"
+          ]
+        },
+        {
+          "node": "body_townhouse_wall",
+          "triangles": 972,
+          "materials": [
+            "townhouse_wall"
+          ]
+        }
+      ],
+      "nodes": [
+        {
+          "name": "body_townhouse_roof",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_townhouse_trim",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_townhouse_timber",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_palette",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "body_townhouse_wall",
+          "translation": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "name": "townhouse_roof",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_trim",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "townhouse_timber",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        },
+        {
+          "name": "townhouse_wall",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness",
+            "normal"
+          ]
+        },
+        {
+          "name": "palette",
+          "baseColor": "#ffffff",
+          "alpha": 1,
+          "metallic": 1,
+          "roughness": 1,
+          "alphaMode": "OPAQUE",
+          "emissive": null,
+          "maps": [
+            "baseColor",
+            "metallicRoughness"
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "townhouse_roof_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_trim_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_wall_h-normal_x4x4",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_roof_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_roof_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "townhouse_trim_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_trim_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "townhouse_timber_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "townhouse_timber_mr",
+          "width": 4,
+          "height": 4
+        },
+        {
+          "name": "townhouse_wall_color_x4x4_tinted",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "name": "palette",
+          "width": 32,
+          "height": 32
+        },
+        {
+          "name": "palette_mr",
+          "width": 32,
+          "height": 32
+        }
+      ],
+      "sizeMeters": [
+        6.16,
+        15.9762,
+        9.56
+      ],
+      "sizeUnits": [
+        22,
+        57.058,
+        34.1429
+      ],
+      "unitName": "stud",
+      "boundsMin": [
+        -11,
+        0,
+        -18.10714
+      ],
+      "sha256": "e8fbfb1d4ee2500eb5b25f11fc732b81b7a3657c8d2f44557e7375128827251b"
     },
     "roblox/minimalist-chair": {
       "title": "Minimalist Oak Chair",

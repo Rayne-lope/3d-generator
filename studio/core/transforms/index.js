@@ -36,6 +36,105 @@ function primsUsing(ir, matId) {
 
 // ------------------------------------------------------------------ tile-bake
 
+/** Texture repeats per meter on these primitives (area weighted), like the density check. */
+function repeatsPerMeter(prims) {
+  let uv = 0;
+  let area = 0;
+  for (const p of prims) {
+    const P = p.positions;
+    const U = p.uvs;
+    for (let t = 0; t < P.length / 9; t++) {
+      const i = t * 9;
+      const ax = P[i + 3] - P[i]; const ay = P[i + 4] - P[i + 1]; const az = P[i + 5] - P[i + 2];
+      const bx = P[i + 6] - P[i]; const by = P[i + 7] - P[i + 1]; const bz = P[i + 8] - P[i + 2];
+      area += Math.hypot(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx) / 2;
+      const j = t * 6;
+      uv += Math.abs((U[j + 2] - U[j]) * (U[j + 5] - U[j + 1]) - (U[j + 4] - U[j]) * (U[j + 3] - U[j + 1])) / 2;
+    }
+  }
+  return area > 0 ? Math.sqrt(uv / area) : 0;
+}
+
+const WRAP = 4;
+
+/** Split a convex polygon (vertices {p, n, uv}) by the line uv[axis] = value. */
+function splitPoly(poly, axis, value) {
+  const below = [];
+  const above = [];
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    const da = a.uv[axis] - value;
+    const db = b.uv[axis] - value;
+    if (da <= 0) below.push(a);
+    if (da >= 0) above.push(a);
+    if ((da < 0 && db > 0) || (da > 0 && db < 0)) {
+      const t = da / (da - db);
+      const lerp = (x, y) => x.map((v, k) => v + (y[k] - v) * t);
+      const n = lerp(a.n, b.n);
+      const len = Math.hypot(n[0], n[1], n[2]) || 1;
+      const c = { p: lerp(a.p, b.p), n: n.map((v) => v / len), uv: lerp(a.uv, b.uv) };
+      c.uv[axis] = value;
+      below.push(c);
+      above.push(c);
+    }
+  }
+  return [below, above];
+}
+
+/**
+ * Cut a triangle-soup primitive on a grid of `su` × `sv` UV repeats (0 = leave that axis) and
+ * shift each piece by whole repeats so its UVs fall in [u0, u0 + su] × [v0, v0 + sv].
+ */
+function wrapUVs(p, su, sv, u0, v0) {
+  const P = p.positions;
+  const N = p.normals;
+  const U = p.uvs;
+  const outP = [];
+  const outN = [];
+  const outU = [];
+  const vert = (i) => ({ p: [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]], n: [N[i * 3], N[i * 3 + 1], N[i * 3 + 2]], uv: [U[i * 2], U[i * 2 + 1]] });
+  for (let t = 0; t < P.length / 9; t++) {
+    let polys = [[vert(t * 3), vert(t * 3 + 1), vert(t * 3 + 2)]];
+    for (const [axis, size, origin] of [[0, su, u0], [1, sv, v0]]) {
+      if (!size) continue;
+      const vals = polys.flatMap((poly) => poly.map((v) => v.uv[axis]));
+      const lo = Math.min(...vals);
+      const hi = Math.max(...vals);
+      for (let k = Math.floor((lo - origin) / size) + 1; origin + k * size < hi; k++) {
+        const line = origin + k * size;
+        const next = [];
+        for (const poly of polys) for (const part of splitPoly(poly, axis, line)) if (part.length >= 3) next.push(part);
+        polys = next;
+      }
+    }
+    for (const poly of polys) {
+      const cu = poly.reduce((s, v) => s + v.uv[0], 0) / poly.length;
+      const cv = poly.reduce((s, v) => s + v.uv[1], 0) / poly.length;
+      const du = su ? Math.floor((cu - u0) / su) * su : 0;
+      const dv = sv ? Math.floor((cv - v0) / sv) * sv : 0;
+      for (let i = 1; i + 1 < poly.length; i++) {
+        // Cut points can be collinear with their neighbours: skip the zero-area fan triangles.
+        const [a, b, c] = [poly[0].p, poly[i].p, poly[i + 1].p];
+        const ux = b[0] - a[0]; const uy = b[1] - a[1]; const uz = b[2] - a[2];
+        const vx = c[0] - a[0]; const vy = c[1] - a[1]; const vz = c[2] - a[2];
+        if (Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) < 1e-10) continue;
+        for (const v of [poly[0], poly[i], poly[i + 1]]) {
+          outP.push(...v.p);
+          outN.push(...v.n);
+          // Clamp float overshoot at the cell edges (pieces lie inside one cell by construction).
+          const uu = su ? Math.min(u0 + su, Math.max(u0, v.uv[0] - du)) : v.uv[0];
+          const vv = sv ? Math.min(v0 + sv, Math.max(v0, v.uv[1] - dv)) : v.uv[1];
+          outU.push(uu, vv);
+        }
+      }
+    }
+  }
+  p.positions = new Float32Array(outP);
+  p.normals = new Float32Array(outN);
+  p.uvs = new Float32Array(outU);
+}
+
 function tileBake(ir, profile) {
   const maxTiles = profile.uv.maxTiles || 16;
   for (const m of ir.materials) {
@@ -60,34 +159,58 @@ function tileBake(ir, profile) {
     const v0 = Math.floor(vMin + eps);
     const nu = Math.max(1, Math.ceil(uMax - eps) - u0);
     const nv = Math.max(1, Math.ceil(vMax - eps) - v0);
-    if (nu * nv > maxTiles) {
-      ir.notes.push({ id: 'tile-bake.too-many', message: `material '${m.name}' repeats ${nu}×${nv} times; more than ${maxTiles} tiles cannot be baked without losing detail. Use fewer repeats (larger texture scale) or split the surface.` });
-      continue;
+    let tu = nu;
+    let tv = nv;
+    let wrapped = false;
+    // Texel density the plain bake would give: repeats squeezed into the profile's max size.
+    const max0 = profile.textures.maxSize || 4096;
+    const src0 = ir.textures[texIds[0]];
+    const perRepeat = Math.sqrt((floorPOT(Math.min(max0, src0.width * nu)) / nu) * (floorPOT(Math.min(max0, src0.height * nv)) / nv));
+    const minDensity = profile.textures.texelDensity?.min || 0;
+    const tooBlurry = minDensity > 0 && perRepeat * repeatsPerMeter(prims) < minDensity;
+    if (nu * nv > maxTiles || tooBlurry) {
+      // Large surfaces (building walls, long trims): cut the triangles on a grid of WRAP
+      // repeats and shift every piece's UVs by whole repeats, so only WRAP × WRAP repeats need
+      // baking. The texture tiles, so the result looks the same.
+      tu = Math.min(nu, WRAP);
+      tv = Math.min(nv, WRAP);
+      if (tu * tv > maxTiles) {
+        ir.notes.push({ id: 'tile-bake.too-many', message: `material '${m.name}' repeats ${nu}×${nv} times; more than ${maxTiles} tiles cannot be baked without losing detail. Use fewer repeats (larger texture scale) or split the surface.` });
+        continue;
+      }
+      const su = nu > WRAP ? WRAP : 0;
+      const sv = nv > WRAP ? WRAP : 0;
+      if (su || sv) {
+        for (const p of prims) wrapUVs(p, su, sv, u0, v0);
+        wrapped = true;
+      }
     }
     // Bake straight to the final size (profile max, power of two) — no giant intermediate image.
     const max = profile.textures.maxSize || 4096;
     for (const key of TEX_KEYS) {
       if (m[key] === null) continue;
       const src = ir.textures[m[key]];
-      let w = src.width * nu;
-      let h = src.height * nv;
+      let w = src.width * tu;
+      let h = src.height * tv;
       const scale = Math.min(1, max / Math.max(w, h));
       w = floorPOT(Math.max(1, Math.round(w * scale)));
       h = floorPOT(Math.max(1, Math.round(h * scale)));
-      const data = tileResize(src.data, src.width, src.height, nu, nv, w, h, { space: src.space, normal: src.slots.includes('normal') });
-      const t = cloneTexture(ir, m[key], { data, width: w, height: h, name: `${src.name}_x${nu}x${nv}`, tileable: true });
+      const data = tileResize(src.data, src.width, src.height, tu, tv, w, h, { space: src.space, normal: src.slots.includes('normal') });
+      const t = cloneTexture(ir, m[key], { data, width: w, height: h, name: `${src.name}_x${tu}x${tv}`, tileable: true });
       m[key] = t.id;
-      if (w !== src.width * nu || h !== src.height * nv) {
-        ir.notes.push({ id: 'texture.downscaled', message: `texture '${t.name}' baked at ${w}×${h} instead of ${src.width * nu}×${src.height * nv} (${profile.label}: max ${max}px, power of two); the preview shows exactly this` });
+      if (w !== src.width * tu || h !== src.height * tv) {
+        ir.notes.push({ id: 'texture.downscaled', message: `texture '${t.name}' baked at ${w}×${h} instead of ${src.width * tu}×${src.height * tv} (${profile.label}: max ${max}px, power of two); the preview shows exactly this` });
       }
     }
     for (const p of prims) {
       for (let i = 0; i < p.uvs.length; i += 2) {
-        p.uvs[i] = (p.uvs[i] - u0) / nu;
-        p.uvs[i + 1] = (p.uvs[i + 1] - v0) / nv;
+        p.uvs[i] = (p.uvs[i] - u0) / tu;
+        p.uvs[i + 1] = (p.uvs[i + 1] - v0) / tv;
       }
     }
-    ir.notes.push({ id: 'tile-bake', message: `material '${m.name}': ${nu}×${nv} texture repeats baked into the image so UVs fit 0..1` });
+    ir.notes.push({ id: 'tile-bake', message: wrapped
+      ? `material '${m.name}': ${nu}×${nv} repeats wrapped into ${tu}×${tv} (surfaces cut on the tile grid) and baked into the image so UVs fit 0..1`
+      : `material '${m.name}': ${nu}×${nv} texture repeats baked into the image so UVs fit 0..1` });
   }
 }
 

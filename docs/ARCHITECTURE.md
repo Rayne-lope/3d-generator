@@ -33,9 +33,9 @@ prompt ──► agent writes assets/<slug>/asset.js (kit code)
 | Path | Role |
 | --- | --- |
 | `studio/index.js` | CLI entry. Dispatches `node studio <command>` to `studio/cli/<command>.js`. |
-| `studio/kit/` | The asset toolkit (isomorphic: Node + browser, no Node built-ins). `k.js` is the namespace; geo, ops, uv, texture painter, 3D surface bake (`bake.js`) and patterns (`patterns.js`), materials, terrain, arch, csg, rng, noise, units. `runtime.js` runs an asset definition (params: defaults ← variant ← skin). |
+| `studio/kit/` | The asset toolkit (isomorphic: Node + browser, no Node built-ins). `k.js` is the namespace; geo, ops, uv, texture painter, 3D surface bake (`bake.js`) and patterns (`patterns.js`), materials, terrain, arch, buildings (`building.js` plan → modules → zones, styles as data in `building-styles.js`), csg, rng, noise, units. `runtime.js` runs an asset definition (params: defaults ← variant ← skin). |
 | `studio/core/ir/` | `from-three.js`: three.js scene → IR (rejects anything non-portable with a fix hint). `to-gltf.js`: IR → glTF-Transform document → GLB. |
-| `studio/core/transforms/` | Engine profile transforms on the IR (`index.js`) and pixel helpers (`pixels.js`). |
+| `studio/core/transforms/` | Engine profile transforms on the IR (`index.js`: tile bake, which wraps large tiling surfaces on the tile grid for Roblox; factor bake; palette atlas; splits; texture limits; dilation) and pixel helpers (`pixels.js`). |
 | `studio/core/validate/` | Khronos glTF validator + studio checks (`checks/geometry, texture-uv, material, scene, source`). Issues are `{ id, severity, message, hint, where }`. |
 | `studio/core/build.js` | One item × one profile: build → GLB → inspect → validate → report. Results are cached by a hash of the asset folder, the set folder, the kit, the core and the profiles. |
 | `studio/core/render/` | `capture.js` drives the headless capture page. `image.js` handles PNGs, pixel diffs and grids. |

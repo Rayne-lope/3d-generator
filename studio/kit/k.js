@@ -14,6 +14,7 @@ import { surface } from './bake.js';
 import { subtract, union, intersect } from './csg.js';
 import { terrain } from './terrain.js';
 import * as arch from './arch.js';
+import { plan as buildingPlan, build as buildingBuild, materials as buildingMaterials, building, styles as buildingStyles, resolveStyle, windowSpec, massRect } from './building.js';
 import { units } from './units.js';
 import { createRng } from './rng.js';
 import { createNoise } from './noise.js';
@@ -76,7 +77,7 @@ export const k = {
   tex: { create: createTexture, normalFromHeight, orm: packORM, pattern },
   bake: { surface },
   csg: { subtract, union, intersect },
-  arch,
+  arch: { ...arch, plan: buildingPlan, build: buildingBuild, materials: buildingMaterials, building, styles: buildingStyles, resolveStyle, windowSpec, massRect },
   units,
   rng: createRng,
   noise: createNoise,

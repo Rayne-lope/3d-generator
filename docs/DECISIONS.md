@@ -38,7 +38,7 @@ automatically by `node studio engine-verify godot`).
 | Max texture | 4096 (warn > 2048) | 4096 (warn > 2048) | **1024** |
 | Materials per mesh | many | many | **1** (split into MeshParts; flat colors → palette atlas) |
 | Color/metal/rough factors | kept | kept | **baked into textures** |
-| UV range | any (REPEAT) | any | **0..1** (texture repeats baked into the image) |
+| UV range | any (REPEAT) | any | **0..1** (texture repeats baked into the image; large surfaces cut on the tile grid first) |
 | Min UV island padding (atlas textures) | 4 px | 4 px | **8 px at the final size** |
 | Texel density min / target | 128 / 256 px/m | 128 / 256 | **90 / 180 px/m** |
 | Alpha | all | all | opaque, mask (blend = warning) |
@@ -59,7 +59,22 @@ automatically by `node studio engine-verify godot`).
 - Godot 4 imports glTF 2.0 natively (editor import, or runtime `GLTFDocument.append_from_file` + `generate_scene`). Meters, +Y up; models face +Z (`Vector3.MODEL_FRONT`), so no conversion is needed. Latest stable at the time of writing: 4.7.2.
 - `baseColorFactor` → `StandardMaterial3D.albedo_color` (converted to sRGB by the importer); metallic-roughness, normal (with tangents), occlusion, emissive and alpha modes map directly.
 - Godot imports 3D textures as **VRAM Compressed** by default (lossy). For pixel-exact palettes set the texture import mode to Lossless; the default is fine for most assets.
-- **Verified (2026-10-01):** `node studio engine-verify godot` on the official Godot 4.7.2 Linux build: **44/44** golden items (re-verified 2026-10-02 with the AK skins and the energy rifle) load through `GLTFDocument` with the expected size and bounds, triangles, mesh/surface counts, node pivots, albedo, alpha, metallic/roughness, texture slots, emission, transparency and culling. Deliberately corrupted expectations fail as they should. `--capture` renders every item in Godot next to the studio view (`docs/demos/phase5.md`). CI repeats the check on every push.
+- **Verified (2026-10-01):** `node studio engine-verify godot` on the official Godot 4.7.2 Linux build: **52/52** golden items (re-verified 2026-10-02 with the AK skins, the energy rifle and the buildings) load through `GLTFDocument` with the expected size and bounds, triangles, mesh/surface counts, node pivots, albedo, alpha, metallic/roughness, texture slots, emission, transparency and culling. Deliberately corrupted expectations fail as they should. `--capture` renders every item in Godot next to the studio view (`docs/demos/phase5.md`). CI repeats the check on every push.
+
+### Buildings (`k.arch.building`)
+
+- **Plan → modules → zones, not a node-graph port.** ProceduralBuildingsThreeJS (MIT) gets its
+  detail from Blender-modeled modules and a geometry-nodes evaluator; neither fits agents that
+  write code. We kept its idea (facade grammar: bays × floors → module per slot, pattern rules
+  per floor) and wrote modules procedurally with the kit, so styles are data and agents can add
+  them.
+- **Masses** (boxes) instead of facades: wings, pavilions and porches hide each other's walls,
+  which is what manor-scale plans need.
+- **Tiling materials per zone**, never one unique atlas: a 40 m building at 1024 px cannot reach
+  90 px/m. For Roblox, the tile-bake transform **wraps** large surfaces (cuts them on the tile grid
+  and shifts each piece by whole repeats) when the plain bake would exceed 64 repeats or drop
+  below the minimum texel density; assets that passed before export byte-identical.
+- **Budget by detail level** (2 → 1 → 0), deterministic: the same plan always gives the same mesh.
 
 ## Quality gates the user asked for
 
@@ -105,6 +120,6 @@ Plus geometry (inverted faces, inside-out shells, degenerate/duplicate triangles
 ## Reliability
 
 - **Preview = Export** is enforced, not assumed: `export` rebuilds from scratch and refuses to write a file whose bytes differ from the preview the user approved.
-- **Golden suite** (`node studio golden`): 21 assets / 44 items × 3 profiles (skins included), checked for validation, determinism, structure (`golden/manifest.json`), visual regression against committed baselines and source-vs-GLB parity. Baselines change only through `--update-baselines`, so an unnoticed visual change cannot slip in.
+- **Golden suite** (`node studio golden`): 24 assets / 52 items × 3 profiles (skins included), checked for validation, determinism, structure (`golden/manifest.json`), visual regression against committed baselines and source-vs-GLB parity. Baselines change only through `--update-baselines`, so an unnoticed visual change cannot slip in.
 - The viewport environment map (PMREM) is built once per renderer: on software WebGL each rebuild cost about 2 s, so caching it made every render command 10–20× faster without changing a pixel.
 - **History** stores each version's parent, so `undo` follows the edits actually made, even after a revert; unsaved work is auto-saved before any restore.

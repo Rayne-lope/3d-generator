@@ -343,6 +343,49 @@ humanHeight 1.75.
 
 See `rules/13-buildings-and-houses.md` for proportions, openings with depth, and roofs.
 
+### Buildings (`k.arch.building`)
+
+Whole buildings from **masses** (boxes of the plan) and a **style** (data). Three steps with
+plain data in between, all deterministic:
+
+| Call | Result |
+| --- | --- |
+| `k.arch.building(spec)` | Everything at once: `{ part, plan, stats, materials }`. `part` is a `k.part` with one mesh per material; `stats` = `{ triangles, detail, perZone, slots, budget, overBudget }`. |
+| `k.arch.plan(spec)` | The layout only: masses with their sides, bays and per-floor hidden intervals, and `slots` (`{ mass, side, floor, bay, role: 'door' \| 'window', floorRole, u }`). |
+| `k.arch.build(plan, { detail: 'auto' \| 0 \| 1 \| 2, budget })` | Geometry per material zone (`{ zones, plan, stats }`). `'auto'` tries detail 2 → 1 → 0 until `budget` fits. |
+| `k.arch.materials(style, { prefix, size, finishes, zones })` | One tiling material per zone (aliases share one). |
+| `k.arch.styles`, `k.arch.resolveStyle(style)` | The built-in styles; resolve a name or `{ extends, …overrides }`. |
+| `k.arch.massRect(mass, floor)`, `k.arch.windowSpec(style, role)` | Footprint of a mass at a floor (jetties included); the window used on a floor role. |
+
+`spec`:
+
+| Field | Meaning |
+| --- | --- |
+| `style` | `'georgian'`, `'medieval-timber'`, `'paris-haussmann'`, `'modern'`, or a style object (`{ extends: 'georgian', roof: { type: 'gable' } }`). |
+| `masses` | `[{ id, x, z, width, depth, floors, groundFloorHeight, floorHeight, roof, bays, blank, jetty, chimneys, dormers }]`. `x`/`z` = center, front = +Z. `roof: { type: 'gable' \| 'hip' \| 'mansard' \| 'shed' \| 'flat', pitch, ridge: 'x' \| 'z', overhang, thickness }` (mansard: `lowerPitch`, `lowerHeight`, `upperPitch`). `bays: { front: 7 }` forces a count; `blank: { front: [0, 6] }` leaves bays without windows; `jetty: { amount, sides }`; `chimneys: false \| { count, placement: 'ends' \| 'ridge' }`; `dormers: false`. |
+| `entrance` | `{ mass, side, bay }` (defaults: first mass, front, center bay). |
+| `portico` | `{ columns, bays, floors, depth, radius, pediment, pitch }` or `false` (overrides the style). |
+| `finishes` | Per zone: `{ kind, color, mortar, tile, roughness }` or another zone's name. Zones: `wall`, `trim`, `roof`, `frame`, `glass`, `door`, `metal`, `timber`, `chimney`, `shutter`. Kinds: `brick`, `ashlar`, `rubble`, `plaster`, `concrete`, `slate`, `clay-tiles`, `thatch`, `zinc`, `timber`, `paint`, `glass`, `iron`. |
+| `name`, `budget`, `detail`, `texSize` | Part and material name prefix, triangle budget, fixed detail level, texture size (default 512). |
+
+A style (see `studio/kit/building-styles.js`) sets `wallThickness`, `groundFloorHeight`,
+`floorHeight`, `plinth`, `bay` (`width`, `min`, `margin`, `symmetric`), `floorZones`, `windows`
+per floor role (`ground`, `noble`, `upper`, `top`: `w`, `h`, `sill`, `shape`, `frame`,
+`mullions`, `head`, `sillBlock`, `shutters`, `balcony`), `door`, `bands` (`stringCourse`,
+`cornice`: stacked `[height, projection]`), `quoins`, `roof`, `dormers`, `chimneys`, `portico`,
+`timber`, `jetty` and `finishes`.
+
+```js
+const house = k.arch.building({
+  name: 'townhouse',
+  style: { extends: 'medieval-timber', roof: { pitch: 48 } },
+  masses: [{ width: 7.5, depth: 6, floors: 3 }],
+  finishes: { wall: { kind: 'plaster', color: p.plaster, tile: 2 } },
+  budget: 20000,
+});
+asset.add(house.part);
+```
+
 ## Units
 
 `k.units.studs(n)` (studs → m, 1 stud = 0.28 m), `k.units.toStuds(m)`, `k.units.cm(n)`,
@@ -435,4 +478,6 @@ Then: `node studio review wooden-stool`, open the sheet, fix, and
 | `k.shape.offset: offset … collapses the shape` | The inset is larger than the shape allows: use a smaller distance. |
 | `k.geo.loft: pass at least 2 sections` / `every section needs at least 3 points` | Give two or more `{ at, shape }` sections. |
 | `k.geo.sweep: path too short` | The path needs two or more distinct points. |
+| `k.arch: unknown style '…'` | Use a built-in style name or pass a style object (`{ extends: 'georgian', … }`). |
+| `k.arch.plan: mass … needs width > 0 and depth > 0` / `two masses are called '…'` / `entrance mass '…' does not exist` | Fix the masses list. |
 | Validator issue ids (`uv.padding`, `scene.mesh-triangles`, `texture.low-density`…) | See `rules/07-export-hygiene.md`, which has a fix for every id. |

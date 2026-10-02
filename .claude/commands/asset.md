@@ -19,7 +19,8 @@ Follow **Workflow A** in `AGENTS.md`:
    `node studio new <slug> --prompt "<the prompt verbatim>" --category <category> --style <style,words>`.
 3. Read `rules/01`–`06`, the rule files for the asset type (12 terrain, 13 buildings, 14 nature,
    15 weapons, 17 complex shapes such as sci-fi gear, vehicles and gadgets, 08 for the style
-   words) and `docs/KIT.md`. If the user gave a picture, save it as `assets/<slug>/reference.png`
+   words) and `docs/KIT.md`. Buildings bigger than a hut use `k.arch.building` (rule 13 §9); for a
+   photo of a house, read it into a plan first (rule 13 §10). If the user gave a picture, save it as `assets/<slug>/reference.png`
    and set `meta.reference: { image: 'reference.png', view: 'front' }` (rule 17).
 4. Write `build()` in `assets/<slug>/asset.js`: primary forms → secondary → tertiary detail.
    Revisable numbers go in `params`. Moving parts get `{ separate: true, pivot }`. Fill

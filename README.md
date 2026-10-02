@@ -37,6 +37,12 @@ requests. The full walkthrough is in the **[User Guide](docs/GUIDE.md)**.
   (wood, bricks, rust, panels…), PBR materials, CSG, terrain, architecture helpers, seeded
   randomness, and a shape language for complex forms (chamfered/filleted outlines, splines,
   bands, insets, loft, sweep, solids from two blueprint views). See [docs/KIT.md](docs/KIT.md).
+- **Buildings up to manor scale:** `k.arch.building` turns a plan (masses, floors, roof) and a
+  style (`georgian`, `medieval-timber`, `paris-haussmann`, `modern`, or your own as data) into a
+  detailed house: bays, windows with heads and sash bars, doors with fanlights, bands, cornices,
+  quoins, timber framing, jetties, dormers, chimneys, porticos, tiling materials and skins, within
+  a triangle budget and Roblox-ready. Agents also read a photo of a house into a plan. See the
+  [buildings demo](docs/demos/buildings.md).
 - **Complex shapes from a picture:** drop a side view as `reference.png`; every review overlays
   the model on it and prints the silhouette match, next to a parts view and a blueprint with
   rulers. See the [energy rifle demo](docs/demos/complex-shapes.md).
@@ -56,8 +62,8 @@ requests. The full walkthrough is in the **[User Guide](docs/GUIDE.md)**.
   [AK skins demo](docs/demos/skins.md).
 - **Publish to Roblox:** `node studio publish <asset> --roblox [--skins]` uploads through Open
   Cloud (new versions on re-publish, images reused), no manual import.
-- **Reliability:** a golden suite (44 items × 3 profiles: validation, determinism, structure,
-  regression, parity), real-engine verification in **Godot 4.7.2 (44/44)**, a Roblox Studio pack
+- **Reliability:** a golden suite (52 items × 3 profiles: validation, determinism, structure,
+  regression, parity), real-engine verification in **Godot 4.7.2 (52/52)**, a Roblox Studio pack
   with a verify script and checklist, and CI.
 - **Modeling knowledge:** `rules/` covers silhouette, proportion, detail, materials, topology,
   parts and pivots, export hygiene, styles, sets, revisions and limitations, plus core guides for
@@ -72,7 +78,7 @@ requests. The full walkthrough is in the **[User Guide](docs/GUIDE.md)**.
 | [docs/KIT.md](docs/KIT.md) | The kit API used in `assets/<slug>/asset.js` |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the pipeline, viewport, validator and tests fit together |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Answers to the PRD's open questions, engine research, verification status |
-| [docs/demos/](docs/demos/) | Evidence per PRD phase ([1](docs/demos/phase1.md) · [2](docs/demos/phase2.md) · [3](docs/demos/phase3.md) · [4](docs/demos/phase4.md) · [5](docs/demos/phase5.md)) the [skins demo](docs/demos/skins.md) and the [complex shapes demo](docs/demos/complex-shapes.md) |
+| [docs/demos/](docs/demos/) | Evidence per PRD phase ([1](docs/demos/phase1.md) · [2](docs/demos/phase2.md) · [3](docs/demos/phase3.md) · [4](docs/demos/phase4.md) · [5](docs/demos/phase5.md)), plus the [skins](docs/demos/skins.md), [complex shapes](docs/demos/complex-shapes.md) and [buildings](docs/demos/buildings.md) demos |
 | [engines/roblox/CHECKLIST.md](engines/roblox/CHECKLIST.md) · [engines/godot/README.md](engines/godot/README.md) | Engine checks |
 | [docs/PRD — AI 3D Asset Studio.md](<docs/PRD — AI 3D Asset Studio.md>) | The product requirements |
 
@@ -80,9 +86,9 @@ requests. The full walkthrough is in the **[User Guide](docs/GUIDE.md)**.
 
 | | |
 | --- | --- |
-| Tests | `npm test`: 68 tests |
-| Golden suite | `node studio golden`: 132/132 |
-| Godot 4.7.2 | `node studio engine-verify godot`: 44/44 golden items import without manual fixes |
+| Tests | `npm test`: 74 tests |
+| Golden suite | `node studio golden`: 156/156 |
+| Godot 4.7.2 | `node studio engine-verify godot`: 52/52 golden items import without manual fixes |
 | Roblox Studio | Prepared (`node studio engine-pack roblox`). The import is checked by hand with the [checklist](engines/roblox/CHECKLIST.md), because Studio has no headless mode |
 
 Requires Node.js 20.11+. No build step, no cloud services: everything runs locally.

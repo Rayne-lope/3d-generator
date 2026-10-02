@@ -28,6 +28,9 @@
     { "slug": "tavern-candle-holder", "type": "set member (emissive)", "style": "cozy (set: tavern)", "variants": "all" },
     { "slug": "tavern-shelf", "type": "set member (back-center origin)", "style": "cozy (set: tavern)", "variants": "all" },
     { "slug": "ak-rifle", "type": "weapon (detachable magazine part, skins)", "style": "realistic (3D-painted atlas)", "variants": "all", "skins": ["desert", "digital", "gold"] },
-    { "slug": "energy-rifle", "type": "weapon (shape language: chamfers, polylines, dualProfile, loft, sweep; skins)", "style": "sci-fi (3D-painted atlas + glow)", "variants": "all", "skins": ["crimson"] }
+    { "slug": "energy-rifle", "type": "weapon (shape language: chamfers, polylines, dualProfile, loft, sweep; skins)", "style": "sci-fi (3D-painted atlas + glow)", "variants": "all", "skins": ["crimson"] },
+    { "slug": "georgian-manor", "type": "building (k.arch.building: masses, portico, dormers, chimneys; skins)", "style": "realistic georgian (tiling materials)", "variants": "all", "skins": ["stucco"], "allowWarnings": ["scene.mesh-triangles"], "note": "manor-scale trim exceeds the 10k-per-mesh recommendation on Roblox; the 20k hard limit is auto-split" },
+    { "slug": "medieval-townhouse", "type": "building (timber framing, jetty, gable)", "style": "medieval", "variants": "all" },
+    { "slug": "building-styles", "type": "building styles (paris, georgian, medieval, modern)", "style": "realistic", "variants": "all", "allowWarnings": ["scene.mesh-triangles"], "note": "the six-storey Paris block and the Georgian house exceed the 10k-per-mesh recommendation on Roblox; the 20k hard limit is auto-split" }
   ]
 }

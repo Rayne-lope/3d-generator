@@ -67,9 +67,9 @@ viewport.
 
 1. **Interpret** (reply text, 1–2 sentences): style, real size, key parts. Flag limitations.
 2. `node studio new <slug> --prompt "<prompt verbatim>" --category <c> --style <words>`.
-3. **Read the relevant rules** (always 01–06; plus 12 terrain, 13 buildings, 14 nature,
-   15 weapons, 16 skins/3D-painted textures, 17 complex shapes, 08 style words) and
-   `docs/KIT.md` for the API. If the user gives a picture, save it as
+3. **Read the relevant rules** (always 01–06; plus 12 terrain, 13 buildings — `k.arch.building`
+   for anything bigger than a hut, §10 for house photos —, 14 nature, 15 weapons, 16 skins/
+   3D-painted textures, 17 complex shapes, 08 style words) and `docs/KIT.md` for the API. If the user gives a picture, save it as
    `assets/<slug>/reference.png` and set `meta.reference` (rule 17).
 4. **Write `build()`**: primary forms → secondary → tertiary. Put every revisable number in
    `params`. Group meshes into named `k.part`s; moving pieces get `{ separate: true, pivot }`.
@@ -143,5 +143,5 @@ never print it or write it anywhere else. Reply with the asset ids and the inser
 
 ## Where things are
 
-`rules/` modeling knowledge (15 weapons, 16 skins, 17 complex shapes) · `.agents/skills/` workflow shortcuts · `docs/KIT.md` kit API · `docs/GUIDE.md` user guide ·
+`rules/` modeling knowledge (13 buildings, 15 weapons, 16 skins, 17 complex shapes) · `.agents/skills/` workflow shortcuts · `docs/KIT.md` kit API · `docs/GUIDE.md` user guide ·
 `studio/profiles/*.json` engine limits · `assets/` assets · `sets/` packs · `exports/` engine files.

@@ -320,7 +320,7 @@ preview byte for byte.
    or crisp detail, set the texture import to Lossless.
 5. Runtime loading: `GLTFDocument.append_from_file()` + `generate_scene()`.
 
-Godot is verified automatically: `node studio engine-verify godot` (44/44 golden items on Godot
+Godot is verified automatically: `node studio engine-verify godot` (52/52 golden items on Godot
 4.7.2; see section 10).
 
 ### Roblox Studio
@@ -467,6 +467,32 @@ What makes houses look good:
 windows with frames, a chimney, cozy stylized look
 ```
 
+**Bigger buildings (town houses, apartment blocks, manors)** use the building generator
+(`k.arch.building`, rule 13 §9). The agent describes the plan as **masses** (main block, wings,
+each with floors and a roof type) and picks a **style**; the generator splits every side into
+bays, places doors and windows per floor, adds frames, sills, window heads, shutters,
+balconies, string courses, cornices, quoins, timber framing, jetties, dormers, chimneys and a
+portico, keeps windows off walls that touch another wing, and fits a triangle budget. Built-in
+styles: `georgian`, `medieval-timber`, `paris-haussmann`, `modern`; a new style is a few lines
+of data (`{ extends: 'georgian', … }`). Materials are tiling textures per zone (brick, ashlar,
+slate, plaster, timber, zinc…), so skins can recolor or swap finishes. On Roblox, big walls are
+cut on the texture grid automatically so they stay sharp (UVs inside 0..1).
+
+![One plan, four styles](demos/img/buildings-styles.png)
+
+**From a photo of a house:** give the agent the picture (saved as `assets/<slug>/reference.png`,
+a straight front view works best). It counts floors, bays, wings, roof type, chimneys and
+details, picks the closest style, and checks itself against the photo with the reference
+overlay on every review. Round towers, bay windows, verandas and curved roofs are not in the
+generator yet; the agent adds them by hand next to the building and tells you.
+
+```
+/asset Detailed Georgian manor house: red-brick main block with two side wings, stone quoins,
+white sash windows, a columned portico with pediment, hipped slate roofs with dormers and chimneys
+/asset Medieval timber-framed townhouse like reference.png
+/asset-skins georgian-manor white stucco and sandstone
+```
+
 ### Nature: rocks, trees, plants
 
 - **Rocks:** flat bottoms sunk into the ground, squashed wider than tall for boulders; sets
@@ -536,7 +562,7 @@ These are for maintainers: run them when you change the kit, the exporter, a pro
 asset.
 
 ```bash
-node studio golden                         # 44 items × 3 profiles, ~7 minutes
+node studio golden                         # 52 items × 3 profiles, ~8 minutes
 open golden/report/index.html              # checks + baseline/current/diff images
 node studio golden --update-baselines      # approve an intentional visual change (then commit)
 ```
@@ -693,9 +719,9 @@ workflow from plain requests.
 | Item | Status |
 | --- | --- |
 | All 22 demo assets (+ variants) build in all three profiles with 0 errors | ✔ verified (build + validator) |
-| Golden suite: 132/132 checks (validate, determinism, structure, regression, parity) | ✔ verified, also in CI |
+| Golden suite: 156/156 checks (validate, determinism, structure, regression, parity) | ✔ verified, also in CI |
 | Viewport live reload, panels, profile switching, UV overlay, versions panel | ✔ verified with Playwright screenshots |
-| Godot 4.7.2: 44/44 golden items load with the expected size, triangles, pivots, materials; rendered side by side | ✔ verified headless (`engine-verify godot`), also in CI |
+| Godot 4.7.2: 52/52 golden items load with the expected size, triangles, pivots, materials; rendered side by side | ✔ verified headless (`engine-verify godot`), also in CI |
 | Roblox Studio import of the golden set | ☐ **needs your machine**: `node studio engine-pack roblox` + [CHECKLIST.md](../engines/roblox/CHECKLIST.md) (Studio has no headless mode) |
 | Roblox emissive and alpha-blend mapping | ☐ unverified, covered by the checklist |
 | Skins: lock check, stable Roblox palette, skin packs, `KHR_materials_variants` GLB (Khronos validator: 0 errors) | ✔ verified (tests + the AK demo's 8 looks × 3 profiles) |
