@@ -96,7 +96,7 @@ export async function inspectGLB(glb) {
   const visit = (node, parentIndex) => {
     const index = nodes.length;
     const world = new THREE.Matrix4().fromArray(node.getWorldMatrix());
-    nodes.push({ index, name: node.getName(), parent: parentIndex, translation: node.getTranslation(), rotation: node.getRotation(), scale: node.getScale(), hasMesh: !!node.getMesh() });
+    nodes.push({ index, name: node.getName(), parent: parentIndex, translation: node.getTranslation(), rotation: node.getRotation(), scale: node.getScale(), extras: node.getExtras() || null, hasMesh: !!node.getMesh() });
     const mesh = node.getMesh();
     if (mesh) {
       const normalMatrix = new THREE.Matrix3().getNormalMatrix(world);

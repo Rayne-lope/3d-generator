@@ -288,7 +288,9 @@ export function setOverlays(root, { wire = false, backfaces = false } = {}) {
     for (const key of ['__wire', '__back']) {
       if (o.userData[key]) {
         o.remove(o.userData[key]);
-        o.userData[key].geometry.dispose?.();
+        // A backface overlay shares the exported mesh geometry; only wire owns a copy.
+        if (key === '__wire') o.userData[key].geometry.dispose?.();
+        o.userData[key].material.dispose?.();
         o.userData[key] = null;
       }
     }

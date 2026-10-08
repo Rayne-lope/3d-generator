@@ -29,15 +29,18 @@ export function asset(name = 'asset') {
 /**
  * A named part.
  * @param {string} name
- * @param {{separate?: boolean, pivot?: number[]}} [opts]
+ * @param {{separate?: boolean, pivot?: number[], id?: string}} [opts]
  */
 export function part(name, opts = {}) {
   checkName(name, 'k.part');
-  const { separate = false, pivot = null } = opts;
+  const { separate = false, pivot = null, id = null } = opts;
   if (pivot && !separate) throw new Error(`k.part('${name}'): pivot only makes sense with separate: true`);
+  if (id !== null) {
+    checkName(id, 'k.part id');
+  }
   const outer = new THREE.Group();
   outer.name = name;
-  outer.userData.studio = { role: 'part', separate: !!separate, pivot: pivot ? [pivot[0], pivot[1], pivot[2]] : null };
+  outer.userData.studio = { role: 'part', separate: !!separate, pivot: pivot ? [pivot[0], pivot[1], pivot[2]] : null, id };
   if (pivot) {
     outer.position.set(pivot[0], pivot[1], pivot[2]);
     const inner = new THREE.Group();

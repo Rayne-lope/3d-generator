@@ -628,17 +628,26 @@ function textureLimits(ir, profile) {
   }
 }
 
-function dilateAtlases(ir) {
+export function dilateAtlases(ir) {
   ir.textures.forEach((t) => {
     if (t.name.startsWith('palette')) return;
     if (t.wrapS !== 'CLAMP_TO_EDGE' || t.wrapT !== 'CLAMP_TO_EDGE') return;
-    const uvs = [];
+    const uvChunks = [];
+    let uvLength = 0;
     for (const m of ir.materials) {
       if (!TEX_KEYS.some((k) => m[k] === t.id)) continue;
-      for (const p of primsUsing(ir, m.id)) uvs.push(...p.uvs);
+      for (const p of primsUsing(ir, m.id)) {
+        uvChunks.push(p.uvs);
+        uvLength += p.uvs.length;
+      }
     }
-    if (!uvs.length) return;
-    const flatUV = Float32Array.from(uvs);
+    if (!uvLength) return;
+    const flatUV = new Float32Array(uvLength);
+    let offset = 0;
+    for (const chunk of uvChunks) {
+      flatUV.set(chunk, offset);
+      offset += chunk.length;
+    }
     const { ids } = uvIslands(flatUV);
     const { labels, covered } = rasterizeIslands(flatUV, ids, t.width, t.height);
     if (covered === 0 || covered === t.width * t.height) return;

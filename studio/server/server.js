@@ -8,9 +8,13 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { paths, previewReport, itemId, ROOT } from '../core/paths.js';
 import { readJson, writeJson, ensureDir } from '../core/fsutil.js';
-import { listAssets, listSets, loadSet } from '../core/targets.js';
+import { listAssets, listSets, loadSet, setOfAsset } from '../core/targets.js';
 import { listProfiles, loadProfile } from '../profiles/index.js';
 import { loadConfig } from '../core/config.js';
+import { EditorError, editorData, editorRevision, replaceEditorScope, assertEditorSlug } from '../core/editor.js';
+import { computeSourceHash } from '../core/build.js';
+import { loadAssetDef } from '../core/load-asset.js';
+import { editorControls, editorParts } from '../kit/editor.js';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -56,19 +60,62 @@ function serveFile(res, file) {
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
-    let data = '';
+    const chunks = [];
+    let size = 0;
+    let exceeded = false;
     req.on('data', (chunk) => {
-      data += chunk;
-      if (data.length > 1e6) req.destroy();
+      if (exceeded) return;
+      size += chunk.byteLength;
+      if (size > 65536) {
+        exceeded = true;
+        reject(new EditorError('request body too large', 413));
+      } else chunks.push(chunk);
     });
     req.on('end', () => {
       try {
+        const data = Buffer.concat(chunks).toString('utf8');
         resolve(data ? JSON.parse(data) : {});
       } catch (err) {
-        reject(err);
+        reject(new EditorError('invalid JSON body', 400));
       }
     });
     req.on('error', reject);
+  });
+}
+
+function requireLocalJson(req) {
+  const host = req.headers.host || '';
+  let local;
+  try { local = new URL(`http://${host}`); } catch { throw new EditorError('local host required', 403); }
+  const hostname = local.hostname.toLowerCase();
+  if (!['127.0.0.1', 'localhost', '[::1]'].includes(hostname)) throw new EditorError('local host required', 403);
+  if (req.headers.origin && req.headers.origin !== local.origin) throw new EditorError('same origin required', 403);
+  if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) throw new EditorError('application/json required', 415);
+}
+
+function runJsonCli(args, { timeoutMs = 120000 } = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [path.join(ROOT, 'studio', 'index.js'), ...args, '--json'], { cwd: ROOT, env: { ...process.env, STUDIO_NO_NOTIFY: '1' } });
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
+    const finish = (err, data) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (err) reject(err);
+      else resolve(data);
+    };
+    const timer = setTimeout(() => { child.kill('SIGKILL'); finish(new EditorError('operation timed out', 504)); }, timeoutMs);
+    child.stdout.on('data', (data) => { stdout += data; if (stdout.length > 2e6) { child.kill('SIGKILL'); finish(new EditorError('operation output too large', 500)); } });
+    child.stderr.on('data', (data) => { stderr += data; if (stderr.length > 2e6) { child.kill('SIGKILL'); finish(new EditorError('operation output too large', 500)); } });
+    child.on('error', (err) => finish(err));
+    child.on('close', (code) => {
+      let parsed;
+      try { parsed = JSON.parse(stdout.trim()); } catch { parsed = null; }
+      if (code !== 0 && !parsed) finish(new EditorError(stderr.trim().split('\n').slice(-4).join('\n') || 'operation failed', 500));
+      else finish(null, parsed || { error: stderr.trim() || 'operation failed', exitCode: code });
+    });
   });
 }
 
@@ -156,6 +203,28 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
   const lastErrors = new Map();
   // The look (variant/skin) the viewport shows per asset, rebuilt along with the base on edits.
   const activeLook = new Map();
+  const assetOperations = new Map();
+  const withAssetOperation = (slug, fn) => {
+    const prior = assetOperations.get(slug) || Promise.resolve();
+    const next = prior.catch(() => {}).then(fn);
+    assetOperations.set(slug, next);
+    next.finally(() => { if (assetOperations.get(slug) === next) assetOperations.delete(slug); }).catch(() => {});
+    return next;
+  };
+  const editorPayload = async (slug, { variant = null, skin = null, profile = 'generic' } = {}) => {
+    if (!listProfiles().includes(profile)) throw new EditorError(`unknown profile '${profile}'`, 400, 'profile');
+    const data = await editorData(slug, { variant, skin, profile });
+    const def = await loadAssetDef(slug);
+    const sourceHash = computeSourceHash(slug, variant, profile, def.meta.set || setOfAsset(slug), skin);
+    const report = readJson(previewReport(slug, variant, profile, skin), null);
+    if (editorRevision(slug) !== data.revision) throw new EditorError('source changed while reading editor state', 409);
+    return { ...data, preview: { current: !!report && report.hashes?.source === sourceHash, sourceHash: report?.hashes?.source || null } };
+  };
+  const requireEditableAsset = async (slug) => {
+    const def = await loadAssetDef(slug);
+    if (!editorControls(def).length && !editorParts(def).length) throw new EditorError(`asset '${slug}' is not enabled for visual editing`, 403);
+    return def;
+  };
   const noteLook = (slug, variant, skin) => {
     if (slug) activeLook.set(slug, { variant: variant || null, skin: skin || null });
   };
@@ -170,21 +239,26 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
     if (job.variant) args.push('--variant', job.variant);
     else args.push('--variant', 'base');
     if (job.skin) args.push('--skin', job.skin);
-    broadcast('build-start', { slug: job.slug, variant: job.variant || null, skin: job.skin || null, profile: job.profile });
+    broadcast('build-start', { slug: job.slug, variant: job.variant || null, skin: job.skin || null, profile: job.profile, revision: job.revision });
     const child = spawn(process.execPath, args, { cwd: ROOT, env: { ...process.env, STUDIO_NO_NOTIFY: '1' } });
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; child.kill('SIGKILL'); }, 60000);
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (d) => (stdout += d));
     child.stderr.on('data', (d) => (stderr += d));
+    child.on('error', (err) => { stderr += err.message; });
     child.on('close', () => {
-      let result = { slug: job.slug, variant: job.variant || null, skin: job.skin || null, profile: job.profile, ok: false };
+      clearTimeout(timer);
+      let result = { slug: job.slug, variant: job.variant || null, skin: job.skin || null, profile: job.profile, revision: job.revision, ok: false };
       try {
         const parsed = JSON.parse(stdout.slice(stdout.indexOf('{')));
         const r = parsed.results?.[0];
         if (r) result = { ...result, ok: r.ok, counts: r.counts, error: r.error || null, cached: r.cached };
       } catch {
-        result.error = (stderr || stdout).trim().split('\n').slice(-6).join('\n') || 'build failed';
+        result.error = timedOut ? 'build timed out after 60 seconds' : (stderr || stdout).trim().split('\n').slice(-6).join('\n') || 'build failed';
       }
+      try { if (editorRevision(job.slug) !== job.revision) return resolve({ ...result, stale: true }); } catch {}
       const key = `${itemId(job.slug, job.variant, job.skin)}|${job.profile}`;
       if (result.error) lastErrors.set(key, result.error);
       else lastErrors.delete(key);
@@ -198,15 +272,33 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
     const job = queue.shift();
     running = job;
     const result = await runBuild(job);
+    if (result.stale) {
+      let latest;
+      try { latest = editorRevision(job.slug); } catch { latest = null; }
+      if (latest) {
+        const queued = queue.find((j) => j.slug === job.slug && j.variant === job.variant && j.skin === job.skin && j.profile === job.profile);
+        if (queued) { queued.revision = latest; queued.waiters.push(...job.waiters); }
+        else queue.unshift({ ...job, revision: latest });
+      } else for (const w of job.waiters) w(result);
+      running = null;
+      pump();
+      return;
+    }
     for (const w of job.waiters) w(result);
     running = null;
     pump();
   };
 
   const enqueue = (slug, variant, profile, skin = null) => new Promise((resolve) => {
+    let revision;
+    try { revision = editorRevision(slug); } catch (err) { resolve({ slug, variant, skin, profile, ok: false, error: err.message }); return; }
+    if (running && running.slug === slug && running.variant === variant && running.skin === skin && running.profile === profile && running.revision === revision) {
+      running.waiters.push(resolve);
+      return;
+    }
     const existing = queue.find((j) => j.slug === slug && j.variant === variant && j.skin === skin && j.profile === profile);
-    if (existing) existing.waiters.push(resolve);
-    else queue.push({ slug, variant, skin, profile, waiters: [resolve] });
+    if (existing) { existing.revision = revision; existing.waiters.push(resolve); }
+    else queue.push({ slug, variant, skin, profile, revision, waiters: [resolve] });
     pump();
   });
 
@@ -248,6 +340,8 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const p = decodeURIComponent(url.pathname);
+    let requestSlug = null;
+    let requestLook = {};
     try {
       if (p === '/api/events') {
         res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
@@ -266,7 +360,7 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
           sets: listSets().map((n) => loadSet(n)),
           profiles: listProfiles().map((id) => ({ id, label: loadProfile(id).label, units: loadProfile(id).units })),
           config,
-          building: running ? { slug: running.slug, variant: running.variant || null, skin: running.skin || null, profile: running.profile } : null,
+          building: running ? { slug: running.slug, variant: running.variant || null, skin: running.skin || null, profile: running.profile, revision: running.revision } : null,
         });
       }
       if (p === '/api/report') {
@@ -283,16 +377,107 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
       if (p === '/api/history') {
         const slug = url.searchParams.get('slug');
         const { versionsForAsset } = await import('../core/history.js');
-        return send(res, 200, { versions: versionsForAsset(slug) });
+        return send(res, 200, { versions: versionsForAsset(slug, url.searchParams.get('variant') || null) });
+      }
+      if (p === '/api/editor' && req.method === 'GET') {
+        const slug = url.searchParams.get('slug');
+        requestSlug = slug;
+        requestLook = { variant: url.searchParams.get('variant') || null, skin: url.searchParams.get('skin') || null, profile: url.searchParams.get('profile') || 'generic' };
+        return send(res, 200, await editorPayload(slug, requestLook));
+      }
+      if (p === '/api/editor' && req.method === 'PUT') {
+        requireLocalJson(req);
+        const body = await readBody(req);
+        requestSlug = body.slug;
+        requestLook = { variant: body.variant || null, profile: body.profile || 'generic' };
+        assertEditorSlug(body.slug);
+        if (body.variant != null && typeof body.variant !== 'string') throw new EditorError('invalid variant', 400, 'variant');
+        if (body.profile != null && typeof body.profile !== 'string') throw new EditorError('invalid profile', 400, 'profile');
+        if (!listProfiles().includes(body.profile || 'generic')) throw new EditorError(`unknown profile '${body.profile}'`, 400, 'profile');
+        const result = await withAssetOperation(body.slug, async () => {
+          if (body.skin) throw new EditorError('skins are preview-only', 400, 'skin');
+          await requireEditableAsset(body.slug);
+          await replaceEditorScope(body);
+          return editorPayload(body.slug, { variant: body.variant || null, profile: body.profile || 'generic' });
+        });
+        return send(res, 200, result);
+      }
+      if (p === '/api/history/save' && req.method === 'POST') {
+        requireLocalJson(req);
+        const body = await readBody(req);
+        requestSlug = body.slug;
+        requestLook = { variant: body.variant || null, profile: body.profile || 'generic' };
+        if (Object.hasOwn(body, 'skin')) throw new EditorError('skins are preview-only', 400, 'skin');
+        assertEditorSlug(body.slug);
+        if (typeof body.note !== 'string' || !body.note.trim() || body.note.length > 500) throw new EditorError('note required (max 500 characters)', 400, 'note');
+        const result = await withAssetOperation(body.slug, async () => {
+          if (body.expectedRevision !== editorRevision(body.slug)) throw new EditorError('source changed', 409);
+          const def = await requireEditableAsset(body.slug);
+          if (body.variant && !Object.hasOwn(def.variants, body.variant)) throw new EditorError(`unknown variant '${body.variant}'`, 404);
+          const args = ['save', body.slug, '-m', body.note.trim(), '--include-variants'];
+          if (body.variant) args.push('--preferred-variant', body.variant);
+          const saved = await runJsonCli(args);
+          if (editorRevision(body.slug) !== body.expectedRevision) throw new EditorError('source changed while saving', 409);
+          return { result: saved, revision: editorRevision(body.slug) };
+        });
+        return send(res, 200, result);
+      }
+      if (p === '/api/history/restore' && req.method === 'POST') {
+        requireLocalJson(req);
+        const body = await readBody(req);
+        requestSlug = body.slug;
+        if (Object.hasOwn(body, 'skin')) throw new EditorError('skins are preview-only', 400, 'skin');
+        assertEditorSlug(body.slug);
+        if (typeof body.version !== 'string' || !/^v\d+$/.test(body.version)) throw new EditorError('invalid version', 400, 'version');
+        const result = await withAssetOperation(body.slug, async () => {
+          if (body.expectedRevision !== editorRevision(body.slug)) throw new EditorError('source changed', 409);
+          await requireEditableAsset(body.slug);
+          const { getVersion } = await import('../core/history.js');
+          try { getVersion(body.slug, body.version); } catch { throw new EditorError(`version '${body.version}' not found`, 404); }
+          const restored = await runJsonCli(['revert', body.slug, body.version], { timeoutMs: 120000 });
+          schedule(body.slug);
+          return { result: restored, revision: editorRevision(body.slug) };
+        });
+        return send(res, 200, result);
+      }
+      if (p === '/api/export' && req.method === 'POST') {
+        requireLocalJson(req);
+        const body = await readBody(req);
+        requestSlug = body.slug;
+        requestLook = { variant: body.variant || null, skin: body.skin || null, profile: body.profile || 'generic' };
+        assertEditorSlug(body.slug);
+        const result = await withAssetOperation(body.slug, async () => {
+          if (body.expectedRevision !== editorRevision(body.slug)) throw new EditorError('source changed', 409);
+          const profile = body.profile || 'generic';
+          if (!listProfiles().includes(profile)) throw new EditorError(`unknown profile '${profile}'`, 400, 'profile');
+          const def = await loadAssetDef(body.slug);
+          if (body.variant && !Object.hasOwn(def.variants, body.variant)) throw new EditorError(`unknown variant '${body.variant}'`, 404);
+          if (body.skin && !Object.hasOwn(def.skins, body.skin)) throw new EditorError(`unknown skin '${body.skin}'`, 404);
+          const editor = await editorPayload(body.slug, requestLook);
+          if (!editor.preview.current) throw new EditorError('preview is stale; build the selected look before export', 409);
+          const args = ['export', body.slug, '--profile', profile, '--variant', body.variant || 'base', '--skin', body.skin || 'default'];
+          const exported = await runJsonCli(args, { timeoutMs: 120000 });
+          if (body.expectedRevision !== editorRevision(body.slug)) throw new EditorError('source changed while exporting', 409);
+          return { result: exported.results?.[0] || { blocked: true, reason: exported.error || 'export failed' }, revision: editorRevision(body.slug) };
+        });
+        return send(res, 200, result);
       }
       if (p === '/api/build' && req.method === 'POST') {
         const body = await readBody(req);
-        if (!body.slug) return send(res, 400, { error: 'slug required' });
+        assertEditorSlug(body.slug);
+        if (body.profile != null && typeof body.profile !== 'string') throw new EditorError('invalid profile', 400, 'profile');
+        if (body.variant != null && typeof body.variant !== 'string') throw new EditorError('invalid variant', 400, 'variant');
+        if (body.skin != null && typeof body.skin !== 'string') throw new EditorError('invalid skin', 400, 'skin');
         const profile = body.profile || 'generic';
-        loadProfile(profile);
+        if (typeof profile !== 'string' || !listProfiles().includes(profile)) throw new EditorError(`unknown profile '${profile}'`, 400, 'profile');
+        const def = await loadAssetDef(body.slug);
+        const variant = body.variant === 'base' ? null : body.variant || null;
+        const skin = body.skin === 'default' ? null : body.skin || null;
+        if (variant && (typeof variant !== 'string' || !Object.hasOwn(def.variants, variant))) throw new EditorError(`unknown variant '${variant}'`, 404, 'variant');
+        if (skin && (typeof skin !== 'string' || !Object.hasOwn(def.skins, skin))) throw new EditorError(`unknown skin '${skin}'`, 404, 'skin');
         activeProfiles.add(profile);
-        noteLook(body.slug, body.variant, body.skin);
-        const result = await enqueue(body.slug, body.variant || null, profile, body.skin || null);
+        noteLook(body.slug, variant, skin);
+        const result = await enqueue(body.slug, variant, profile, skin);
         return send(res, 200, result);
       }
       if (p === '/api/notify' && req.method === 'POST') {
@@ -304,7 +489,13 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
       if (serveMounted(p, res)) return;
       return send(res, 404, { error: 'not found' });
     } catch (err) {
-      return send(res, 500, { error: err.message });
+      const status = err.status || 500;
+      const body = { error: err.message, code: err.code || (status === 500 ? 'internal_error' : 'operation_failed') };
+      if (err.field) body.field = err.field;
+      if (status === 409) {
+        if (requestSlug) try { body.current = await editorPayload(requestSlug, requestLook); } catch {}
+      }
+      return send(res, status, body);
     }
   });
 

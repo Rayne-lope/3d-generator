@@ -1,3 +1,4 @@
+
 // AK-47 style assault rifle
 // Prompt: AK-47 style assault rifle with a detachable curved magazine, then lots of skins on the same model: desert camo, woodland, tiger stripe, digital urban, arctic, neon and gold
 import { defineAsset } from '../../studio/kit/index.js';
@@ -28,6 +29,7 @@ export default defineAsset({
     category: 'weapon',
     budget: { triangles: 9000 },
     origin: 'base-center',
+    set: 'gun-kit',
   },
   seed: 47,
   params: {

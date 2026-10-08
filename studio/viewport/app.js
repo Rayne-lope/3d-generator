@@ -5,6 +5,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EditorController } from './editor.js';
+import { PartViewportController } from './parts.js';
 import {
   createRenderer, applyLighting, contentBox, frameCamera, forceSingleSided, makeGrid, makeHuman,
   makeDimensions, setViewMode, setOverlays, unitsPerMeter, VIEWS,
@@ -29,6 +31,8 @@ const state = {
   units: 1,
   version: null,
   loadToken: 0,
+  viewToken: 0,
+  sidebar: 'assets',
 };
 
 // ------------------------------------------------------------------ three.js stage
@@ -42,6 +46,7 @@ camera.position.set(2, 1.6, 2);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 let content = null;
+let partController = null;
 let helpers = new THREE.Group();
 scene.add(helpers);
 applyLighting(renderer, scene, state.lighting);
@@ -57,6 +62,7 @@ resize();
 
 renderer.setAnimationLoop(() => {
   controls.update();
+  partController?.update();
   renderer.render(scene, camera);
 });
 
@@ -94,11 +100,12 @@ function setView(name) {
 
 const loader = new GLTFLoader();
 
-async function loadGLB(url, { keepCamera = true } = {}) {
+async function loadGLB(url, { keepCamera = true, ready = false, isCurrent = () => true } = {}) {
   const token = ++state.loadToken;
   const gltf = await loader.loadAsync(`${url}?t=${Date.now()}`);
-  if (token !== state.loadToken) return;
+  if (token !== state.loadToken || !isCurrent()) return false;
   const prevUnits = state.units;
+  partController?.cancel();
   if (content) {
     scene.remove(content);
     content.traverse((o) => {
@@ -110,6 +117,12 @@ async function loadGLB(url, { keepCamera = true } = {}) {
   state.gltf = gltf;
   state.units = unitsPerMeter(gltf);
   scene.add(content);
+  const previouslySelected = partController?.selected;
+  const selectionBelongedToLook = previouslySelected && editor.selectedPartId === previouslySelected;
+  partController?.setContext({ content, parts: (state.version ? state.report?.parts : editor.snapshot?.parts || []).map((part) => ({ ...part, value: editor.snapshot?.partTransforms?.effective?.[part.id] })), units: state.units,
+    readOnly: editor.readOnly || !!state.version || !ready });
+  if (selectionBelongedToLook && !partController?.selected) editor.showAlert(`Selected part '${previouslySelected}' no longer exists in this exported look. Selection was cleared.`);
+  renderPartsList();
   const box = contentBox(content);
   applyLighting(renderer, scene, state.lighting, { size: box.getSize(new THREE.Vector3()).length() || 1 });
   applyViewSettings();
@@ -119,6 +132,7 @@ async function loadGLB(url, { keepCamera = true } = {}) {
   }
   $('empty').classList.add('hidden');
   renderUVPanel();
+  return true;
 }
 
 // ------------------------------------------------------------------ data
@@ -182,7 +196,56 @@ function renderAssetList() {
   $('assetList').innerHTML = html.join('');
 }
 
+function setSidebarTab(name) {
+  state.sidebar = name === 'parts' ? 'parts' : 'assets';
+  $('assetList').classList.toggle('hidden', state.sidebar !== 'assets');
+  $('partList').classList.toggle('hidden', state.sidebar !== 'parts');
+  $('filter').classList.toggle('hidden', state.sidebar !== 'assets');
+  for (const [key, node] of [['assets', $('sideAssets')], ['parts', $('sideParts')]]) {
+    node.classList.toggle('on', state.sidebar === key);
+    node.setAttribute('aria-selected', String(state.sidebar === key));
+  }
+}
+
+function renderPartsList() {
+  const node = $('partList');
+  const parts = state.version ? state.report?.parts || [] : editor.snapshot?.parts || [];
+  const selected = partController?.selected;
+  const rawNodes = partController?.rawNodes || [];
+  if (!state.slug) node.innerHTML = '<p class="muted">Choose an asset first.</p>';
+  else if (rawNodes.length) {
+    const byId = new Map(parts.map((part) => [part.id, part]));
+    node.innerHTML = `<div class="group-title">Exported GLB hierarchy</div>${rawNodes.map((entry) => {
+      const part = byId.get(entry.partId);
+      const active = entry.partId && selected === entry.partId || partController?.selectedRaw?.index === entry.index;
+      const tag = part?.editable && !state.version && !state.skin ? 'Editable part' : entry.name === 'body' ? 'Merged · read-only' : entry.parent === null ? 'Asset root · read-only' : entry.hasMesh ? 'Mesh · read-only' : 'Group · read-only';
+      const label = part?.label || (entry.name === 'body' ? 'Body (merged)' : entry.parent === null ? `Asset root · ${entry.name}` : entry.name);
+      return `<button type="button" role="treeitem" aria-selected="${!!active}" aria-level="${entry.depth + 1}" class="part-tree-row ${active ? 'selected' : ''} ${part?.editable ? '' : 'readonly'}" style="padding-left:${8 + Math.min(entry.depth, 9) * 14}px" ${part ? `data-part-id="${esc(part.id)}"` : `data-node-index="${entry.index}"`}><span>${entry.hasMesh ? '◇' : '▣'}</span><span>${esc(label)}</span><span class="part-tag">${tag}</span></button>`;
+    }).join('')}`;
+  } else if (!parts.length) node.innerHTML = '<p class="muted">No editable separate parts in this asset yet. Load its exported GLB to inspect the hierarchy.</p>';
+  else {
+    const children = (parentId, depth = 1) => parts.filter((part) => part.parentPartId === parentId).map((part) => `
+      <button type="button" class="part-tree-row ${part.id === selected ? 'selected' : ''} ${part.editable ? '' : 'readonly'}" role="treeitem" aria-selected="${part.id === selected}" data-part-id="${esc(part.id)}" style="padding-left:${8 + depth * 14}px">
+        <span>◇</span><span>${esc(part.label)}</span><span class="part-tag">${part.editable ? 'Move · Rotate · Scale' : 'Read only'}</span>
+      </button>${children(part.id, depth + 1)}`).join('');
+    node.innerHTML = `<div class="group-title">Exported hierarchy</div><div class="part-tree-row readonly" style="padding-left:8px">▣ ${esc(state.slug)}</div><div class="part-tree-row readonly" style="padding-left:22px">▣ body · merged</div>${children(null)}`;
+  }
+  $('partTools').classList.toggle('hidden', !parts.length || !!state.version || !!state.skin);
+  $('partDraftBadge').classList.toggle('hidden', !partController?.pendingDraft);
+  $('partDraftBadge').textContent = partController?.pendingDraft && editor.mutationBusy ? 'Saving part draft…' : 'Draft not saved · Retry or Discard';
+  for (const button of document.querySelectorAll('[data-part-mode]')) {
+    const part = parts.find((item) => item.id === selected);
+    const mode = button.dataset.partMode;
+    const capability = mode === 'translate' ? 'move' : mode === 'rotate' ? 'rotate' : mode === 'scale' ? 'scale' : null;
+    button.disabled = !!(partController?.locked && partController?.pendingDraft) || mode !== 'select' && (editor.readOnly || partController?.locked || !part?.editable || !part?.transform?.[capability]);
+  }
+}
+
 async function selectAsset(slug, variant = null) {
+  partController?.cancel();
+  exitHistory();
+  const selectionToken = ++state.viewToken;
+  ++state.loadToken;
   state.slug = slug;
   state.variant = variant;
   state.skin = null;
@@ -193,6 +256,11 @@ async function selectAsset(slug, variant = null) {
   const asset = state.assets.find((a) => a.slug === slug);
   $('title').textContent = asset ? titleText(asset) : slug;
   renderVariantBar(asset);
+  await editor.setContext({ slug, variant, skin: null, profile: state.profile, version: null });
+  if (selectionToken !== state.viewToken || state.slug !== slug) return;
+  partController?.setContext({ content: null, parts: (editor.snapshot?.parts || []).map((part) => ({ ...part, value: editor.snapshot?.partTransforms?.effective?.[part.id] })), units: 1, readOnly: true });
+  renderPartsList();
+  selectTab(editor.supported ? 'edit' : 'report');
   await showCurrent({ keepCamera: false });
   loadVersions();
 }
@@ -213,23 +281,69 @@ function renderVariantBar(asset) {
   }
 }
 
-async function showCurrent({ keepCamera = true } = {}) {
-  if (!state.slug) return;
+async function showCurrent({ keepCamera = true, forceBuild = false, allowBuild = true } = {}) {
+  if (!state.slug || state.version) return;
+  const previousPreviewError = editor.previewError;
+  const token = ++state.viewToken;
+  const look = { slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile };
+  const stillCurrent = () => token === state.viewToken && !state.version && look.slug === state.slug && look.variant === state.variant && look.skin === state.skin && look.profile === state.profile;
   hideBanner();
+  editor.markPreviewPending();
   setStatus(`Loading ${itemKey()} [${state.profile}]…`);
-  let { report, error } = await api(`/api/report?${lookQuery()}`).catch(() => ({}));
-  if (!report && !error) {
+  const query = new URLSearchParams({ slug: look.slug, profile: look.profile });
+  if (look.variant) query.set('variant', look.variant);
+  if (look.skin) query.set('skin', look.skin);
+  let { report, error } = await api(`/api/report?${query}`).catch(() => ({}));
+  if (!stillCurrent()) return;
+  const needsBuild = forceBuild || (!report && !error) || editor.snapshot?.preview?.current === false;
+  if (allowBuild && needsBuild) {
     setStatus(`Building ${itemKey()} [${state.profile}]…`);
-    const result = await api('/api/build', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile }) });
-    ({ report, error } = await api(`/api/report?${lookQuery()}`).catch(() => ({})));
+    try {
+      const result = await api('/api/build', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(look) });
+      if (!stillCurrent()) return;
+      ({ report, error } = await api(`/api/report?${query}`).catch(() => ({})));
+      if (result.error) error = result.error;
+    } catch (buildError) { error = buildError.message; }
+  }
+  if (!stillCurrent()) return;
+  await editor.refresh();
+  if (!stillCurrent()) return;
+  let current = editor.snapshot?.preview?.current === true && report?.hashes?.source === editor.snapshot.preview.sourceHash;
+  if (!current && !error && allowBuild && !needsBuild) {
+    setStatus(`Building ${itemKey()} [${state.profile}]…`);
+    const result = await api('/api/build', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(look) }).catch((buildError) => ({ error: buildError.message }));
+    if (!stillCurrent()) return;
+    ({ report, error } = await api(`/api/report?${query}`).catch(() => ({})));
     if (result.error) error = result.error;
+    await editor.refresh();
+    if (!stillCurrent()) return;
+    current = editor.snapshot?.preview?.current === true && report?.hashes?.source === editor.snapshot.preview.sourceHash;
   }
   state.report = report || null;
+  editor.setReport(null, { error: error || null, pending: !error });
   renderReport();
-  if (error) showBanner(`Build failed:\n${error}`, true);
+  if (error) {
+    showBanner(`Build failed:\n${error}`, true);
+    editor.showAlert(`Build failed: ${error}`, { 'Retry build': () => showCurrent({ forceBuild: true }), ...(editor.stack.undo.length ? { 'Undo edit': () => editor.undo() } : {}) });
+  }
+  else lightingBanner();
   if (report) {
-    await loadGLB(`/files/preview/${itemKey()}/${state.profile}.glb`, { keepCamera });
-    setStatus(`${itemKey()} [${state.profile}] · built ${new Date(report.builtAt).toLocaleTimeString()} · ${report.file.path}`);
+    try {
+      const loaded = await loadGLB(`/files/preview/${itemKey()}/${look.profile}.glb`, { keepCamera, ready: current && !error, isCurrent: stillCurrent });
+      if (stillCurrent() && loaded) {
+        editor.setLoadedSourceHash(current && !error ? report.hashes?.source : null);
+        editor.setReport(report, { error: error || null, pending: !current && !error });
+        if (current && !error && previousPreviewError) editor.clearAlert();
+        renderReport();
+        setStatus(`${itemKey()} [${look.profile}] · built ${new Date(report.builtAt).toLocaleTimeString()} · ${report.file.path}`);
+      }
+    } catch (loadError) {
+      if (stillCurrent()) {
+        editor.setReport(report, { error: `Could not load GLB: ${loadError.message}` });
+        showBanner(`Preview failed: ${loadError.message}`, true);
+        editor.showAlert(`Preview failed: ${loadError.message}`, { 'Retry build': () => showCurrent({ forceBuild: true }), ...(editor.stack.undo.length ? { 'Undo edit': () => editor.undo() } : {}) });
+      }
+    }
   }
 }
 
@@ -250,9 +364,13 @@ function renderReport() {
     return;
   }
   const notes = r.notes.map((n) => `<div class="note">• ${esc(n.message)}</div>`).join('');
+  const reportStatus = state.version ? '<span class="muted">Saved version · Generic report</span>'
+    : !editor.fresh ? '<span style="color:var(--warn)">Preview out of date</span>'
+      : r.ok ? '<span style="color:var(--ok)">passes preflight</span>'
+        : `<span style="color:var(--err)">${r.counts.error} error(s) block export</span>`;
   el.innerHTML = `
     <div class="kv">
-      <div>Status</div><div>${r.ok ? '<span style="color:var(--ok)">passes preflight</span>' : `<span style="color:var(--err)">${r.counts.error} error(s) block export</span>`} · ${r.counts.warning} warnings</div>
+      <div>Status</div><div>${reportStatus} · ${r.counts.warning} warnings</div>
       <div>Profile</div><div>${esc(r.profile.label)}</div>
       <div>Size</div><div>${fmtDims(r)}</div>
       <div>Triangles</div><div>${r.triangles.total.toLocaleString()}${r.triangles.budget ? ` / ${r.triangles.budget.toLocaleString()} budget` : ''}</div>
@@ -359,42 +477,84 @@ function renderUVPanel() {
 async function loadVersions() {
   const el = $('tab-versions');
   if (!state.slug) return;
-  const data = await api(`/api/history?slug=${state.slug}`).catch(() => ({ versions: [] }));
+  if (state.skin) {
+    state.versionList = [];
+    el.innerHTML = '<p class="muted">Choose the default skin to preview or restore asset versions.</p>';
+    return;
+  }
+  const selectedSlug = state.slug;
+  const selectedVariant = state.variant;
+  const query = new URLSearchParams({ slug: state.slug });
+  if (state.variant) query.set('variant', state.variant);
+  const data = await api(`/api/history?${query}`).catch(() => ({ versions: [] }));
+  if (selectedSlug !== state.slug || selectedVariant !== state.variant) return;
   const versions = data.versions || [];
   if (!versions.length) {
-    el.innerHTML = `<p class="muted">No saved versions yet.</p><p class="muted">Your agent saves one after each request:<br><code>node studio save ${esc(state.slug)} -m "…"</code></p>`;
+    state.versionList = [];
+    el.innerHTML = '<p class="muted">No saved versions yet. Edit the working copy, then choose Save Version.</p>';
     return;
   }
   state.versionList = versions;
   el.innerHTML = `
-    <p class="muted">Click to preview a version (read-only). Restore with the command shown.</p>
+    <p class="muted">Choose a version to preview. Restore returns the entire asset source, including base and variant values.</p>
     <div class="version ${state.version === null ? 'on' : ''}" data-version=""><div class="muted" style="display:flex;align-items:center;justify-content:center">live</div><div><div class="v">Working copy</div><div class="muted">latest build</div></div></div>
     ${versions.slice().reverse().map((v) => {
       const key = `${v.target}|${v.id}`;
       const scope = v.target === state.slug ? '' : ` <span class="muted">(${esc(v.target)})</span>`;
       return `
-      <div class="version ${state.version === key ? 'on' : ''}" data-version="${esc(key)}">
-        <img src="/files/history/${v.thumb}" alt="" onerror="this.onerror=null;this.src='/files/history/${v.sheet}'">
-        <div><div class="v">${v.id}${scope}${v.pinned ? ' 📌' : ''}${v.auto ? ' <span class="muted">auto</span>' : ''}</div><div>${esc(v.note || '')}</div>
-        <div class="muted">${new Date(v.createdAt).toLocaleString()} · ${v.triangles?.toLocaleString() ?? '?'}△</div>
-        <code>node studio revert ${esc(v.target)} ${v.id}</code></div>
+      <div class="version ${state.version === key ? 'on' : ''}" ${v.glb ? `data-version="${esc(key)}"` : ''}>
+        ${v.glb && v.thumb ? `<img src="/files/history/${v.thumb}" alt="" onerror="this.style.display='none'">` : '<div class="muted" style="display:flex;align-items:center;justify-content:center">No preview</div>'}
+        <div><div class="v">${v.id}${selectedVariant ? ` · ${esc(selectedVariant)}` : ''}${scope}${v.pinned ? ' 📌' : ''}${v.auto ? ' <span class="muted">auto</span>' : ''}</div><div>${esc(v.note || '')}</div>
+        <div class="muted">${new Date(v.createdAt).toLocaleString()} · ${v.triangles?.toLocaleString() ?? '?'}△${v.glb ? '' : ' · No saved GLB for this look'}</div>
+        ${v.target === state.slug ? `<button type="button" data-restore="${esc(v.id)}">Restore this version</button>` : `<code>node studio revert ${esc(v.target)} ${v.id}</code>`}</div>
       </div>`;
     }).join('')}
   `;
 }
 
 async function previewVersion(key) {
+  partController?.cancel();
+  if (!key) exitHistory();
+  else if (!state.version) {
+    state.profileBeforeVersion = state.profile;
+    state.profile = 'generic';
+    $('profile').value = 'generic';
+    $('profile').disabled = true;
+  }
+  const selectionToken = ++state.viewToken;
+  ++state.loadToken;
   state.version = key || null;
+  state.report = null;
+  renderReport();
   loadVersions();
   if (!key) {
     hideBanner();
+    await editor.setContext({ slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile, version: null });
+    if (selectionToken !== state.viewToken) return;
     await showCurrent();
     return;
   }
   const v = (state.versionList || []).find((x) => `${x.target}|${x.id}` === key);
-  if (!v) return;
-  showBanner(`Previewing saved version ${v.id}${v.target === state.slug ? '' : ` of ${v.target}`} (read-only). Restore: node studio revert ${v.target} ${v.id}`);
-  await loadGLB(`/files/history/${v.glb}`);
+  if (!v || !v.glb) return;
+  await editor.setContext({ slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile, version: key });
+  if (selectionToken !== state.viewToken) return;
+  showBanner(`Previewing saved version ${v.id}${state.variant ? ` · ${state.variant}` : ''} (read-only). Restore returns all base and variant values.`);
+  state.report = v.report ? await api(`/files/history/${v.report}`).catch(() => null) : null;
+  if (selectionToken !== state.viewToken) return;
+  editor.setHistoricalParts(state.report?.parts || []);
+  renderReport();
+  if (!v.report) $('tab-report').innerHTML = '<p class="muted">No saved report for this older version.</p>';
+  try { await loadGLB(`/files/history/${v.glb}`); }
+  catch (error) { showBanner(`Saved GLB could not be loaded: ${error.message}`, true); }
+}
+
+function exitHistory() {
+  if (!state.version) return;
+  state.profile = state.profileBeforeVersion || state.profile;
+  $('profile').value = state.profile;
+  $('profile').disabled = false;
+  state.profileBeforeVersion = null;
+  state.version = null;
 }
 
 // ------------------------------------------------------------------ UI helpers
@@ -419,36 +579,132 @@ function lightingBanner() {
   else if (!state.version) hideBanner();
 }
 
+function selectTab(name) {
+  document.querySelectorAll('[data-tab]').forEach((button) => button.classList.toggle('on', button.dataset.tab === name));
+  document.querySelectorAll('.tab').forEach((tab) => tab.classList.toggle('on', tab.id === `tab-${name}`));
+  if (name === 'uv') renderUVPanel();
+  if (name === 'versions') loadVersions();
+}
+
+const editor = new EditorController({
+  onBuild: () => { partController?.cancel(); showCurrent({ forceBuild: true }); },
+  onDiscardDraft: () => { partController?.cancel(); showCurrent({ allowBuild: false }); },
+  onStateChange: (controller) => {
+    if (!partController) return;
+    partController.setLocked(controller.readOnly || controller.mutationBusy || controller.previewPending || !!controller.previewError || !controller.fresh);
+    renderPartsList();
+  },
+  onSave: () => loadVersions(),
+  onRestore: async () => {
+    partController?.cancel();
+    exitHistory();
+    editor.context = { ...editor.context, version: null, profile: state.profile };
+    editor.render();
+    await editor.refresh();
+    await showCurrent({ forceBuild: true });
+    loadVersions();
+  },
+});
+partController = new PartViewportController({ scene, camera, canvas, orbit: controls,
+  onSelect: (id, raw, stats) => { editor.setSelectedPart(id, raw, stats); renderPartsList(); if (id || raw) selectTab('edit'); },
+  onCommit: (id, value) => editor.commitPart(id, 'all', 0, null, { whole: value }),
+  onDrag: (dragging) => editor.setPartDrag(dragging),
+  onInvalid: (message) => editor.showAlert(message),
+});
+
+function setPartMode(mode) {
+  if (partController.pendingDraft) return;
+  const selectedPart = editor.snapshot?.parts?.find((part) => part.id === partController.selected);
+  const capability = mode === 'translate' ? 'move' : mode === 'rotate' ? 'rotate' : mode === 'scale' ? 'scale' : null;
+  if (capability && (partController.locked || !selectedPart?.editable || !selectedPart.transform?.[capability])) return;
+  partController.setMode(mode);
+  for (const button of document.querySelectorAll('[data-part-mode]')) button.classList.toggle('on', button.dataset.partMode === mode);
+  renderPartsList();
+}
+
 // ------------------------------------------------------------------ events
 
 $('assetList').addEventListener('click', (e) => {
   const el = e.target.closest('.asset');
   if (el) selectAsset(el.dataset.slug);
 });
+$('sideAssets').addEventListener('click', () => setSidebarTab('assets'));
+$('sideParts').addEventListener('click', () => setSidebarTab('parts'));
+$('partList').addEventListener('click', (event) => {
+  const button = event.target.closest('[data-part-id]');
+  if (button) { partController.select(button.dataset.partId); return; }
+  const raw = event.target.closest('[data-node-index]');
+  if (raw) partController.selectRaw(Number(raw.dataset.nodeIndex));
+});
+$('partList').addEventListener('keydown', (event) => {
+  const rows = [...$('partList').querySelectorAll('[role="treeitem"]')];
+  const index = rows.indexOf(document.activeElement);
+  if (index < 0) return;
+  let next = index;
+  if (event.key === 'ArrowDown') next = Math.min(rows.length - 1, index + 1);
+  else if (event.key === 'ArrowUp') next = Math.max(0, index - 1);
+  else if (event.key === 'Home') next = 0;
+  else if (event.key === 'End') next = rows.length - 1;
+  else if (event.key === 'ArrowLeft') {
+    const level = Number(rows[index].getAttribute('aria-level'));
+    for (let i = index - 1; i >= 0; i--) if (Number(rows[i].getAttribute('aria-level')) < level) { next = i; break; }
+  } else if (event.key === 'ArrowRight') {
+    if (index + 1 < rows.length && Number(rows[index + 1].getAttribute('aria-level')) > Number(rows[index].getAttribute('aria-level'))) next = index + 1;
+  } else return;
+  event.preventDefault();
+  rows[next].focus();
+});
+document.querySelectorAll('[data-part-mode]').forEach((button) => button.addEventListener('click', () => setPartMode(button.dataset.partMode)));
+$('partSnap').addEventListener('click', () => {
+  partController.setSnap(!partController.snap);
+  $('partSnap').textContent = partController.snap ? 'Snap On' : 'Snap Off';
+  $('partSnap').setAttribute('aria-pressed', String(partController.snap));
+});
 $('filter').addEventListener('input', renderAssetList);
 $('variantBar').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
+  partController.cancel();
+  exitHistory();
+  const selectionToken = ++state.viewToken;
+  ++state.loadToken;
+  state.version = null;
   state.variant = b.dataset.variant || null;
   const asset = state.assets.find((a) => a.slug === state.slug);
   renderVariantBar(asset);
   $('title').textContent = titleText(asset);
-  showCurrent();
+  editor.setContext({ slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile, version: null }).then(() => {
+    if (selectionToken === state.viewToken) showCurrent();
+  });
+  loadVersions();
 });
 $('skinBar').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
+  partController.cancel();
+  exitHistory();
+  const selectionToken = ++state.viewToken;
+  ++state.loadToken;
+  state.version = null;
   state.skin = b.dataset.skin || null;
   const asset = state.assets.find((a) => a.slug === state.slug);
   renderVariantBar(asset);
   $('title').textContent = titleText(asset);
-  showCurrent();
+  editor.setContext({ slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile, version: null }).then(() => {
+    if (selectionToken === state.viewToken) showCurrent();
+  });
 });
 $('profile').addEventListener('change', (e) => {
+  partController.cancel();
+  const selectionToken = ++state.viewToken;
+  ++state.loadToken;
+  state.version = null;
   state.profile = e.target.value;
   localStorage.setItem('studio.profile', state.profile);
   renderAssetList();
-  showCurrent({ keepCamera: false });
+  editor.setContext({ slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile, version: state.version }).then(() => {
+    if (selectionToken === state.viewToken) showCurrent({ keepCamera: false });
+  });
 });
 $('lighting').addEventListener('change', (e) => {
   state.lighting = e.target.value;
@@ -480,14 +736,11 @@ function frameWithHelpers() {
   controls.update();
 }
 document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
-document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => {
-  document.querySelectorAll('[data-tab]').forEach((x) => x.classList.toggle('on', x === b));
-  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.id === `tab-${b.dataset.tab}`));
-  if (b.dataset.tab === 'uv') renderUVPanel();
-  if (b.dataset.tab === 'versions') loadVersions();
-}));
+document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.tab)));
 $('uvTexture').addEventListener('change', renderUVPanel);
 $('tab-versions').addEventListener('click', (e) => {
+  const restore = e.target.closest('[data-restore]');
+  if (restore) { editor.restore(restore.dataset.restore); return; }
   const el = e.target.closest('.version');
   if (el) previewVersion(el.dataset.version);
 });
@@ -499,29 +752,58 @@ $('shot').addEventListener('click', () => {
   a.click();
 });
 window.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    editor.openSaveFromShortcut(e.target);
+    return;
+  }
+  const typing = ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) || e.target.isContentEditable;
+  if (typing) return;
+  if (e.metaKey || e.ctrlKey) {
+    if (e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? editor.redo() : editor.undo(); }
+    else if (e.key.toLowerCase() === 'y') { e.preventDefault(); editor.redo(); }
+    return;
+  }
   const map = { w: 'wire', b: 'backfaces', g: 'grid', d: 'dims', h: 'human' };
+  const partMode = { q: 'select', t: 'translate', r: 'rotate', s: 'scale' };
+  if (e.key === 'Escape') { setPartMode('select'); return; }
+  if (partMode[e.key.toLowerCase()] && editor.snapshot?.parts?.length && !editor.readOnly) { setPartMode(partMode[e.key.toLowerCase()]); return; }
   if (map[e.key]) document.querySelector(`[data-toggle="${map[e.key]}"]`).click();
   if (e.key === 'f') setView('iso');
 });
 
 // Live updates from the server.
+function eventMatchesLook(d) {
+  return d.slug === state.slug && (d.variant || null) === state.variant &&
+    (d.skin || null) === state.skin && d.profile === state.profile && !state.version;
+}
+
 function connect() {
   const es = new EventSource('/api/events');
   es.addEventListener('hello', () => setStatus('Connected. Waiting for builds…'));
-  es.addEventListener('build-start', (e) => {
+  es.addEventListener('build-start', async (e) => {
     const d = JSON.parse(e.data);
-    if (d.slug === state.slug) setStatus(`Rebuilding ${d.slug} [${d.profile}]…`);
+    if (eventMatchesLook(d)) {
+      await editor.refresh();
+      if (!eventMatchesLook(d) || (d.revision && d.revision !== editor.snapshot?.revision)) return;
+      editor.markPreviewPending();
+      setStatus(`Rebuilding ${d.slug} [${d.profile}]…`);
+    }
   });
   es.addEventListener('built', async (e) => {
     const d = JSON.parse(e.data);
     await refreshState();
-    if (d.slug === state.slug && (d.variant || null) === state.variant && (d.skin || null) === state.skin && d.profile === state.profile && !state.version) {
+    if (eventMatchesLook(d)) {
+      await editor.refresh();
+      if (!eventMatchesLook(d) || (d.revision && d.revision !== editor.snapshot?.revision)) return;
       if (d.error) {
         showBanner(`Build failed:\n${d.error}`, true);
+        editor.setReport(state.report, { error: d.error });
+        editor.showAlert(`Build failed: ${d.error}`, { 'Retry build': () => showCurrent({ forceBuild: true }), ...(editor.stack.undo.length ? { 'Undo edit': () => editor.undo() } : {}) });
+        renderReport();
         setStatus(`Build failed for ${d.slug}`);
       } else {
-        await showCurrent();
+        await showCurrent({ allowBuild: false });
       }
     }
   });

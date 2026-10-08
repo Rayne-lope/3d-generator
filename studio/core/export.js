@@ -6,11 +6,13 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { buildItem } from './build.js';
+import { buildItem, computeSourceHash } from './build.js';
 import { parityCheck } from './review.js';
 import { paths, itemId, previewGlb, previewReport, rel } from './paths.js';
 import { ensureDir, readJson, sha256, writeFileAtomic, writeJson } from './fsutil.js';
 import { reportMarkdown } from './report.js';
+import { loadAssetDef } from './load-asset.js';
+import { setOfAsset } from './targets.js';
 
 export function exportPaths(slug, variant, profileId, skin = null) {
   const base = path.join(paths.exports, profileId, itemId(slug, variant, skin));
@@ -55,6 +57,11 @@ export async function exportItem({ slug, variant = null, skin = null, profileId,
 
   let parityResult = null;
   if (parity && api) parityResult = await parityCheck(api, { slug, variant, skin, profileId });
+  const def = await loadAssetDef(slug);
+  const expectedSource = computeSourceHash(slug, variant, profileId, def.meta.set || setOfAsset(slug), skin) + (allowDecimate ? ':dec' : '');
+  if (expectedSource !== report.hashes.source) {
+    return { slug, variant, skin, id, profile: profileId, blocked: true, reason: 'source changed while exporting; rebuild the selected look', errors: [], report };
+  }
   const finalReport = readJson(previewReport(slug, variant, profileId, skin));
   const out = exportPaths(slug, variant, profileId, skin);
   ensureDir(path.dirname(out.glb));
@@ -71,6 +78,9 @@ export async function exportItem({ slug, variant = null, skin = null, profileId,
   };
   writeJson(out.json, exported);
   fs.writeFileSync(out.md, reportMarkdown(exported));
+  if (computeSourceHash(slug, variant, profileId, def.meta.set || setOfAsset(slug), skin) + (allowDecimate ? ':dec' : '') !== expectedSource) {
+    return { slug, variant, skin, id, profile: profileId, blocked: true, reason: 'source changed while exporting; rebuild the selected look', errors: [], report };
+  }
   recordExport(slug, profileId, rel(out.glb));
   return { slug, variant, skin, id, profile: profileId, blocked: false, files: { glb: rel(out.glb), json: rel(out.json), md: rel(out.md) }, report: exported, parity: parityResult };
 }

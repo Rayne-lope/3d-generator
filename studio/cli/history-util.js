@@ -8,8 +8,8 @@ import { fmtNum } from '../core/log.js';
 import { notifyServer } from './notify.js';
 
 /** Build the generic preview of one asset and return its report (history stores generic GLBs). */
-export async function buildGeneric(slug) {
-  return (await buildItem({ slug, variant: null, profileId: 'generic' })).report;
+export async function buildGeneric(slug, variant = null) {
+  return (await buildItem({ slug, variant, profileId: 'generic' })).report;
 }
 
 /** Rebuild the generic previews after a restore and tell a running viewport to reload. */
@@ -43,13 +43,17 @@ export async function renderVersionThumbnail(dir, t, meta) {
     const base = `${api.url}files/history/${key}/${meta.id}/`;
     if (t.kind === 'asset') {
       const views = ['front', 'right', 'iso'];
-      const r = await api.renderGLB({ url: `${base}generic.glb`, views, size: 320 });
+      const r = await api.renderGLB({ url: `${base}${meta.preferredVariant ? meta.lookGlbs[meta.preferredVariant] : 'generic.glb'}`, views, size: 320 });
       writeDataUrl(path.join(dir, 'thumb.png'), r.images.iso);
+      for (const [variant, file] of Object.entries(meta.lookGlbs || {})) {
+        const img = await api.renderGLB({ url: `${base}${file}`, views: ['iso'], size: 320 });
+        writeDataUrl(path.join(dir, `thumb--${variant}.png`), img.images.iso);
+      }
       const sheet = await api.sheet({
         tiles: views.map((v) => ({ image: r.images[v], label: v })),
         columns: 3,
         tileSize: 320,
-        title: `${t.label} · ${meta.id}${meta.auto ? ' (auto-save)' : ''}`,
+        title: `${t.label}${meta.preferredVariant ? ` · ${meta.preferredVariant}` : ''} · ${meta.id}${meta.auto ? ' (auto-save)' : ''}`,
         lines: [meta.note ? `"${meta.note}"` : '', statsLine(meta)].filter(Boolean),
       });
       writeDataUrl(path.join(dir, 'sheet.png'), sheet);

@@ -24,6 +24,9 @@ export default defineAsset({
   variants: {
     'red-zone': { needle: 0.93 },
   },
+  editor: { version: 1, groups: [], controls: [], parts: [
+    { id: 'handwheel', label: 'Handwheel', transform: { move: true, rotate: true, scale: true } },
+  ] },
   build({ p, k }) {
     const asset = k.asset('pressure_valve');
     const brass = k.mat.pbr({ name: 'brass', color: p.brass, roughness: 0.38, metalness: 1 });
@@ -62,7 +65,7 @@ export default defineAsset({
     pipes.add(k.mesh(k.geo.cylinder(R * 1.6, 0.02, { segments: 18, bevel: 0.004 }), brass, { at: [0.35, elbowY + 0.09, 0], rot: [0, 0, Math.PI / 2] }));
 
     // Handwheel on the front of the valve: rim + hub + spokes.
-    const wheel = k.part('handwheel', { separate: true, pivot: [0, vy, R * 2.3 + 0.07] });
+    const wheel = k.part('handwheel', { separate: true, pivot: [0, vy, R * 2.3 + 0.07], id: 'handwheel' });
     const wz = R * 2.3 + 0.07;
     wheel.add(k.mesh(k.geo.torus(p.wheelRadius, 0.012, { axis: 'z', tubularSegments: 32, radialSegments: 8 }), iron, { at: [0, vy, wz] }));
     wheel.add(k.mesh(k.geo.cylinder(0.025, 0.05, { segments: 12, bevel: 0.005 }), brass, { at: [0, vy, wz - 0.01], rot: [Math.PI / 2, 0, 0] }));

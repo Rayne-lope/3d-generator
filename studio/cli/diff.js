@@ -56,11 +56,12 @@ export async function run(argv) {
     views: { type: 'string' },
     size: { type: 'string', default: '360' },
     out: { type: 'string' },
+    variant: { type: 'string' },
     'no-source': { type: 'boolean', default: false },
   }, USAGE);
   if (args.length < 1 || args.length > 3) throw new Error(USAGE);
   const [target, ...specs] = args;
-  const res = await withCapture((api) => diffTarget(api, target, { specs, views: opts.views ? opts.views.split(',') : undefined, size: Number(opts.size) }));
+  const res = await withCapture((api) => diffTarget(api, target, { specs, views: opts.views ? opts.views.split(',') : undefined, size: Number(opts.size), variant: opts.variant || null }));
   if (opts.out && res.sheet) {
     ensureDir(path.dirname(path.resolve(opts.out)));
     fs.copyFileSync(path.resolve(res.sheet), path.resolve(opts.out));

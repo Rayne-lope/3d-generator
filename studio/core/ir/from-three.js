@@ -130,8 +130,8 @@ export function sceneToIR(root, { slug, variant = null, skin = null, meta = {}, 
     return name;
   };
 
-  const makeNode = (name, parent, frame) => {
-    const node = { id: nodes.length, name: uniqueName(name), parent, frame, frameInv: frame.clone().invert(), prims: new Map(), children: [] };
+  const makeNode = (name, parent, frame, extras = null) => {
+    const node = { id: nodes.length, name: uniqueName(name), parent, frame, frameInv: frame.clone().invert(), prims: new Map(), children: [], extras };
     nodes.push(node);
     if (parent !== null) nodes[parent].children.push(node.id);
     return node;
@@ -211,7 +211,9 @@ export function sceneToIR(root, { slug, variant = null, skin = null, meta = {}, 
         const scl = new THREE.Vector3();
         obj.matrixWorld.decompose(pos, quat, scl);
         const frame = new THREE.Matrix4().compose(pos, quat, new THREE.Vector3(1, 1, 1));
-        const node = makeNode(obj.name, partOwner.id, frame);
+        const parentPartId = partOwner.extras?.studio?.partId || null;
+        const partId = obj.userData.studio.id || null;
+        const node = makeNode(obj.name, partOwner.id, frame, partId ? { studio: { partId, parentPartId } } : null);
         nextOwner = node;
         nextPartOwner = node;
       }
@@ -260,6 +262,7 @@ export function sceneToIR(root, { slug, variant = null, skin = null, meta = {}, 
       translation: [round(t.x), round(t.y), round(t.z)],
       rotation: [round(q.x), round(q.y), round(q.z), round(q.w)],
       scale: [1, 1, 1],
+      extras: node.extras,
       primitives,
     };
   });

@@ -21,6 +21,12 @@
   <header class="topbar">
     <div class="brand">AI 3D Asset Studio</div>
     <div class="title" id="title">No asset selected</div>
+    <div class="edit-actions" aria-label="Asset editing">
+      <button id="undoEdit" type="button" title="Undo this look's last edit (Ctrl/⌘ Z)" disabled>Undo</button>
+      <button id="redoEdit" type="button" title="Redo this look's last edit (Ctrl/⌘ Shift Z)" disabled>Redo</button>
+      <button id="saveVersionBtn" type="button" disabled>Save Version</button>
+      <button id="exportBtn" type="button" disabled>Export</button>
+    </div>
     <div class="controls">
       <label>Profile <select id="profile"></select></label>
       <label>Light
@@ -55,15 +61,28 @@
   </header>
   <aside class="sidebar">
     <div class="side-head">
-      <span>Assets</span>
+      <span>Studio</span>
       <input id="filter" placeholder="filter…" autocomplete="off">
     </div>
+    <div class="side-tabs" role="tablist" aria-label="Sidebar content">
+      <button id="sideAssets" type="button" class="on" role="tab" aria-selected="true">Assets</button>
+      <button id="sideParts" type="button" role="tab" aria-selected="false">Parts</button>
+    </div>
     <div id="assetList" class="asset-list"></div>
-    <div class="side-foot">Prompt your coding agent (e.g. <code>/asset a mossy stone well</code>). This page only shows exported GLBs.</div>
+    <div id="partList" class="asset-list hidden" role="tree" aria-label="Exported parts"></div>
+    <div class="side-foot">Select a part to inspect its transform. The viewport always loads the exported GLB.</div>
   </aside>
   <main class="stage">
     <canvas id="canvas"></canvas>
-    <div id="banner" class="banner hidden"></div>
+    <div id="partTools" class="part-tools hidden" role="toolbar" aria-label="Part tools">
+      <button type="button" data-part-mode="select" class="on" title="Select part (Q)">Select</button>
+      <button type="button" data-part-mode="translate" title="Move part (T)">Move</button>
+      <button type="button" data-part-mode="rotate" title="Rotate part (R)">Rotate</button>
+      <button type="button" data-part-mode="scale" title="Uniform scale part (S)">Scale</button>
+      <button id="partSnap" type="button" aria-pressed="false" title="Snap: 1 cm, 15°, 5%">Snap Off</button>
+      <span id="partDraftBadge" class="part-draft-badge hidden" role="status">Draft not saved</span>
+    </div>
+    <div id="banner" class="banner hidden" role="status"></div>
     <div class="bars">
       <div id="skinBar" class="variant-bar hidden"></div>
       <div id="variantBar" class="variant-bar hidden"></div>
@@ -75,11 +94,23 @@
   </main>
   <section class="panel">
     <nav class="tabs">
+      <button data-tab="edit">Edit</button>
       <button data-tab="report" class="on">Report</button>
       <button data-tab="issues">Issues <span id="issueCount" class="pill"></span></button>
       <button data-tab="uv">UV</button>
       <button data-tab="versions">Versions</button>
     </nav>
+    <div id="tab-edit" class="tab" aria-label="Asset inspector">
+      <div id="editStatus" class="edit-status" aria-live="polite"></div>
+      <div id="editAlert" class="edit-alert hidden" role="alert"></div>
+      <div id="editFields"></div>
+      <form id="saveVersionForm" class="edit-form hidden">
+        <label for="versionNote">Version note</label>
+        <input id="versionNote" maxlength="180" required placeholder="What changed?" autocomplete="off">
+        <div class="edit-form-actions"><button type="submit">Save Version</button><button id="cancelSaveVersion" type="button">Cancel</button></div>
+      </form>
+      <div id="exportResult" class="export-result hidden"></div>
+    </div>
     <div id="tab-report" class="tab on"></div>
     <div id="tab-issues" class="tab"></div>
     <div id="tab-uv" class="tab">
@@ -91,6 +122,7 @@
   </section>
   <footer class="status">
     <span id="status">Connecting…</span>
+    <span id="quality" class="quality" aria-live="polite"></span>
     <span class="badge" title="The viewport loads the exported GLB through a clean GLTFLoader — never the source scene">Preview = Export</span>
   </footer>
   <script type="module" src="/viewport/app.js"></script>

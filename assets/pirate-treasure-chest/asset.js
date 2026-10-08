@@ -30,6 +30,9 @@ export default defineAsset({
   variants: {
     open: { lidOpen: 1.15 },
   },
+  editor: { version: 1, groups: [], controls: [], parts: [
+    { id: 'lid', label: 'Lid', transform: { move: true, rotate: true, scale: true } },
+  ] },
   build({ p, k, rng }) {
     const asset = k.asset('treasure_chest');
     const woodColors = [p.wood, k.color.hex(k.color.shade(p.wood, -0.04)), k.color.hex(k.color.shade(p.wood, 0.03))];
@@ -105,7 +108,7 @@ export default defineAsset({
     }
 
     // ---- Lid: barrel vault, separate part hinged at the back top edge
-    const lid = k.part('lid', { separate: true, pivot: [0, BH, -D / 2] });
+    const lid = k.part('lid', { separate: true, pivot: [0, BH, -D / 2], id: 'lid' });
     const rise = p.lidRise;
     const R = (D * D / 4 + rise * rise) / (2 * rise); // circle through both eaves and the crown
     const cy = BH + rise - R;

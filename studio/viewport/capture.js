@@ -22,7 +22,10 @@ async function loadGLB(url) {
 async function loadSource(slug, variant, skin) {
   const kit = await import('/studio/kit/index.js');
   const mod = await import(`/assets/${slug}/asset.js?t=${Date.now()}`);
-  const { root } = kit.runAsset(mod.default, { variant: variant || null, skin: skin || null });
+  const response = await fetch(`/assets/${slug}/editor.json?t=${Date.now()}`);
+  if (!response.ok && response.status !== 404) throw new Error(`editor overrides fetch failed: ${response.status}`);
+  const editor = response.status === 404 ? null : await response.json();
+  const { root } = kit.runAsset(mod.default, { variant: variant || null, skin: skin || null, editor });
   return { object: root, units: 1 };
 }
 

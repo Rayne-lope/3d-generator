@@ -20,15 +20,36 @@ export default defineAsset({
     stone: '#8b8679',
     glass: '#ffcf7a',
     glow: 0.9,
+    ironRoughness: 0.62,
+    stoneRoughness: 0.88,
+    glassRoughness: 0.2,
+    ironMetalness: 1,
+  },
+  editor: {
+    version: 1,
+    groups: [{ id: 'shape', label: 'Shape' }, { id: 'surface', label: 'Surface' }],
+    controls: [
+      { key: 'height', label: 'Post height', group: 'shape', type: 'number', unit: 'm', min: 2.7, max: 4, step: 0.05 },
+      { key: 'armLength', label: 'Arm length', group: 'shape', type: 'number', unit: 'm', displayUnit: 'cm', min: 0.55, max: 1, step: 0.01 },
+      { key: 'lanternSize', label: 'Lantern size', group: 'shape', type: 'number', unit: 'm', displayUnit: 'cm', min: 0.28, max: 0.42, step: 0.01 },
+      { key: 'iron', label: 'Wrought iron', group: 'surface', type: 'color' },
+      { key: 'ironMetalness', label: 'Iron surface', group: 'surface', type: 'select', options: [{ value: 0, label: 'Matte paint' }, { value: 1, label: 'Bare metal' }] },
+      { key: 'ironRoughness', label: 'Iron roughness', group: 'surface', type: 'number', min: 0.4, max: 0.85, step: 0.01 },
+      { key: 'stone', label: 'Plinth stone', group: 'surface', type: 'color' },
+      { key: 'stoneRoughness', label: 'Stone roughness', group: 'surface', type: 'number', min: 0.7, max: 1, step: 0.01 },
+      { key: 'glass', label: 'Lantern glass', group: 'surface', type: 'color', help: 'Glow color when lit; glass body color when unlit.' },
+      { key: 'glassRoughness', label: 'Glass roughness', group: 'surface', type: 'number', min: 0.05, max: 0.5, step: 0.01 },
+      { key: 'glow', label: 'Glow strength', group: 'surface', type: 'number', min: 0, max: 1, step: 0.05 },
+    ],
   },
   variants: {
     unlit: { glow: 0, glass: '#3d4a52' },
   },
   build({ p, k }) {
     const asset = k.asset('street_lamp');
-    const iron = k.mat.pbr({ name: 'wrought_iron', color: p.iron, roughness: 0.62, metalness: 1 });
-    const stone = k.mat.physical('stone', { name: 'plinth_stone', color: p.stone });
-    const glass = k.mat.pbr({ name: 'lantern_glass', color: p.glow > 0 ? '#5a4a2a' : p.glass, roughness: 0.2, emissive: p.glow > 0 ? p.glass : null, emissiveIntensity: p.glow || 1 });
+    const iron = k.mat.pbr({ name: 'wrought_iron', color: p.iron, roughness: p.ironRoughness, metalness: p.ironMetalness });
+    const stone = k.mat.physical('stone', { name: 'plinth_stone', color: p.stone, roughness: p.stoneRoughness });
+    const glass = k.mat.pbr({ name: 'lantern_glass', color: p.glow > 0 ? '#5a4a2a' : p.glass, roughness: p.glassRoughness, emissive: p.glow > 0 ? p.glass : null, emissiveIntensity: p.glow || 1 });
     const H = p.height;
 
     const post = k.part('post');

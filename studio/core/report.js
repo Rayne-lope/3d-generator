@@ -5,7 +5,7 @@ import { c, sym, fmtBytes, fmtNum, fmtMs } from './log.js';
 const toSRGB8 = (v) => Math.round((v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255);
 const hex = (rgb) => `#${rgb.slice(0, 3).map((v) => toSRGB8(Math.min(1, Math.max(0, v))).toString(16).padStart(2, '0')).join('')}`;
 
-export function makeReport({ slug, variant, skin = null, id, def, setName, profile, glbPath, glbBytes, glbHash, info, ir, validation, sourceHash, buildMs }) {
+export function makeReport({ slug, variant, skin = null, id, def, setName, profile, glbPath, glbBytes, glbHash, info, ir, validation, sourceHash, parts = [], buildMs }) {
   const perMeter = profile.units.perMeter;
   const sizeUnits = info.bbox.size.map((v) => +v.toFixed(4));
   const sizeM = sizeUnits.map((v) => +(v / perMeter).toFixed(4));
@@ -37,7 +37,8 @@ export function makeReport({ slug, variant, skin = null, id, def, setName, profi
     },
     meshCount: info.meshes.length,
     geometry: info.geometry,
-    nodes: info.nodes.map((n) => ({ name: n.name, parent: n.parent, translation: n.translation.map((v) => +v.toFixed(5)), hasMesh: n.hasMesh })),
+    parts,
+    nodes: info.nodes.map((n) => ({ name: n.name, parent: n.parent, translation: n.translation.map((v) => +v.toFixed(5)), partId: n.extras?.studio?.partId || null, hasMesh: n.hasMesh })),
     materials: info.materials.map((m) => ({
       name: m.name,
       baseColor: hex(m.baseColor),

@@ -20,6 +20,23 @@ export default defineAsset({
     legRadius: 0.018,
     oak: '#d9b98c',
     seat: '#f1efe9',
+    oakRoughness: 0.48,
+    seatRoughness: 0.92,
+  },
+  editor: {
+    version: 1,
+    groups: [{ id: 'shape', label: 'Shape' }, { id: 'surface', label: 'Surface' }],
+    controls: [
+      { key: 'seatWidth', label: 'Seat width', group: 'shape', type: 'number', unit: 'm', displayUnit: 'cm', min: 0.36, max: 0.58, step: 0.01 },
+      { key: 'seatDepth', label: 'Seat depth', group: 'shape', type: 'number', unit: 'm', displayUnit: 'cm', min: 0.35, max: 0.55, step: 0.01 },
+      { key: 'seatHeight', label: 'Seat height', group: 'shape', type: 'number', unit: 'm', displayUnit: 'cm', min: 0.35, max: 0.55, step: 0.01 },
+      { key: 'backHeight', label: 'Back height', group: 'shape', type: 'number', unit: 'm', displayUnit: 'cm', min: 0.68, max: 1, step: 0.01 },
+      { key: 'legRadius', label: 'Leg radius', group: 'shape', type: 'number', unit: 'm', displayUnit: 'cm', min: 0.012, max: 0.03, step: 0.001 },
+      { key: 'oak', label: 'Oak color', group: 'surface', type: 'color' },
+      { key: 'oakRoughness', label: 'Oak roughness', group: 'surface', type: 'number', min: 0.25, max: 0.8, step: 0.01 },
+      { key: 'seat', label: 'Seat fabric', group: 'surface', type: 'color' },
+      { key: 'seatRoughness', label: 'Fabric roughness', group: 'surface', type: 'number', min: 0.7, max: 1, step: 0.01 },
+    ],
   },
   variants: {
     walnut: { oak: '#7a5236', seat: '#2e3033' },
@@ -34,8 +51,8 @@ export default defineAsset({
     const grainH = k.tex.create(T, T, { space: 'linear', name: 'oak_height', seed: 18 })
       .fill(0.6)
       .grain({ color: 0.45, rings: 18, amount: 0.5, warp: 0.4, scale: 2, seed: 4 });
-    const oak = k.mat.pbr({ name: 'oak', map: grain, normalMap: k.tex.normalFromHeight(grainH, { strength: 0.6 }), roughness: 0.48 });
-    const fabric = k.mat.physical('fabric', { name: 'seat_fabric', color: p.seat, roughness: 0.92 });
+    const oak = k.mat.pbr({ name: 'oak', map: grain, normalMap: k.tex.normalFromHeight(grainH, { strength: 0.6 }), roughness: p.oakRoughness });
+    const fabric = k.mat.physical('fabric', { name: 'seat_fabric', color: p.seat, roughness: p.seatRoughness });
     const uvs = 3; // oak repeats per meter (fine grain on thin parts)
     const SW = p.seatWidth;
     const SD = p.seatDepth;

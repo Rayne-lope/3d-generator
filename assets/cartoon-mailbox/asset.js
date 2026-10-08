@@ -29,6 +29,9 @@ export default defineAsset({
     'flag-down': { flagUp: false },
     pink: { body: '#e85d9a', door: '#f59ac2', flag: '#3fc1ff', seed: 3 },
   },
+  editor: { version: 1, groups: [], controls: [], parts: [
+    { id: 'flag', label: 'Flag', transform: { move: true, rotate: true, scale: true } },
+  ] },
   build({ p, k }) {
     const asset = k.asset('mailbox');
     const body = k.mat.pbr({ name: 'mailbox_paint', color: p.body, roughness: 0.4 });
@@ -65,7 +68,7 @@ export default defineAsset({
     // Flag on a hinged arm: separate part so it can rotate in the engine.
     const hingeY = p.postHeight + 0.065 + p.boxHeight * 0.35;
     const hingeX = topX + W / 2 + 0.035;
-    const flag = k.part('flag', { separate: true, pivot: [hingeX, hingeY, 0.05] });
+    const flag = k.part('flag', { separate: true, pivot: [hingeX, hingeY, 0.05], id: 'flag' });
     flag.add(k.mesh(k.geo.box(0.03, 0.34, 0.03, { bevel: 0.008 }), flagMat, { at: [hingeX, hingeY + 0.14, 0.05] }));
     flag.add(k.mesh(k.geo.box(0.025, 0.12, 0.16, { bevel: 0.01 }), flagMat, { at: [hingeX, hingeY + 0.26, 0.12] }));
     flag.add(k.mesh(k.geo.cylinder(0.03, 0.04, { segments: 12, bevel: 0.006 }), knob, { at: [hingeX - 0.01, hingeY, 0.05], rot: [0, 0, Math.PI / 2] }));

@@ -91,6 +91,7 @@ export async function irToGLB(ir, { profileId, allowEmissiveStrength = true, kee
   const scene = doc.createScene(ir.asset.slug);
   const nodeObjs = ir.nodes.map((n) => {
     const node = doc.createNode(n.name).setTranslation(n.translation).setRotation(n.rotation).setScale(n.scale);
+    if (n.extras) node.setExtras(n.extras);
     if (n.primitives.length) {
       const mesh = doc.createMesh(n.name);
       for (const p of n.primitives) {

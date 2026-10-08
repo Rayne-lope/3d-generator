@@ -16,6 +16,7 @@ import { loadProfile } from '../profiles/index.js';
 import { paths, assetDir, previewGlb, previewReport, itemId, rel } from './paths.js';
 import { hashDirs, listFiles, readJson, sha256, writeFileAtomic, writeJson } from './fsutil.js';
 import { setOfAsset } from './targets.js';
+import { readEditorOverrides } from './editor.js';
 
 const PIPELINE_DIRS = [paths.kit, path.join(paths.root, 'studio', 'core'), paths.profiles];
 
@@ -63,7 +64,7 @@ export async function buildItem({ slug, variant = null, skin = null, profileId =
   // Assets with skins keep every declared material and palette swatch, so all skins share
   // one mesh layout (same materials, same UVs) and engines can swap their textures.
   const skinned = Object.keys(def.skins || {}).length > 0;
-  const run = runAsset(def, { variant, skin });
+  const run = runAsset(def, { variant, skin, editor: readEditorOverrides(slug, def) });
   const ir = sceneToIR(run.root, { slug, variant, skin, meta: def.meta, keepMaterials: skinned });
   await applyProfile(ir, profile, { allowDecimate, stablePalette: skinned });
   const { glb } = await irToGLB(ir, {
@@ -80,8 +81,11 @@ export async function buildItem({ slug, variant = null, skin = null, profileId =
   const glbHash = sha256(glb);
   const report = makeReport({
     slug, variant, skin, id: itemId(slug, variant, skin), def, setName, profile, glbPath: rel(glbFile), glbBytes: glb.byteLength, glbHash,
-    info, ir, validation, sourceHash, buildMs: performance.now() - t0,
+    info, ir, validation, sourceHash, parts: run.parts, buildMs: performance.now() - t0,
   });
+  if (computeSourceHash(slug, variant, profileId, setName, skin) + (allowDecimate ? ':dec' : '') !== sourceHash) {
+    throw new Error(`source changed while building '${slug}'; retry the latest revision`);
+  }
   if (write) {
     writeFileAtomic(glbFile, glb);
     writeJson(reportFile, report);

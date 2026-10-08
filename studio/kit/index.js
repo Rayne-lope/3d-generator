@@ -4,4 +4,5 @@
 
 export { defineAsset } from './define.js';
 export { runAsset, applyOrigin } from './runtime.js';
+export { editorControls, editorParts, editorParams, editorOrigins, partTransformState, assertEditorValue, assertPartTransform, validateEditorState } from './editor.js';
 export { k, KIT_VERSION } from './k.js';

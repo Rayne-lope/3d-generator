@@ -72,14 +72,20 @@ viewport.
    3D-painted textures, 17 complex shapes, 08 style words) and `docs/KIT.md` for the API. If the user gives a picture, save it as
    `assets/<slug>/reference.png` and set `meta.reference` (rule 17).
 4. **Write `build()`**: primary forms → secondary → tertiary. Put every revisable number in
-   `params`. Group meshes into named `k.part`s; moving pieces get `{ separate: true, pivot }`.
-   Fill `meta.interpretation` and `meta.budget`.
+   `params`. Include a curated `editor` schema for useful shape and surface controls; the user
+   does not need to request editor support in the prompt. Test control bounds against the
+   actual geometry; never auto-expose seed, texture size or internal values.
+   Group meshes into named `k.part`s with stable `id`s. Moving/detachable pieces get
+   `{ separate: true, pivot, id }` and an `editor.parts` entry for Move/Rotate/uniform Scale.
+   Keep IDs when labels change. Do not split decorative detail just to expose a gizmo.
+   Fill `meta.interpretation` and `meta.budget`. See `docs/KIT.md` for the editor contract.
 5. `node studio review <slug>` → **open the printed sheet PNG** (see *Looking at images*) and go
    through `rules/checklists/review.md`. When structure or proportions look wrong, also open
    `parts.png` (each `k.part` colored) and `blueprint.png` (rulers in meters); with a reference,
    open `reference.png` and fix the largest red/cyan area (IoU printed). Fix errors and visible
    problems; repeat (usually 1–3 rounds, more when matching a reference).
-6. `node studio save <slug> -m "<user prompt>"`.
+6. `node studio save <slug> -m "<user prompt>" --include-variants` for editor-enabled assets
+   (the default for new assets), retaining accurate Base and variant checkpoint previews.
 7. **Reply**: interpretation, what you built (parts, size, triangles), anything you could not do,
    and 2–3 useful next revisions. Mention the viewport shows it live.
 
@@ -88,6 +94,9 @@ viewport.
 Follow `rules/10-revisions.md`: locate the param/part → smallest change → keep seeds →
 `node studio diff <slug>` (red only where requested) → review → `save -m "<revision prompt>"`.
 Never rebuild the asset from scratch for a revision.
+Preserve existing editor metadata, stable part IDs, and `editor.json` working-copy overrides.
+Update curated controls when adding or removing a public parameter; never silently discard
+parameter or part-transform edits while changing source.
 
 ## Workflow C — variants
 
@@ -99,6 +108,11 @@ See `rules/09-sets-and-variants.md`.
 `node studio new-set <set> --members ...` → design `sets/<set>/style.js` first (palette,
 materials, bevel, shared dimensions, helpers) → build members importing it →
 `node studio review set:<set>` (check the lineup for consistency) → `save set:<set>`.
+New members also get curated editor controls and stable part IDs; shared style values stay
+in the style module. Gizmos are for meaningful separate parts with pivots, not every detail.
+For editor-enabled members, also save an individual checkpoint with
+`node studio save <member> -m "<user prompt>" --include-variants`, so their browser Versions
+cards have the correct variant previews. The set checkpoint still preserves the whole pack.
 
 ## Workflow E — export for an engine
 

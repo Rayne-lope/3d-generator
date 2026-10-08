@@ -56,15 +56,16 @@ function statsFromReport(r) {
   return { triangles: r.triangles.total, dimensions: r.dimensions.meters, materials: r.materials.length, meshes: r.meshCount, errors: r.counts.error, warnings: r.counts.warning };
 }
 
-async function sideInfo(t, side, slug) {
+async function sideInfo(t, side, slug, variant = null) {
   if (side === WORKING) {
-    const { report } = await buildItem({ slug, variant: null, profileId: 'generic' });
-    return { label: 'working copy', short: 'working', url: `files/preview/${itemId(slug, null)}/generic.glb`, stats: statsFromReport(report), note: null };
+    const { report } = await buildItem({ slug, variant, profileId: 'generic' });
+    return { label: 'working copy', short: 'working', url: `files/preview/${itemId(slug, variant)}/generic.glb`, stats: statsFromReport(report), note: null };
   }
   const v = getVersion(t, side);
-  const file = t.kind === 'set' ? `${slug}.glb` : 'generic.glb';
+  if (variant && !v.lookGlbs?.[variant]) throw new Error(`version '${v.id}' has no preview for variant '${variant}'`);
+  const file = variant ? v.lookGlbs[variant] : t.kind === 'set' ? `${slug}.glb` : 'generic.glb';
   if (!fs.existsSync(path.join(historyDir(t), v.id, file))) return null;
-  return { label: v.id, short: v.id, url: `files/history/${t.key}/${v.id}/${file}`, stats: v.stats[slug], note: v.note };
+  return { label: v.id, short: v.id, url: `files/history/${t.key}/${v.id}/${file}`, stats: variant ? v.lookStats[variant] : v.stats[slug], note: v.note };
 }
 
 /** Source folders of one side: [{prefix, dir}] (prefix is the repo-relative folder name). */
@@ -199,7 +200,7 @@ export function heatmap(a, b, { threshold = 0.12, subtleThreshold = 0.03 } = {})
  * Render and compare. Requires an open capture api (withCapture).
  * @returns {Promise<object>} summary (also written to diff.json next to sheet.png)
  */
-export async function diffTarget(api, target, { specs = [], views, size = 360, threshold } = {}) {
+export async function diffTarget(api, target, { specs = [], views, size = 360, threshold, variant = null } = {}) {
   const config = loadConfig();
   const { t, a, b } = resolveSides(target, specs);
   if (a === b) throw new Error(`both sides are ${a}`);
@@ -210,8 +211,8 @@ export async function diffTarget(api, target, { specs = [], views, size = 360, t
   const members = [];
   const tiles = [];
   for (const slug of t.members) {
-    const sa = await sideInfo(t, a, slug);
-    const sb = await sideInfo(t, b, slug);
+    const sa = await sideInfo(t, a, slug, variant);
+    const sb = await sideInfo(t, b, slug, variant);
     if (!sa || !sb) {
       members.push({ slug, missing: !sa ? a : b });
       continue;

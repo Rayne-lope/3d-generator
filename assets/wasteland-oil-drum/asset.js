@@ -19,6 +19,23 @@ export default defineAsset({
     dents: 3,
     paint: '#8f2f22',
     textureSize: 512,
+    bodyRoughness: 1,
+    lidRoughness: 0.7,
+    steelRoughness: 0.6,
+  },
+  editor: {
+    version: 1,
+    groups: [{ id: 'shape', label: 'Shape' }, { id: 'surface', label: 'Surface' }],
+    controls: [
+      { key: 'height', label: 'Height', group: 'shape', type: 'number', unit: 'm', displayUnit: 'cm', min: 0.7, max: 1.1, step: 0.01 },
+      { key: 'radius', label: 'Radius', group: 'shape', type: 'number', unit: 'm', displayUnit: 'cm', min: 0.24, max: 0.34, step: 0.005 },
+      { key: 'dents', label: 'Dents', group: 'shape', type: 'integer', min: 0, max: 4, step: 1 },
+      { key: 'paint', label: 'Paint color', group: 'surface', type: 'color' },
+      { key: 'rust', label: 'Rust coverage', group: 'surface', type: 'number', min: 0, max: 0.8, step: 0.01 },
+      { key: 'bodyRoughness', label: 'Body roughness', group: 'surface', type: 'number', min: 0.85, max: 1, step: 0.01, help: 'Multiplies the painted body roughness texture.' },
+      { key: 'lidRoughness', label: 'Lid roughness', group: 'surface', type: 'number', min: 0.45, max: 0.95, step: 0.01 },
+      { key: 'steelRoughness', label: 'Cap roughness', group: 'surface', type: 'number', min: 0.35, max: 0.9, step: 0.01 },
+    ],
   },
   variants: {
     fresh: { rust: 0.12, dents: 0, paint: '#2f5d8f', seed: 7 },
@@ -61,15 +78,15 @@ export default defineAsset({
       .fill(0.5)
       .rust({ amount: p.rust, scale: 6, seed: 21, color: '#5a5a5a', rim: '#707070' })
       .blur(1);
-    const drum = k.mat.pbr({ name: 'drum', map: paint, ormMap: orm, normalMap: k.tex.normalFromHeight(bump, { strength: 1.2 }), roughness: 1, metalness: 1 });
-    const steel = k.mat.pbr({ name: 'drum_steel', color: '#6d6a66', roughness: 0.6, metalness: 0 });
+    const drum = k.mat.pbr({ name: 'drum', map: paint, ormMap: orm, normalMap: k.tex.normalFromHeight(bump, { strength: 1.2 }), roughness: p.bodyRoughness, metalness: 1 });
+    const steel = k.mat.pbr({ name: 'drum_steel', color: '#6d6a66', roughness: p.steelRoughness, metalness: 0 });
     // Lid: its own paint (no hazard band, no ground grime) so the planar lid UVs show no seams.
     const lidPaint = k.tex.create(256, 256, { name: 'drum_lid', seed: 8 })
       .fill(p.paint)
       .noise({ color: '#5f1d15', scale: 3, amount: 0.35 })
       .rust({ amount: p.rust * 1.2, scale: 3, seed: 31 })
       .scratches({ count: 25, color: '#b8b3a8', alpha: 0.4, width: 0.002 });
-    const lid = k.mat.pbr({ name: 'drum_lid', map: lidPaint, roughness: 0.7, metalness: 0 });
+    const lid = k.mat.pbr({ name: 'drum_lid', map: lidPaint, roughness: p.lidRoughness, metalness: 0 });
 
     const body = k.part('body');
     // Shell with two rolling hoops and rolled rims, all in one lathe profile.

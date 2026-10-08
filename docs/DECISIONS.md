@@ -19,7 +19,8 @@ automatically by `node studio engine-verify godot`).
 - The AI coding agent writes **procedural Three.js code** in `assets/<slug>/asset.js` using the studio kit (`studio/kit`). No Blender, no cloud generation.
 - Asset modules export `defineAsset({ meta, seed, params, variants, build })`. `params` hold every revisable number; `variants` are named param/seed overrides exported as separate GLBs; sets (packs) share `sets/<set>/style.js`.
 - Builds are **deterministic**: seeded RNG with named streams per part, no clocks, no `Math.random`. A revision only changes what it touches.
-- The browser is **only a viewport**. It loads the exported GLB through a plain `GLTFLoader` (**Preview = Export**). Build, validation and export run in Node (`node studio …`).
+- The browser displays exported GLBs through a plain `GLTFLoader` (**Preview = Export**). The opt-in visual editor writes curated parameter overrides to `assets/<slug>/editor.json`; build, validation and export still run in Node (`node studio …`). Base and variant overrides are resolved identically in builds and source-parity renders. See [Visual asset editor](EDITOR.md).
+- Separate editable parts carry stable IDs through GLB node extras. Part transforms are source-space deltas applied after origin placement, shared by build and parity. Gizmo gestures show a labelled temporary GLB draft; export requires the current rebuilt file. New assets include curated editor metadata by default; merged decoration stays merged. See [Part editor](PART-EDITOR.md).
 
 ## Export pipeline
 

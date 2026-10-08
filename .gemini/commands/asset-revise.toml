@@ -15,6 +15,9 @@ Follow **Workflow B** (`AGENTS.md`) and `rules/10-revisions.md`:
    edit only the affected part's code. Never change the seed or rename rng streams, keep
    existing loops drawing the same random numbers in the same order, and never rebuild the asset
    from scratch.
+   Preserve stable part IDs, curated editor metadata and existing `editor.json` overrides.
+   Keep the schema in sync with added/removed public parameters, and report any obsolete
+   override instead of silently dropping it.
 3. `node studio diff <slug>` → open the diff sheet with your image tool. Red (shape or strong
    change) must appear only where the request applies; orange (subtle color/shading) only for
    color, wear or material requests. If other areas changed, find out why and fix it.

@@ -19,11 +19,24 @@ export default defineAsset({
     height: 0.5,
     depth: 0.5,
   },
+  // Curate controls for the member; shared palette/materials remain in the set style.
+  editor: {
+    version: 1,
+    groups: [{ id: 'shape', label: 'Shape' }],
+    controls: [
+      { key: 'width', type: 'number', label: 'Width', group: 'shape', min: 0.1, max: 5, step: 0.01, unit: 'm', displayUnit: 'cm' },
+      { key: 'height', type: 'number', label: 'Height', group: 'shape', min: 0.1, max: 5, step: 0.01, unit: 'm', displayUnit: 'cm' },
+      { key: 'depth', type: 'number', label: 'Depth', group: 'shape', min: 0.1, max: 5, step: 0.01, unit: 'm', displayUnit: 'cm' },
+    ],
+    parts: [],
+  },
   variants: {},
   build({ p, k }) {
     const m = style.materials(k);
     const asset = k.asset('{{SLUG_NAME}}');
-    asset.add(k.mesh(k.geo.box(p.width, p.height, p.depth, { bevel: style.dims.bevel, base: true }), m.primary));
+    const body = k.part('body', { id: 'body' });
+    body.add(k.mesh(k.geo.box(p.width, p.height, p.depth, { bevel: style.dims.bevel, base: true }), m.primary));
+    asset.add(body);
     return asset;
   },
 });

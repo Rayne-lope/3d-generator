@@ -8,10 +8,12 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { paths, assetDir, previewGlb, rel } from './paths.js';
+import { paths, assetDir, previewGlb, previewReport, rel } from './paths.js';
 import { copyDir, ensureDir, hashDirs, listFiles, readJson, removeDir, writeJson } from './fsutil.js';
 import { loadConfig } from './config.js';
 import { loadSet, setOfAsset } from './targets.js';
+import { loadAssetDef } from './load-asset.js';
+import { editorControls } from '../kit/editor.js';
 
 /** Normalize 'set:<name>' or '<slug>' into a target descriptor. */
 export function parseTarget(target) {
@@ -86,7 +88,7 @@ export function workingState(target) {
  * preview; `thumbnail` is an optional async function (versionDir, t) that writes sheet.png and
  * thumb.png. Skips when nothing changed since the head (unless `force`).
  */
-export async function saveVersion(target, { note = '', pin = false, force = false, build, thumbnail = null, auto = false, keep } = {}) {
+export async function saveVersion(target, { note = '', pin = false, force = false, build, thumbnail = null, auto = false, keep, includeVariants = false, preferredVariant = null } = {}) {
   const t = parseTarget(target);
   const { versions, head } = readIndex(t);
   const hash = workingHash(t);
@@ -106,11 +108,14 @@ export async function saveVersion(target, { note = '', pin = false, force = fals
   }
   // GLB snapshot(s) + stats from the generic profile.
   const stats = {};
+  const lookGlbs = {};
+  const lookStats = {};
   try {
     for (const m of t.members) {
-      const report = await build(m);
+      const report = await build(m, null);
       const glb = previewGlb(m, null, 'generic');
       fs.copyFileSync(glb, path.join(dir, t.kind === 'set' ? `${m}.glb` : 'generic.glb'));
+      if (t.kind === 'asset' && fs.existsSync(previewReport(m, null, 'generic'))) fs.copyFileSync(previewReport(m, null, 'generic'), path.join(dir, 'generic.report.json'));
       stats[m] = {
         triangles: report.triangles.total,
         dimensions: report.dimensions.meters,
@@ -119,7 +124,19 @@ export async function saveVersion(target, { note = '', pin = false, force = fals
         errors: report.counts.error,
         warnings: report.counts.warning,
       };
+      if (includeVariants && t.kind === 'asset') {
+        const def = await loadAssetDef(m);
+        for (const variant of Object.keys(def.variants || {})) {
+          const variantReport = await build(m, variant);
+          const filename = `generic--${variant}.glb`;
+          fs.copyFileSync(previewGlb(m, variant, 'generic'), path.join(dir, filename));
+          if (fs.existsSync(previewReport(m, variant, 'generic'))) fs.copyFileSync(previewReport(m, variant, 'generic'), path.join(dir, `generic--${variant}.report.json`));
+          lookGlbs[variant] = filename;
+          lookStats[variant] = { triangles: variantReport.triangles.total, dimensions: variantReport.dimensions.meters, materials: variantReport.materials.length, meshes: variantReport.meshCount, errors: variantReport.counts.error, warnings: variantReport.counts.warning };
+        }
+      }
     }
+    if (workingHash(t) !== hash) throw new Error(`source changed while saving ${t.label}; retry`);
   } catch (err) {
     removeDir(dir);
     throw err;
@@ -137,6 +154,9 @@ export async function saveVersion(target, { note = '', pin = false, force = fals
     setHash: setName ? hashDirs([path.join(paths.sets, setName)]) : null,
     triangles: Object.values(stats).reduce((s, x) => s + x.triangles, 0),
     stats,
+    ...(Object.keys(lookGlbs).length ? { lookGlbs } : {}),
+    ...(Object.keys(lookStats).length ? { lookStats } : {}),
+    ...(preferredVariant && lookGlbs[preferredVariant] ? { preferredVariant } : {}),
   };
   writeJson(path.join(dir, 'meta.json'), meta);
   if (thumbnail) {
@@ -145,6 +165,10 @@ export async function saveVersion(target, { note = '', pin = false, force = fals
     } catch {
       // thumbnails are optional (no browser available)
     }
+  }
+  if (workingHash(t) !== hash) {
+    removeDir(dir);
+    throw new Error(`source changed while saving ${t.label}; retry`);
   }
   versions.push(meta);
   const pruned = prune(t, versions, id, keep);
@@ -181,7 +205,10 @@ export async function revertVersion(target, id, { build, thumbnail = null } = {}
   const v = getVersion(t, id);
   let autosaved = null;
   if (workingState(t).dirty) {
-    const res = await saveVersion(t, { note: `auto-save before restoring ${v.id}`, auto: true, build, thumbnail });
+    const { editorParts } = await import('../kit/editor.js');
+    const assetDef = t.kind === 'asset' ? await loadAssetDef(t.name) : null;
+    const includeVariants = !!assetDef && (editorControls(assetDef).length > 0 || editorParts(assetDef).length > 0);
+    const res = await saveVersion(t, { note: `auto-save before restoring ${v.id}`, auto: true, build, thumbnail, includeVariants });
     if (!res.skipped) autosaved = res.version.id;
   }
   const dir = path.join(historyDir(t), v.id, 'source');
@@ -246,9 +273,13 @@ export function versionSetSource(target, id) {
   return path.join(historyDir(t), v.id, 'source', 'set');
 }
 
-export function versionGlb(target, id, slug) {
+export function versionGlb(target, id, slug, variant = null) {
   const t = parseTarget(target);
   const v = getVersion(t, id);
+  if (variant && t.kind === 'asset') {
+    if (!v.lookGlbs?.[variant]) throw new Error(`version '${v.id}' has no preview for variant '${variant}'`);
+    return path.join(historyDir(t), v.id, v.lookGlbs[variant]);
+  }
   return path.join(historyDir(t), v.id, t.kind === 'set' ? `${slug}.glb` : 'generic.glb');
 }
 
@@ -256,8 +287,13 @@ export function versionGlb(target, id, slug) {
  * Versions that contain an asset: its own saves plus saves of its set. Paths are relative to
  * .studio/history (served at /files/history/ by the dev server).
  */
-export function versionsForAsset(slug) {
-  const own = listVersions(slug).map((v) => ({ ...v, target: slug, glb: `${slug}/${v.id}/generic.glb`, thumb: `${slug}/${v.id}/thumb.png`, sheet: `${slug}/${v.id}/sheet.png` }));
+export function versionsForAsset(slug, variant = null) {
+  const own = listVersions(slug).map((v) => {
+    const glbName = variant ? v.lookGlbs?.[variant] || null : 'generic.glb';
+    const reportName = variant ? `generic--${variant}.report.json` : 'generic.report.json';
+    const thumbName = variant ? `thumb--${variant}.png` : 'thumb.png';
+    return { ...v, target: slug, glb: glbName ? `${slug}/${v.id}/${glbName}` : null, report: glbName && fs.existsSync(path.join(historyDir(slug), v.id, reportName)) ? `${slug}/${v.id}/${reportName}` : null, thumb: fs.existsSync(path.join(historyDir(slug), v.id, thumbName)) ? `${slug}/${v.id}/${thumbName}` : null, sheet: `${slug}/${v.id}/sheet.png` };
+  });
   let setName = null;
   try {
     setName = setOfAsset(slug);
@@ -265,7 +301,7 @@ export function versionsForAsset(slug) {
     setName = null;
   }
   const fromSet = setName
-    ? listVersions(`set:${setName}`).filter((v) => v.stats?.[slug]).map((v) => ({ ...v, triangles: v.stats[slug].triangles, target: `set:${setName}`, glb: `set-${setName}/${v.id}/${slug}.glb`, thumb: `set-${setName}/${v.id}/thumb.png`, sheet: `set-${setName}/${v.id}/sheet.png` }))
+    ? listVersions(`set:${setName}`).filter((v) => v.stats?.[slug]).map((v) => ({ ...v, triangles: v.stats[slug].triangles, target: `set:${setName}`, glb: variant ? null : `set-${setName}/${v.id}/${slug}.glb`, report: null, thumb: `set-${setName}/${v.id}/thumb.png`, sheet: `set-${setName}/${v.id}/sheet.png` }))
     : [];
   return [...own, ...fromSet].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }

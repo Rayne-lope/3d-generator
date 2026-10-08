@@ -43,6 +43,8 @@ export async function run(argv) {
     pin: { type: 'boolean', default: false },
     force: { type: 'boolean', default: false },
     'no-thumb': { type: 'boolean', default: false },
+    'include-variants': { type: 'boolean', default: false },
+    'preferred-variant': { type: 'string' },
   }, USAGE);
   if (args.length !== 1) throw new Error(USAGE);
   if (!opts.message || !opts.message.trim()) throw new Error(`save needs -m "<the user's request>" so the history stays readable.\n\n${USAGE}`);
@@ -54,6 +56,8 @@ export async function run(argv) {
     force: opts.force,
     build: buildGeneric,
     thumbnail: opts['no-thumb'] ? null : renderVersionThumbnail,
+    includeVariants: opts['include-variants'],
+    preferredVariant: opts['preferred-variant'] || null,
   });
   if (!res.skipped) recordSave(t);
   if (opts.json) {

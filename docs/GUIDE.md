@@ -171,6 +171,7 @@ files, so it is also your export preview.
 | Area | What it does |
 | --- | --- |
 | **Assets** (left) | Every asset, grouped by set, with status (green = clean, yellow = warnings, red = errors), variant count and triangles. |
+| **Parts** (left) | The exported hierarchy. Select by tree or canvas; eligible separate parts have Move/Rotate/uniform Scale gizmos, numeric controls and Focus. See the [part editor guide](PART-EDITOR.md). |
 | **Profile** | Generic glTF / Godot / Roblox Studio. Switching shows that profile's GLB (built on demand), e.g. the Roblox version in studs with baked colors. |
 | **Light** | **Neutral** (default) is a plain gray environment with key and fill lights and no tone mapping: the parity reference, close to an engine's default look. **Showcase** adds reflections and filmic tone mapping. It looks nicer but is not a parity reference. |
 | **View** | Shaded, normals, UV checker, and texel density: a checker where each square is 16 texels of the real texture. Even square sizes across the model mean consistent sharpness; big squares mean blurry areas. |
@@ -179,13 +180,22 @@ files, so it is also your export preview.
 | **Front / Side / Top / 3/4** | Camera presets. Drag to orbit, right-drag to pan, wheel to zoom. |
 | **PNG** | Saves a screenshot. |
 | **Variant bar / Skin bar** (bottom) | Switch between the base asset and its variants, and between the default look and its skins (same mesh, different textures). |
+| **Edit** tab | Curated shape/material controls for editor-enabled assets, plus transforms for a selected eligible part. Base and variant edits autosave; Undo/Redo, Save Version and strict Export are available from the inspector. See the [editor walkthrough](EDITOR.md). |
 | **Report** tab | Size, triangles vs budget, meshes, materials with swatches, textures, the engine conversions the profile made, and import hints. |
 | **Issues** tab | Validator issues with fix hints. |
 | **UV** tab | Each texture at export resolution with the UV wireframe on top. Padding violations are circled in red. Shows texel density and minimum padding. |
-| **Versions** tab | Saved versions with thumbnails. Click one to preview it read-only. Each row shows the command that restores it. |
+| **Versions** tab | Saved versions with thumbnails. Click one to preview it read-only. Editor checkpoints include variant snapshots; editor-enabled assets can restore a version from the UI, while CLI restore remains available. |
 
 The viewport reloads by itself when the agent saves code or runs a CLI build, and it keeps your
 camera.
+
+The canvas still displays exported GLBs. Inspector edits write source parameter overrides
+and rebuild through the same pipeline as the CLI. Autosaving a working copy and saving a
+version checkpoint are separate actions; the [editor guide](EDITOR.md) explains both.
+The chest lid, mailbox flag and valve handwheel also support [part transforms](PART-EDITOR.md).
+While dragging a gizmo, a temporary GLB copy shows the draft; the last validated GLB stays
+available for rollback. Export waits for the rebuilt preview. New assets receive curated
+editor metadata by default, without needing that instruction in the user's prompt.
 
 ## 5. Revisions, versions and undo
 

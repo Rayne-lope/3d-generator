@@ -1,5 +1,7 @@
 // defineAsset(): the contract between an asset module and the studio.
 
+import { editorControls, editorParts } from './editor.js';
+
 const VARIANT_RE = /^[a-z0-9][a-z0-9-]{0,40}$/;
 const ORIGINS = new Set(['base-center', 'center', 'back-center', 'none']);
 // 'default' names the base look in skin packs and the viewport; 'base' means "no variant".
@@ -44,5 +46,8 @@ export function defineAsset(def) {
     if (!v || typeof v !== 'object') throw new Error(`defineAsset: skin '${name}' must be an object of param overrides`);
     if ('seed' in v) throw new Error(`defineAsset: skin '${name}' cannot change the seed (that usually changes the shape). Give texture painters their own seed param instead.`);
   }
-  return Object.freeze({ __studioAsset: 1, meta, seed: def.seed ?? 1, params: def.params || {}, variants, skins, build: def.build });
+  const asset = { __studioAsset: 1, meta, seed: def.seed ?? 1, params: def.params || {}, variants, skins, editor: def.editor || null, build: def.build };
+  editorControls(asset);
+  editorParts(asset);
+  return Object.freeze(asset);
 }

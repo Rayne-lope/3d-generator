@@ -36,8 +36,47 @@ yarn-error.log*
 golden/report/
 engines/godot/.godot/
 
-# Temporary asset folders created by tests
-.tmp-test-*/
+# Temporary asset folders created by tests and UI
+.tmp-*/
+
+# Scratch & local reference directories / images in root
+/*.png
+/padel kit/
+/gun-kit/
+/hospital-asset/
+
+# Custom user-created sets (keep starter sets)
+sets/*
+!sets/tavern/
+
+# Custom user-created assets (keep starter studio assets)
+assets/*
+!assets/ab-lantern-norules/
+!assets/ab-lantern-rules/
+!assets/ak-rifle/
+!assets/building-styles/
+!assets/cartoon-mailbox/
+!assets/castle-wall-modular/
+!assets/energy-rifle/
+!assets/fantasy-crystal-cluster/
+!assets/georgian-manor/
+!assets/lowpoly-pine-tree/
+!assets/meadow-terrain-tile/
+!assets/medieval-street-lamp/
+!assets/medieval-townhouse/
+!assets/minimalist-chair/
+!assets/pirate-treasure-chest/
+!assets/realistic-crate/
+!assets/scifi-supply-crate/
+!assets/steampunk-pressure-valve/
+!assets/stone-cottage/
+!assets/stylized-barrel/
+!assets/tavern-candle-holder/
+!assets/tavern-mug/
+!assets/tavern-shelf/
+!assets/tavern-stool/
+!assets/tavern-table/
+!assets/wasteland-oil-drum/
 
 # Engine files written by `node studio export` and `node studio engine-pack`
 exports/
@@ -48,3 +87,4 @@ engines/roblox/golden/
 engines/roblox/GoldenManifest.lua
 engines/roblox/GoldenVerify.rbxlx
 engines/godot/verify/items/
+

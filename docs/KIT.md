@@ -7,7 +7,7 @@ and in the browser (parity renders). It uses no Node built-ins, randomness only 
 Units are **meters**. **+Y is up** and the asset's **front faces +Z**. By default the origin is
 the **base center**: the lowest point at y = 0, and x/z at the center of the footprint.
 
-- [Asset module](#asset-module) · [Structure](#structure) · [Materials](#materials) · [Color](#color)
+- [Asset module](#asset-module) · [Editor controls](#editor-controls) · [Structure](#structure) · [Materials](#materials) · [Color](#color)
 - [Geometry](#geometry) · [2D shapes](#2d-shapes) · [Operators](#operators) · [UVs](#uvs) · [Textures](#textures) · [3D painting and skins](#3d-painting-and-skins)
 - [CSG](#csg) · [Terrain](#terrain) · [Architecture](#architecture) · [Units](#units) · [Randomness and noise](#randomness-and-noise)
 - [Sets](#sets-shared-style) · [Complete example](#complete-example) · [Errors you may see](#errors-you-may-see)
@@ -51,13 +51,109 @@ export default defineAsset({
 
 | `build()` argument | What it is |
 | --- | --- |
-| `p` | frozen params: defaults ← variant ← skin overrides |
+| `p` | frozen params: defaults ← base editor overrides ← variant ← variant editor overrides ← skin ← explicit runtime overrides |
 | `k` | the kit namespace (this document) |
 | `rng` | seeded random generator. Use **named streams** per part: `rng.stream('planks')` |
 | `noise` | seeded noise (`noise.fbm2(x, y)`, …) |
 | `THREE` | three.js, for vectors and matrices (not for materials or geometry generators) |
 | `variant` | the variant name or `null` |
 | `skin` | the skin name or `null` (the default look). Read params instead of branching on the name |
+
+## Editor controls
+
+An optional `editor` property on `defineAsset` exposes a curated subset of `params` in the
+browser inspector. Omit it to retain the existing preview-only behavior. The studio validates
+the schema; every control key must exist in `params`.
+
+```js
+params: { width: 0.44, woodColor: '#d9b98c', roughness: 0.48 },
+editor: {
+  version: 1,
+  groups: [
+    { id: 'shape', label: 'Shape' },
+    { id: 'surface', label: 'Surface' },
+  ],
+  controls: [
+    { key: 'width', type: 'number', label: 'Width', group: 'shape',
+      min: 0.36, max: 0.58, step: 0.01, unit: 'm', displayUnit: 'cm' },
+    { key: 'woodColor', type: 'color', label: 'Wood color', group: 'surface' },
+    { key: 'roughness', type: 'number', label: 'Roughness', group: 'surface',
+      min: 0.25, max: 0.8, step: 0.01 },
+  ],
+},
+```
+
+Control types are `number`, `integer`, `color`, `boolean` and `select`. Numbers declare finite
+`min`, `max` and positive `step`; lengths remain stored in meters even when `displayUnit`
+is `cm`. Colors use six-digit hex. Select controls declare allowlisted values and labels.
+Only declared keys are writable, and seed stays source-owned. Curate bounds for the actual
+geometry and test them in every engine profile before enabling an asset.
+
+The editor service writes sparse overrides to `assets/<slug>/editor.json`. The file participates
+in source hashing, version snapshots, diff, review and export. Source defaults are retained;
+resetting a control removes its UI override. A source variant value masks a Base override,
+while a variant-specific UI override masks the source variant. Skin editing is unavailable in
+v1, but preview builds still resolve the same editor state before applying the source skin.
+
+Use exposed surface parameters inside the material/painter construction in `build()`. For
+example, a wood color should feed its texture painter, and a roughness parameter should feed
+the authored PBR factor. Do not implement inspector changes by mutating a loaded GLB.
+
+The first three curated assets are `minimalist-chair`, `wasteland-oil-drum` and
+`medieval-street-lamp`. See [EDITOR.md](EDITOR.md) for autosave, variant editing, versions,
+conflicts and export behavior.
+
+New asset and set-member templates include curated editor controls by default. When replacing
+the placeholder, keep the schema in sync with the actual parameters and test safe bounds.
+Controls are authored explicitly, not inferred from every number in `params`.
+
+### Editable separate parts
+
+Give a meaningful moving or detachable part a stable ID and a real pivot:
+
+```js
+editor: {
+  version: 1,
+  groups: [],
+  controls: [],
+  parts: [{ id: 'lid', label: 'Lid', transform: { move: true, rotate: true, scale: true } }],
+},
+// Inside build():
+const lid = k.part('lid', { id: 'lid', separate: true, pivot: [0, bodyHeight, -depth / 2] });
+```
+
+IDs are unique within the asset and remain stable when display labels change. Declared part
+IDs must refer to separate parts with pivots in every supported look. A parameter control can
+declare `partIds: ['lid']` to appear for that part; shared controls can name several IDs.
+Do not separate every decorative piece for picking.
+
+Part overrides use an optional sidecar field:
+
+```json
+{
+  "version": 1,
+  "base": {},
+  "variants": {},
+  "partTransforms": {
+    "base": {
+      "lid": { "move": [0, 0.02, 0], "rotation": [0, 0, 0, 1], "scale": 1.1 }
+    },
+    "variants": {}
+  }
+}
+```
+
+Move is parent-local in source meters; rotation is a normalized quaternion relative to the
+authored orientation; scale is a positive uniform factor. Pilot move bounds are ±2 m per
+axis and scale bounds are 0.25–4. A variant record replaces the whole inherited Base record.
+Reset removes its record, so it inherits Base again on top of its authored variant pose.
+
+The shared runtime applies part overrides after authored origin placement and before IR
+conversion. It does not recenter the asset afterward. GLB node extras carry stable part and
+parent IDs; Roblox split meshes retain selection through their authored ancestor. Report and
+editor data carry source pose/pivot/matrices because GLB geometry has baked scale. Unsupported
+nonuniform/sheared ancestors make a part read-only. Skins inherit the same geometry transforms.
+See [PART-EDITOR.md](PART-EDITOR.md) for draft gestures, recovery and keyboard controls.
 
 ## Structure
 
@@ -66,6 +162,7 @@ export default defineAsset({
 | `k.asset(name)` | The root. Add parts and meshes to it and return it. |
 | `k.part(name)` | A named group. Non-separate parts are **merged per material** into the `body` mesh at export, which is efficient. |
 | `k.part(name, { separate: true, pivot: [x, y, z] })` | Its own node in the GLB, with its origin on `pivot` (a hinge, axle or detach point). Children are authored in asset space; the kit routes them through the pivot. Use it for lids, doors, wheels, drawers. |
+| `k.part(name, { id, separate: true, pivot })` | A stable identity for hierarchy/picking. Add a matching `editor.parts` entry to enable persisted gizmo transforms. |
 | `k.mesh(geometry, material, { at, rot, scale, name })` | A mesh. `at` = position, `rot` = Euler XYZ radians, `scale` = number or `[x, y, z]`. Negative scale throws (use `k.op.mirror`). |
 | `k.group(name)` | A plain group for arranging (merged like a non-separate part). |
 | `k.ring(count, radius, (i, angle) => object)` | Copies around the Y axis. Return the object as if it sat at angle 0 on +X. |

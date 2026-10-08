@@ -48,6 +48,13 @@ requests. The full walkthrough is in the **[User Guide](docs/GUIDE.md)**.
   rulers. See the [energy rifle demo](docs/demos/complex-shapes.md).
 - **Preview = Export:** the viewport only loads exported GLBs, and `export` refuses to write a
   file that differs from the preview.
+- **Visual editor:** an opt-in Edit inspector for the chair, oil drum and street lamp pilots,
+  with base/variant parameter and material controls, autosave, Undo/Redo, version checkpoints
+  and strict export from the UI. See the [editor guide](docs/EDITOR.md).
+- **Part editor:** hierarchy, GLB click selection and persisted Move/Rotate/uniform Scale
+  for the chest lid, mailbox flag and valve handwheel. New assets get curated editor
+  controls by default. See the [part editor guide](docs/PART-EDITOR.md) and
+  [verification results](docs/PART-EDITOR-VERIFICATION.md).
 - **Engine profiles:** Generic glTF, Godot, Roblox Studio. The Roblox profile handles studs,
   colors baked into textures, a palette atlas, one material per MeshPart, ≤ 1024 px textures, the
   20k-triangle split and UV-padding dilation.

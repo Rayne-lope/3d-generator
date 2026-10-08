@@ -21,14 +21,20 @@ Follow **Workflow A** in `AGENTS.md`:
    photo of a house, read it into a plan first (rule 13 §10). If the user gave a picture, save it as `assets/<slug>/reference.png`
    and set `meta.reference: { image: 'reference.png', view: 'front' }` (rule 17).
 4. Write `build()` in `assets/<slug>/asset.js`: primary forms → secondary → tertiary detail.
-   Revisable numbers go in `params`. Moving parts get `{ separate: true, pivot }`. Fill
-   `meta.interpretation` and `meta.budget`. Never edit `studio/`.
+   Revisable numbers go in `params`. Editor support is standard for new assets: maintain a
+   curated `editor` schema for useful shape and surface controls, testing the actual bounds.
+   Keep seed, texture size and implementation details source-owned. Give named parts stable
+   IDs; moving/detachable parts get `{ separate: true, pivot, id }` and an `editor.parts` entry
+   for Move/Rotate/uniform Scale. Keep IDs when labels change, and do not split decorative
+   detail just to offer a gizmo. See `docs/KIT.md` for the contract. Fill `meta.interpretation`
+   and `meta.budget`. Never edit `studio/` while creating an asset.
 5. `node studio review <slug>` → open the printed sheet PNG with your image tool and look at it
    (Claude Code: Read · Codex: view_image · Gemini CLI: read_file) → go through
    `rules/checklists/review.md` → fix → review again (usually 1–3 rounds). 0 errors required.
    When a piece or a proportion looks wrong, open `parts.png` (each part colored, with a legend)
    and `blueprint.png` (rulers in meters). With a reference, open `reference.png` and fix the
    largest red (model only) or cyan (reference only) area first; the IoU is printed.
-6. `node studio save <slug> -m "<the prompt verbatim>"`.
+6. `node studio save <slug> -m "<the prompt verbatim>" --include-variants` to save accurate Base
+   and variant previews alongside the editor-enabled asset source.
 7. Reply: what you built (parts, size in m, triangles), anything you could not do, and 2–3 useful
    next revisions. Mention that the viewport (`node studio dev`) shows it live.
