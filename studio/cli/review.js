@@ -67,6 +67,7 @@ export async function run(argv) {
             console.log(`  ${c.bold('review sheet:')} ${c.cyan(r.sheet)}`);
             if (r.parts) console.log(`  ${c.bold('parts view:')}   ${c.cyan(r.parts.file)}`);
             if (r.blueprint) console.log(`  ${c.bold('blueprint:')}    ${c.cyan(r.blueprint.file)}`);
+            if (r.markers) console.log(`  ${c.bold('markers:')}      ${c.cyan(r.markers.file)} ${c.gray('(attachments and collision shapes: open it)')}`);
             if (r.reference?.file) console.log(`  ${c.bold('reference:')}    ${c.cyan(r.reference.file)} ${c.gray(`(silhouette IoU ${(r.reference.iou * 100).toFixed(1)}%)`)}`);
             else if (r.reference?.missing) console.log(`  ${sym.warn} meta.reference points to ${r.reference.missing}, which does not exist`);
             for (const i of r.report.issues.filter((x) => x.id === 'scene.floating-part')) console.log(`  ${sym.warn} ${i.message}`);

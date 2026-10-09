@@ -7,9 +7,12 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EditorController } from './editor.js';
 import { PartViewportController } from './parts.js';
+import { SceneComposer } from './composer.js';
+import { SceneUI } from './scene-ui.js';
+import { ThumbnailQueue } from './thumbs.js';
 import {
-  createRenderer, applyLighting, contentBox, frameCamera, forceSingleSided, makeGrid, makeHuman,
-  makeDimensions, setViewMode, setOverlays, unitsPerMeter, VIEWS,
+  createRenderer, applyLighting, contentBox, frameCamera, forceSingleSided, makeGrid, makeScaleRef,
+  makeDimensions, makeMarkers, setViewMode, setOverlays, unitsPerMeter, VIEWS, SCALE_REFS,
 } from './scene-setup.js';
 
 const $ = (id) => document.getElementById(id);
@@ -25,7 +28,10 @@ const state = {
   profile: localStorage.getItem('studio.profile') || 'generic',
   lighting: 'neutral',
   viewMode: 'shaded',
-  toggles: { wire: false, backfaces: false, grid: true, dims: true, human: false },
+  toggles: { wire: false, backfaces: false, grid: true, dims: true, colliders: true, attach: true },
+  scaleRef: 'off',
+  mode: 'asset', // 'asset' (one asset) | 'scene' (the composer)
+  sceneName: null,
   report: null,
   gltf: null,
   units: 1,
@@ -47,6 +53,7 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 let content = null;
 let partController = null;
+let composer = null;
 let helpers = new THREE.Group();
 scene.add(helpers);
 applyLighting(renderer, scene, state.lighting);
@@ -56,6 +63,7 @@ function resize() {
   renderer.setSize(r.width, r.height, false);
   camera.aspect = r.width / Math.max(1, r.height);
   camera.updateProjectionMatrix();
+  composer?.resize();
 }
 new ResizeObserver(resize).observe(canvas.parentElement);
 resize();
@@ -63,7 +71,8 @@ resize();
 renderer.setAnimationLoop(() => {
   controls.update();
   partController?.update();
-  renderer.render(scene, camera);
+  composer?.update();
+  renderer.render(scene, composer?.camera || camera);
 });
 
 function rebuildHelpers() {
@@ -75,11 +84,18 @@ function rebuildHelpers() {
   const u = state.units;
   if (state.toggles.grid) helpers.add(makeGrid(u, Math.max(10, Math.ceil((box.getSize(new THREE.Vector3()).length() / u) * 2))));
   if (state.toggles.dims) helpers.add(makeDimensions(box, u, { studs: state.profile === 'roblox' }));
-  if (state.toggles.human) {
-    const h = makeHuman(u);
-    h.name = '__human';
-    h.position.set(box.max.x + 0.45 * u, 0, (box.min.z + box.max.z) / 2);
-    helpers.add(h);
+  // Markers come from the report of the GLB on screen (same units), so they also show for
+  // profiles whose file does not contain them (Roblox).
+  const r = state.report;
+  if (r && ((state.toggles.colliders && r.colliders?.length) || (state.toggles.attach && r.attachments?.length))) {
+    helpers.add(makeMarkers(r, { colliders: state.toggles.colliders, attachments: state.toggles.attach }));
+  }
+  const ref = makeScaleRef(state.scaleRef, u);
+  if (ref) {
+    ref.name = '__human';
+    // Roblox rigs stand in a T-pose (4 studs wide), so they need more room than the mannequin.
+    ref.position.set(box.max.x + (state.scaleRef === 'human' ? 0.45 : 0.8) * u, 0, (box.min.z + box.max.z) / 2);
+    helpers.add(ref);
   }
 }
 
@@ -91,6 +107,7 @@ function applyViewSettings() {
 }
 
 function setView(name) {
+  if (state.mode === 'scene') { composer.setView(name); return; }
   if (!content) return;
   const box = contentBox(content);
   const { center } = frameCamera(camera, box, name);
@@ -128,6 +145,7 @@ async function loadGLB(url, { keepCamera = true, ready = false, isCurrent = () =
   applyViewSettings();
   if (!keepCamera || prevUnits !== state.units || !state.cameraSet) {
     setView('iso');
+    if (state.scaleRef !== 'off') frameWithHelpers();
     state.cameraSet = true;
   }
   $('empty').classList.add('hidden');
@@ -159,6 +177,12 @@ async function refreshState() {
   state.assets = data.assets;
   state.sets = data.sets;
   state.profiles = data.profiles;
+  // A server started before the studio's code changed (or before this page's version) cannot
+  // tell which previews are current: say so instead of leaving everything "out of date".
+  const notice = $('serverNotice');
+  const outdated = data.codeChanged === true || data.codeChanged === undefined;
+  notice.classList.toggle('hidden', !outdated);
+  if (outdated) notice.innerHTML = 'The studio was updated: stop this server (Ctrl+C) and run <code>node studio dev</code> again. Until then previews stay “out of date” and Export is off.';
   renderProfiles();
   renderAssetList();
 }
@@ -189,22 +213,109 @@ function renderAssetList() {
       const p = a.profiles?.[state.profile] || a.profiles?.generic;
       const dot = !p ? '' : p.counts?.error ? 'err' : p.counts?.warning ? 'warn' : 'ok';
       const meta = [a.variants?.length ? `${a.variants.length} var` : '', a.skins?.length ? `${a.skins.length} skin${a.skins.length === 1 ? '' : 's'}` : '', p ? `${(p.triangles || 0).toLocaleString()}△` : 'not built'].filter(Boolean).join(' · ');
-      html.push(`<div class="asset ${a.slug === state.slug ? 'on' : ''}" data-slug="${a.slug}"><span class="dot ${dot}"></span><span class="name" title="${esc(a.prompt || a.title)}">${esc(a.title || a.slug)}</span><span class="meta">${meta}</span></div>`);
+      html.push(`<div class="asset ${a.slug === state.slug ? 'on' : ''}" data-slug="${a.slug}">${thumbs.html(a.slug, a)}<span class="dot ${dot}"></span><span class="name" title="${esc(a.prompt || a.title)}">${esc(a.title || a.slug)}</span><span class="meta">${meta}</span></div>`);
     }
   }
   if (!state.assets.length) html.push('<div class="muted" style="padding:10px">No assets yet. Ask your agent to create one.</div>');
   $('assetList').innerHTML = html.join('');
+  thumbs.observe($('assetList'));
 }
 
 function setSidebarTab(name) {
-  state.sidebar = name === 'parts' ? 'parts' : 'assets';
+  state.sidebar = ['parts', 'scenes'].includes(name) ? name : 'assets';
   $('assetList').classList.toggle('hidden', state.sidebar !== 'assets');
   $('partList').classList.toggle('hidden', state.sidebar !== 'parts');
-  $('filter').classList.toggle('hidden', state.sidebar !== 'assets');
-  for (const [key, node] of [['assets', $('sideAssets')], ['parts', $('sideParts')]]) {
+  $('sceneSide').classList.toggle('hidden', state.sidebar !== 'scenes');
+  $('filter').classList.toggle('hidden', state.sidebar === 'parts');
+  for (const [key, node] of [['assets', $('sideAssets')], ['parts', $('sideParts')], ['scenes', $('sideScenes')]]) {
     node.classList.toggle('on', state.sidebar === key);
     node.setAttribute('aria-selected', String(state.sidebar === key));
   }
+  $('sideFoot').textContent = state.sidebar === 'scenes'
+    ? 'Assets are placed at their real size. Every instance is the exported GLB of that asset.'
+    : 'Select a part to inspect its transform. The viewport always loads the exported GLB.';
+  localStorage.setItem('studio.sidebar', state.sidebar);
+  if (state.sidebar === 'scenes') enterSceneMode();
+  else exitSceneMode();
+}
+
+// ------------------------------------------------------------------ scene mode
+
+const EMPTY_HTML = $('empty').innerHTML;
+
+function unitsOfProfile(id = state.profile) {
+  return state.profiles.find((p) => p.id === id)?.units?.perMeter || 1;
+}
+
+function removeAssetContent() {
+  partController?.cancel();
+  partController?.setContext({ content: null, parts: [], units: 1, readOnly: true });
+  if (content) {
+    scene.remove(content);
+    content.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+    content = null;
+  }
+  scene.remove(helpers);
+  helpers = new THREE.Group();
+  scene.add(helpers);
+}
+
+function enterSceneMode() {
+  if (state.mode === 'scene') return;
+  exitHistory();
+  ++state.viewToken;
+  ++state.loadToken;
+  state.mode = 'scene';
+  document.body.classList.add('mode-scene');
+  removeAssetContent();
+  hideBanner();
+  $('partTools').classList.add('hidden');
+  $('variantBar').classList.add('hidden');
+  $('skinBar').classList.add('hidden');
+  $('sceneTools').classList.remove('hidden');
+  selectTab('scene');
+  sceneUI.refreshScenes();
+  sceneUI.refreshLibrary();
+  const last = state.sceneName || localStorage.getItem('studio.scene');
+  openScene(last || null);
+}
+
+function exitSceneMode() {
+  if (state.mode !== 'scene') return;
+  state.mode = 'asset';
+  composer.exit();
+  document.body.classList.remove('mode-scene');
+  $('sceneTools').classList.add('hidden');
+  $('empty').innerHTML = EMPTY_HTML;
+  $('empty').classList.toggle('hidden', !!state.slug);
+  if (state.slug) selectAsset(state.slug, state.variant);
+  else {
+    $('title').textContent = 'No asset selected';
+    selectTab('report');
+    setStatus('Pick an asset on the left.');
+  }
+}
+
+async function openScene(name) {
+  if (state.mode !== 'scene') return;
+  state.sceneName = name;
+  if (!name) {
+    composer.exit();
+    $('title').textContent = 'No scene selected';
+    $('empty').classList.remove('hidden');
+    $('empty').innerHTML = '<h2>Scene composer</h2><p>Choose a scene on the left or create one, then place assets from the library.</p>';
+    setStatus('Choose or create a scene.');
+    sceneUI.render();
+    return;
+  }
+  localStorage.setItem('studio.scene', name);
+  $('empty').classList.add('hidden');
+  $('title').textContent = `Scene — ${name}`;
+  await composer.enter(name, state.profile, unitsOfProfile());
+  if (state.mode !== 'scene' || state.sceneName !== name) return;
+  if (composer.doc) $('title').textContent = `Scene — ${composer.doc.title}`;
+  applyLighting(renderer, scene, state.lighting, { size: composer.contentBox().getSize(new THREE.Vector3()).length() || 1 });
+  sceneUI.render();
 }
 
 function renderPartsList() {
@@ -282,7 +393,7 @@ function renderVariantBar(asset) {
 }
 
 async function showCurrent({ keepCamera = true, forceBuild = false, allowBuild = true } = {}) {
-  if (!state.slug || state.version) return;
+  if (!state.slug || state.version || state.mode === 'scene') return;
   const previousPreviewError = editor.previewError;
   const token = ++state.viewToken;
   const look = { slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile };
@@ -389,6 +500,8 @@ function renderReport() {
     </table>
     ${r.palette?.length ? `<h3>Palette swatches</h3>${r.palette.map((p) => p.swatches.map((s) => `<span class="swatch" title="${esc(s.materials.join(', '))}" style="background:rgb(${s.color.slice(0, 3).join(',')})"></span>`).join('')).join('')}` : ''}
     ${r.textures.length ? `<h3>Textures</h3><table><tr><th>Name</th><th>Size</th><th class="num">px/m</th><th class="num">Pad</th></tr>${r.textures.map((t) => `<tr><td>${esc(t.name)}</td><td>${t.width}×${t.height}</td><td class="num">${t.texelDensity ?? '—'}</td><td class="num">${t.minPaddingPx ?? '—'}</td></tr>`).join('')}</table>` : ''}
+    ${r.attachments?.length ? `<h3>Attachments</h3><table><tr><th>Name</th><th>On node</th><th class="num">Position (${esc(r.profile.units.name)})</th></tr>${r.attachments.map((a) => `<tr><td>${esc(a.name)}</td><td>${esc(a.node)}</td><td class="num">${a.position.map((v) => v.toFixed(3)).join(', ')}</td></tr>`).join('')}</table>` : ''}
+    ${r.colliders?.length || r.collision === 'none' ? `<h3>Collision</h3>${r.collision === 'none' ? '<div class="note">No collision (meta.collision: none).</div>' : `<table><tr><th>Name</th><th>Shape</th><th class="num">Size (${esc(r.profile.units.name)})</th></tr>${r.colliders.map((x) => `<tr><td>${esc(x.name)}</td><td>${esc(x.shape)}</td><td class="num">${x.size.map((v) => v.toFixed(3)).join(' × ')}</td></tr>`).join('')}</table>`}` : ''}
     ${notes ? `<h3>Engine conversions</h3>${notes}` : ''}
     ${r.importHints?.length ? `<h3>Import</h3>${r.importHints.map((h) => `<div class="note">• ${esc(h)}</div>`).join('')}` : ''}
   `;
@@ -580,6 +693,7 @@ function lightingBanner() {
 }
 
 function selectTab(name) {
+  if (state.mode === 'scene') name = 'scene';
   document.querySelectorAll('[data-tab]').forEach((button) => button.classList.toggle('on', button.dataset.tab === name));
   document.querySelectorAll('.tab').forEach((tab) => tab.classList.toggle('on', tab.id === `tab-${name}`));
   if (name === 'uv') renderUVPanel();
@@ -612,6 +726,19 @@ partController = new PartViewportController({ scene, camera, canvas, orbit: cont
   onInvalid: (message) => editor.showAlert(message),
 });
 
+const thumbs = new ThumbnailQueue();
+composer = new SceneComposer({ scene, canvas, orbit: controls, camera, onChange: () => sceneUI.render(), onStatus: setStatus });
+const sceneUI = new SceneUI({ composer, thumbs, onEnter: (name) => openScene(name), getFilter: () => $('filter').value });
+
+function setScaleRef(kind) {
+  state.scaleRef = SCALE_REFS[kind] ? kind : 'off';
+  $('scaleRef').value = state.scaleRef;
+  composer.setScaleRef(state.scaleRef);
+  if (state.mode === 'scene') return;
+  applyViewSettings();
+  if (state.scaleRef !== 'off') frameWithHelpers();
+}
+
 function setPartMode(mode) {
   if (partController.pendingDraft) return;
   const selectedPart = editor.snapshot?.parts?.find((part) => part.id === partController.selected);
@@ -630,6 +757,8 @@ $('assetList').addEventListener('click', (e) => {
 });
 $('sideAssets').addEventListener('click', () => setSidebarTab('assets'));
 $('sideParts').addEventListener('click', () => setSidebarTab('parts'));
+$('sideScenes').addEventListener('click', () => setSidebarTab('scenes'));
+$('scaleRef').addEventListener('change', (e) => setScaleRef(e.target.value));
 $('partList').addEventListener('click', (event) => {
   const button = event.target.closest('[data-part-id]');
   if (button) { partController.select(button.dataset.partId); return; }
@@ -660,7 +789,10 @@ $('partSnap').addEventListener('click', () => {
   $('partSnap').textContent = partController.snap ? 'Snap On' : 'Snap Off';
   $('partSnap').setAttribute('aria-pressed', String(partController.snap));
 });
-$('filter').addEventListener('input', renderAssetList);
+$('filter').addEventListener('input', () => {
+  if (state.sidebar === 'scenes') { sceneUI.signatures.sceneLibrary = null; sceneUI.render(); }
+  else renderAssetList();
+});
 $('variantBar').addEventListener('click', (e) => {
   const b = e.target.closest('button');
   if (!b) return;
@@ -702,12 +834,14 @@ $('profile').addEventListener('change', (e) => {
   state.profile = e.target.value;
   localStorage.setItem('studio.profile', state.profile);
   renderAssetList();
+  if (state.mode === 'scene') { composer.setProfile(state.profile, unitsOfProfile()); return; }
   editor.setContext({ slug: state.slug, variant: state.variant, skin: state.skin, profile: state.profile, version: state.version }).then(() => {
     if (selectionToken === state.viewToken) showCurrent({ keepCamera: false });
   });
 });
 $('lighting').addEventListener('change', (e) => {
   state.lighting = e.target.value;
+  if (state.mode === 'scene' && composer.active) applyLighting(renderer, scene, state.lighting, { size: composer.contentBox().getSize(new THREE.Vector3()).length() || 1 });
   if (content) applyLighting(renderer, scene, state.lighting, { size: contentBox(content).getSize(new THREE.Vector3()).length() || 1 });
   lightingBanner();
 });
@@ -720,7 +854,6 @@ document.querySelectorAll('[data-toggle]').forEach((b) => b.addEventListener('cl
   state.toggles[k] = !state.toggles[k];
   b.classList.toggle('on', state.toggles[k]);
   applyViewSettings();
-  if (k === 'human') frameWithHelpers();
 }));
 
 /** Re-frame from the current direction so the asset (and the human, when shown) fits. */
@@ -745,13 +878,60 @@ $('tab-versions').addEventListener('click', (e) => {
   if (el) previewVersion(el.dataset.version);
 });
 $('shot').addEventListener('click', () => {
-  renderer.render(scene, camera);
+  renderer.render(scene, composer.camera);
   const a = document.createElement('a');
   a.href = canvas.toDataURL('image/png');
-  a.download = `${itemKey() || 'viewport'}-${state.profile}.png`;
+  a.download = `${state.mode === 'scene' ? `scene-${state.sceneName || 'empty'}` : itemKey() || 'viewport'}-${state.profile}.png`;
   a.click();
 });
+function cycleScaleRef() {
+  const kinds = Object.keys(SCALE_REFS);
+  setScaleRef(kinds[(kinds.indexOf(state.scaleRef) + 1) % kinds.length]);
+}
+
+/** Shortcuts of the scene composer. Returns true when the key was handled. */
+function sceneKey(e, typing) {
+  const key = e.key.toLowerCase();
+  if ((e.metaKey || e.ctrlKey) && key === 's') {
+    e.preventDefault();
+    if (composer.doc) sceneUI.openSaveForm();
+    return true;
+  }
+  if (typing) return true;
+  if (e.metaKey || e.ctrlKey) {
+    if (key === 'z') { e.preventDefault(); e.shiftKey ? composer.redo() : composer.undo(); }
+    else if (key === 'y') { e.preventDefault(); composer.redo(); }
+    else if (key === 'd') { e.preventDefault(); composer.duplicateSelected(); }
+    else if (key === 'a') { e.preventDefault(); composer.selectAll(); }
+    else if (key === 'g') { e.preventDefault(); e.shiftKey ? composer.ungroupSelection() : composer.groupSelection(); }
+    return true;
+  }
+  // Arrow keys nudge the selection one grid step (up = toward the back wall, as in plan view).
+  const arrows = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+  if (arrows[e.key] && composer.selection.length) {
+    e.preventDefault();
+    composer.nudgeSelected(...arrows[e.key]);
+    return true;
+  }
+  if (e.key === 'Escape') {
+    if (composer.placing) composer.cancelPlacing();
+    else if (composer.mode !== 'select') composer.setMode('select');
+    else composer.select(null);
+  } else if (e.key === 'Delete' || e.key === 'Backspace') composer.deleteSelected();
+  else if (key === 'q') composer.setMode('select');
+  else if (key === 't') composer.setMode('translate');
+  else if (key === 'r') { if (composer.placing) composer.rotatePlacing(e.shiftKey ? 90 : -90); else composer.rotateSelected(e.shiftKey ? 90 : -90); }
+  else if (key === 'p') composer.setPlan(!composer.plan);
+  else if (key === 'f') { if (composer.selected) composer.focusSelected(); else composer.setView('iso'); }
+  else if (key === 'h') cycleScaleRef();
+  return true;
+}
+
 window.addEventListener('keydown', (e) => {
+  if (state.mode === 'scene') {
+    sceneKey(e, ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) || e.target.isContentEditable);
+    return;
+  }
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
     e.preventDefault();
     editor.openSaveFromShortcut(e.target);
@@ -764,7 +944,8 @@ window.addEventListener('keydown', (e) => {
     else if (e.key.toLowerCase() === 'y') { e.preventDefault(); editor.redo(); }
     return;
   }
-  const map = { w: 'wire', b: 'backfaces', g: 'grid', d: 'dims', h: 'human' };
+  const map = { w: 'wire', b: 'backfaces', g: 'grid', d: 'dims' };
+  if (e.key === 'h') { cycleScaleRef(); return; }
   const partMode = { q: 'select', t: 'translate', r: 'rotate', s: 'scale' };
   if (e.key === 'Escape') { setPartMode('select'); return; }
   if (partMode[e.key.toLowerCase()] && editor.snapshot?.parts?.length && !editor.readOnly) { setPartMode(partMode[e.key.toLowerCase()]); return; }
@@ -774,7 +955,7 @@ window.addEventListener('keydown', (e) => {
 
 // Live updates from the server.
 function eventMatchesLook(d) {
-  return d.slug === state.slug && (d.variant || null) === state.variant &&
+  return state.mode === 'asset' && d.slug === state.slug && (d.variant || null) === state.variant &&
     (d.skin || null) === state.skin && d.profile === state.profile && !state.version;
 }
 
@@ -790,9 +971,21 @@ function connect() {
       setStatus(`Rebuilding ${d.slug} [${d.profile}]…`);
     }
   });
+  es.addEventListener('scene-changed', (e) => {
+    const d = JSON.parse(e.data);
+    if (state.mode !== 'scene') return;
+    sceneUI.refreshScenes();
+    composer.onSceneChanged(d);
+  });
   es.addEventListener('built', async (e) => {
     const d = JSON.parse(e.data);
     await refreshState();
+    if (state.mode === 'scene') {
+      if (!d.error) composer.onAssetBuilt(d);
+      clearTimeout(state.libraryTimer);
+      state.libraryTimer = setTimeout(() => sceneUI.refreshLibrary(), 400);
+      return;
+    }
     if (eventMatchesLook(d)) {
       await editor.refresh();
       if (!eventMatchesLook(d) || (d.revision && d.revision !== editor.snapshot?.revision)) return;
@@ -813,4 +1006,7 @@ function connect() {
 await refreshState();
 connect();
 const last = localStorage.getItem('studio.asset');
-if (last && state.assets.some((a) => a.slug === last)) selectAsset(last);
+if (localStorage.getItem('studio.sidebar') === 'scenes') {
+  if (last && state.assets.some((a) => a.slug === last)) state.slug = last;
+  setSidebarTab('scenes');
+} else if (last && state.assets.some((a) => a.slug === last)) selectAsset(last);

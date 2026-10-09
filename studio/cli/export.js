@@ -65,6 +65,7 @@ export async function run(argv) {
             const parity = r.parity ? ` · parity ${(r.parity.max * 100).toFixed(1)}%${r.parity.ok ? '' : c.yellow(' MISMATCH')}` : '';
             const warn = rep.counts.warning ? c.yellow(` · ${rep.counts.warning} warning(s)`) : '';
             console.log(`${sym.ok} ${c.bold(r.id)} ${c.gray(`[${profileId}]`)} → ${c.cyan(r.files.glb)} ${c.gray(`(${fmtBytes(rep.file.bytes)}, ${fmtNum(rep.triangles.total)} tris, ${rep.meshCount} mesh)`)}${parity}${warn}`);
+            if (r.files.setup) console.log(`  ${sym.ok} attachments and collision → ${c.cyan(r.files.setupCommand || r.files.setup)}${r.files.setupCommand ? c.gray(' (paste its content into the Studio command bar after importing the GLB)') : ''}`);
           }
         } catch (err) {
           results.push({ ...item, id: itemId(item.slug, item.variant, item.skin), profile: profileId, blocked: true, reason: err.message, errors: [] });

@@ -140,6 +140,45 @@ export function sceneToIR(root, { slug, variant = null, skin = null, meta = {}, 
   const rootNode = makeNode(slug, null, new THREE.Matrix4());
   const bodyNode = makeNode('body', rootNode.id, new THREE.Matrix4());
 
+  // Markers (k.attach, k.collider): engine data that travels next to the meshes.
+  const attachments = [];
+  const colliders = [];
+  const addMarker = (obj, role, owner) => {
+    const pos = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+    const scl = new THREE.Vector3();
+    obj.matrixWorld.decompose(pos, quat, scl);
+    const local = owner.frameInv.clone().multiply(obj.matrixWorld);
+    const lpos = new THREE.Vector3();
+    const lquat = new THREE.Quaternion();
+    local.decompose(lpos, lquat, new THREE.Vector3());
+    const entry = {
+      name: obj.name,
+      owner,
+      position: pos.toArray().map((x) => round(x)),
+      rotation: quat.toArray().map((x) => round(x)),
+      local: { position: lpos.toArray().map((x) => round(x)), rotation: lquat.toArray().map((x) => round(x)) },
+    };
+    if (role === 'attachment') {
+      if (attachments.some((a) => a.name === obj.name)) {
+        issues.push({ id: 'attachment.duplicate-name', severity: 'error', message: `two attachments are called '${obj.name}'`, where: obj.name, hint: 'Attachment names must be unique in an asset (engines look them up by name).' });
+      }
+      entry.forward = new THREE.Vector3(0, 0, 1).applyQuaternion(quat).toArray().map((x) => round(x));
+      entry.up = new THREE.Vector3(0, 1, 0).applyQuaternion(quat).toArray().map((x) => round(x));
+      attachments.push(entry);
+      return;
+    }
+    const { shape, size, named } = obj.userData.studio;
+    const s = [Math.abs(scl.x), Math.abs(scl.y), Math.abs(scl.z)];
+    if (Math.max(...s) - Math.min(...s) > 1e-4 * Math.max(...s) || scl.x * scl.y * scl.z < 0) {
+      throw new ExportError(`collider '${obj.name}' is inside a non-uniformly scaled or mirrored group`, 'Collision shapes cannot be squashed. Size the collider itself, or keep the scale uniform.');
+    }
+    entry.name = named ? obj.name : `collider-${colliders.length + 1}`;
+    entry.shape = shape;
+    entry.size = size.map((v) => round(v * s[0]));
+    colliders.push(entry);
+  };
+
   const addGeometry = (node, geometry, material, world, partName) => {
     const matId = materialEntry(material, materials, textures, issues, keepMaterials);
     const local = node.frameInv.clone().multiply(world);
@@ -198,6 +237,10 @@ export function sceneToIR(root, { slug, variant = null, skin = null, meta = {}, 
     if (obj.isSkinnedMesh) throw new ExportError(`skinned mesh '${obj.name}'`, 'Rigging and animation are out of scope for V1.');
     if (!obj.visible) {
       issues.push({ id: 'scene.hidden-object', severity: 'warning', message: `hidden object '${obj.name}' skipped`, where: obj.name, hint: 'Remove it instead of hiding it; the viewport only shows what is exported.' });
+      return;
+    }
+    if (role === 'attachment' || role === 'collider') {
+      addMarker(obj, role, owner);
       return;
     }
     let nextOwner = owner;
@@ -267,6 +310,30 @@ export function sceneToIR(root, { slug, variant = null, skin = null, meta = {}, 
     };
   });
 
+  // Markers name the exported node they belong to (the root when the merged body is empty).
+  const ownerName = (owner) => (idMap.has(owner.id) ? owner.name : rootNode.name);
+  const finish = ({ owner, ...marker }) => ({ ...marker, node: ownerName(owner) });
+  if (meta.collision === 'none' && colliders.length) {
+    throw new ExportError("meta.collision is 'none' but the asset adds k.collider shapes", "Remove meta.collision, or remove the colliders.");
+  }
+  let collision = colliders.length ? 'colliders' : meta.collision === 'none' ? 'none' : 'default';
+  const colliderList = colliders.map(finish);
+  if (!colliders.length && meta.collision === 'bounds') {
+    // One box around everything, in asset space.
+    const box = new THREE.Box3();
+    const v = new THREE.Vector3();
+    for (const node of outNodes) {
+      for (const bucket of node.prims.values()) {
+        for (let i = 0; i < bucket.positions.length; i += 3) box.expandByPoint(v.set(bucket.positions[i], bucket.positions[i + 1], bucket.positions[i + 2]).applyMatrix4(node.frame));
+      }
+    }
+    if (!box.isEmpty()) {
+      const center = box.getCenter(new THREE.Vector3()).toArray().map((x) => round(x));
+      colliderList.push({ name: 'bounds', shape: 'box', size: box.getSize(new THREE.Vector3()).toArray().map((x) => round(x)), position: center, rotation: [0, 0, 0, 1], local: { position: center, rotation: [0, 0, 0, 1] }, node: rootNode.name });
+      collision = 'bounds';
+    }
+  }
+
   const matList = [...materials.values()].sort((a, b) => a.id - b.id);
   const texList = [...textures.values()].sort((a, b) => a.id - b.id);
   for (const m of matList) {
@@ -283,6 +350,9 @@ export function sceneToIR(root, { slug, variant = null, skin = null, meta = {}, 
     materials: matList,
     textures: texList,
     stats: { partTriangles },
+    collision,
+    attachments: attachments.map(finish),
+    colliders: colliderList,
     issues,
     notes: [],
   };

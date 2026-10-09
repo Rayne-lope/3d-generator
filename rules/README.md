@@ -38,6 +38,7 @@ first version, and let revisions refine it.
 | [15-weapons.md](15-weapons.md) | Guns, melee weapons, bows, shields: game-ready weapon props |
 | [16-skins-and-textures.md](16-skins-and-textures.md) | Skins (many looks on one mesh), 3D-painted atlas textures, patterns, wear |
 | [17-complex-shapes.md](17-complex-shapes.md) | Anything beyond boxes and cylinders: sci-fi hard surface, vehicles, gadgets, smooth product shapes; tracing a reference image |
+| [18-scene-layout.md](18-scene-layout.md) | Composing a room or environment from existing assets (`node studio scene`) |
 | [checklists/review.md](checklists/review.md) | After every `node studio review` |
 
 The kit API itself is documented in [docs/KIT.md](../docs/KIT.md).

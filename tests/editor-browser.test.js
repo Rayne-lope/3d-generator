@@ -220,7 +220,8 @@ test('visual editor edits pilots, recovers work, versions and strictly exports a
     await page.locator('#editAlert').getByText(/interrupted before the studio confirmed/).waitFor();
     await page.locator('#editAlert').getByRole('button', { name: 'Reapply draft' }).click();
     await page.waitForFunction(async () => (await (await fetch('/api/editor?slug=minimalist-chair')).json()).overrides.base.seatDepth === 0.48);
-    assert.equal(await page.evaluate(() => sessionStorage.getItem('studio.editor.recovery.minimalist-chair.base')), null);
+    // The server has the value before the page has handled the PUT response: wait for the page too.
+    await page.waitForFunction(() => sessionStorage.getItem('studio.editor.recovery.minimalist-chair.base') === null);
     await page.unroute(editorRoute, abortFirstPut);
 
     let wroteExternally = false;

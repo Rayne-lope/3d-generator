@@ -2,6 +2,7 @@
 
 import * as THREE from 'three';
 import { asset, part, mesh, group, ring } from './scene.js';
+import { attach, collider } from './markers.js';
 import { pbr, physical, PHYSICAL } from './materials.js';
 import { color } from './color.js';
 import * as geo from './geo.js';
@@ -19,7 +20,7 @@ import { units } from './units.js';
 import { createRng } from './rng.js';
 import { createNoise } from './noise.js';
 
-export const KIT_VERSION = '1.1.0';
+export const KIT_VERSION = '1.2.0';
 
 export const k = {
   version: KIT_VERSION,
@@ -30,6 +31,9 @@ export const k = {
   mesh,
   group,
   ring,
+  // markers (engine data, not geometry)
+  attach,
+  collider,
   // materials & color
   mat: { pbr, physical, PHYSICAL },
   color,

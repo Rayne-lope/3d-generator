@@ -673,8 +673,45 @@ function unitScale(ir, profile) {
     n.translation = n.translation.map((v) => v * s);
     for (const p of n.primitives) for (let i = 0; i < p.positions.length; i++) p.positions[i] *= s;
   }
+  for (const m of [...(ir.attachments || []), ...(ir.colliders || [])]) {
+    m.position = m.position.map((v) => v * s);
+    m.local = { ...m.local, position: m.local.position.map((v) => v * s) };
+    if (m.size) m.size = m.size.map((v) => v * s);
+  }
   ir.units = { name: profile.units.name, metersPerUnit: 1 / s, perMeter: s };
   ir.notes.push({ id: 'units', message: `scaled to ${profile.units.name}s (${s.toFixed(4)} per meter)` });
+}
+
+/**
+ * Write markers into the file as empty nodes under the node they belong to: plain glTF, so
+ * any engine sees named attachment points (and collider specs in extras.studio).
+ * Profiles with metadata.emptyNodes = false (Roblox) keep the GLB as it is and get the same
+ * data next to the file instead (<item>.setup.json + a setup script).
+ */
+function materializeMarkers(ir, profile) {
+  if (profile.metadata?.emptyNodes === false) return;
+  const parentOf = (marker) => {
+    const index = ir.nodes.findIndex((n) => n.name === marker.node);
+    return index < 0 ? 0 : index;
+  };
+  const add = (marker, extras) => {
+    const parent = parentOf(marker);
+    // A marker whose node was renamed by a transform keeps its place through asset-space values.
+    const inPlace = ir.nodes[parent].name === marker.node;
+    ir.nodes.push({
+      name: uniqueName(ir.nodes, marker.name),
+      parent,
+      translation: inPlace ? marker.local.position : marker.position,
+      rotation: inPlace ? marker.local.rotation : marker.rotation,
+      scale: [1, 1, 1],
+      extras: { studio: extras },
+      primitives: [],
+    });
+  };
+  for (const a of ir.attachments || []) add(a, { role: 'attachment' });
+  for (const c of ir.colliders || []) add(c, { role: 'collider', shape: c.shape, size: c.size });
+  const count = (ir.attachments || []).length + (ir.colliders || []).length;
+  if (count) ir.notes.push({ id: 'markers', message: `${count} marker(s) written as empty nodes (attachments and collider specs in extras.studio)` });
 }
 
 function dropUnusedMaterials(ir) {
@@ -713,5 +750,6 @@ export async function applyProfile(ir, profile, opts = {}) {
   dilateAtlases(ir);
   clampEmissive(ir, profile);
   unitScale(ir, profile);
+  materializeMarkers(ir, profile);
   return ir;
 }

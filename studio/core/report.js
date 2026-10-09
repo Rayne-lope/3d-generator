@@ -5,6 +5,24 @@ import { c, sym, fmtBytes, fmtNum, fmtMs } from './log.js';
 const toSRGB8 = (v) => Math.round((v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055) * 255);
 const hex = (rgb) => `#${rgb.slice(0, 3).map((v) => toSRGB8(Math.min(1, Math.max(0, v))).toString(16).padStart(2, '0')).join('')}`;
 
+const r5 = (v) => +v.toFixed(5);
+
+/** Bounding box of one mesh node in asset space (file units). */
+function meshBox(mesh) {
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  for (const prim of mesh.primitives) {
+    const p = prim.positions;
+    for (let i = 0; i < p.length; i += 3) {
+      for (let k = 0; k < 3; k++) {
+        if (p[i + k] < min[k]) min[k] = p[i + k];
+        if (p[i + k] > max[k]) max[k] = p[i + k];
+      }
+    }
+  }
+  return { node: mesh.node, center: min.map((v, k) => r5((v + max[k]) / 2)), size: min.map((v, k) => r5(max[k] - v)) };
+}
+
 export function makeReport({ slug, variant, skin = null, id, def, setName, profile, glbPath, glbBytes, glbHash, info, ir, validation, sourceHash, parts = [], buildMs }) {
   const perMeter = profile.units.perMeter;
   const sizeUnits = info.bbox.size.map((v) => +v.toFixed(4));
@@ -38,6 +56,11 @@ export function makeReport({ slug, variant, skin = null, id, def, setName, profi
     meshCount: info.meshes.length,
     geometry: info.geometry,
     parts,
+    // Markers in file units (the same units as bounds): what engines get as data.
+    collision: ir.collision || 'default',
+    attachments: (ir.attachments || []).map((a) => ({ name: a.name, node: a.node, position: a.position.map(r5), forward: a.forward, up: a.up, rotation: a.rotation, local: { position: a.local.position.map(r5), rotation: a.local.rotation } })),
+    colliders: (ir.colliders || []).map((c) => ({ name: c.name, node: c.node, shape: c.shape, size: c.size.map(r5), position: c.position.map(r5), rotation: c.rotation, local: { position: c.local.position.map(r5), rotation: c.local.rotation } })),
+    meshBounds: info.meshes.map(meshBox),
     nodes: info.nodes.map((n) => ({ name: n.name, parent: n.parent, translation: n.translation.map((v) => +v.toFixed(5)), partId: n.extras?.studio?.partId || null, hasMesh: n.hasMesh })),
     materials: info.materials.map((m) => ({
       name: m.name,
@@ -92,6 +115,13 @@ export function formatReport(r, { verbose = false } = {}) {
     lines.push(`  ${s} ${i.message} ${c.gray(`(${i.id})`)}`);
     if (i.hint && (verbose || i.severity === 'error')) lines.push(c.gray(`      fix: ${i.hint}`));
   }
+  if (r.attachments?.length || r.colliders?.length || r.collision === 'none') {
+    const bits = [];
+    if (r.attachments?.length) bits.push(`${r.attachments.length} attachment${r.attachments.length === 1 ? '' : 's'} (${r.attachments.map((a) => a.name).join(', ')})`);
+    if (r.colliders?.length) bits.push(`${r.colliders.length} collider${r.colliders.length === 1 ? '' : 's'} (${r.collision === 'bounds' ? 'bounds box' : r.colliders.map((x) => x.shape).join(', ')})`);
+    if (r.collision === 'none') bits.push('no collision');
+    lines.push(c.gray(`    markers: ${bits.join(' · ')}`));
+  }
   const hidden = r.issues.length - shown.length;
   if (hidden > 0) lines.push(c.gray(`  ${hidden} info message(s) hidden (use --verbose)`));
   lines.push(c.gray(`  ${sym.arrow} ${r.file.path}`));
@@ -130,6 +160,37 @@ export function reportMarkdown(r) {
     out.push('| Texture | Size | Layout | Texel density | UV padding |');
     out.push('| --- | --- | --- | ---: | ---: |');
     for (const t of r.textures) out.push(`| ${t.name} | ${t.width}×${t.height} | ${t.layout || '—'} | ${t.texelDensity ? `${t.texelDensity} px/m` : '—'} | ${t.minPaddingPx !== undefined && t.minPaddingPx !== null ? `${t.minPaddingPx}px (needs ${t.requiredPaddingPx}px)` : '—'} |`);
+  }
+  if (r.attachments?.length || r.colliders?.length || r.collision === 'none') {
+    const unit = r.profile.units.name;
+    const v3 = (v) => v.map((x) => +x.toFixed(3)).join(', ');
+    out.push('');
+    out.push('## Attachments and collision');
+    out.push('');
+    if (r.collision === 'none') out.push('This asset is meant to have no collision.');
+    if (r.attachments?.length) {
+      out.push(`| Attachment | On node | Position (${unit}) | Forward |`);
+      out.push('| --- | --- | --- | --- |');
+      for (const a of r.attachments) out.push(`| ${a.name} | ${a.node} | ${v3(a.position)} | ${v3(a.forward)} |`);
+      out.push('');
+    }
+    if (r.colliders?.length) {
+      out.push(`| Collider | Shape | Size (${unit}) | Center (${unit}) |`);
+      out.push('| --- | --- | --- | --- |');
+      for (const x of r.colliders) out.push(`| ${x.name} | ${x.shape} | ${v3(x.size)} | ${v3(x.position)} |`);
+      out.push('');
+    }
+    if (r.export?.setup) {
+      out.push(`The same data is in \`${r.export.setup.json}\`.`);
+      if (r.export.setup.rbxmx) {
+        out.push('');
+        out.push(`**Roblox:** after importing the GLB, open \`${r.export.setup.command}\`, copy all of it, paste it into the command bar (View > Command Bar) and press Enter. It works on the selected Model, or on the model named \`${r.id}\` in Workspace.`);
+        out.push('');
+        out.push('It checks the imported size first, then creates invisible collision Parts (folder `Collision`), turns collision off on the visual MeshParts and adds the Attachments. Running it again replaces what it made.');
+        out.push('');
+        out.push(`For scripts, the same code is a ModuleScript in \`${r.export.setup.rbxmx}\` (insert it with Insert from File): \`require(folder.AssetSetup).apply(model)\`.`);
+      }
+    }
   }
   if (r.notes.length) {
     out.push('');

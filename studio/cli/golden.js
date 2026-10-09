@@ -5,6 +5,7 @@ import { loadGolden, runGolden } from '../core/golden.js';
 import { resolveProfiles } from '../profiles/index.js';
 import { withCapture } from '../core/render/capture.js';
 import { c, sym, fmtNum } from '../core/log.js';
+import { onAuthoredSources, runOnAuthoredSources } from './authored.js';
 
 const USAGE = `Usage: node studio golden [options]
 
@@ -12,6 +13,9 @@ Runs the golden set (golden/golden.json): every item and variant, in every profi
 validate · determinism · structure · regression · parity. Writes golden/report/index.html and
 exits with code 1 when anything fails. Run it after changing the kit, the exporter, a profile or
 a golden asset.
+
+The suite checks the authored source of each golden asset: edits made in the visual editor
+(assets/<slug>/editor.json) are left out, so trying things in the browser never fails it.
 
 Options:
   --profile <id>       generic | godot | roblox | all (default: the profiles in golden.json)
@@ -26,6 +30,7 @@ export async function run(argv) {
     only: { type: 'string' },
     'update-baselines': { type: 'boolean', default: false },
   }, USAGE);
+  if (!onAuthoredSources()) return runOnAuthoredSources('golden', argv, { quiet: opts.json });
   const golden = loadGolden();
   const profiles = opts.profile ? resolveProfiles(opts.profile) : golden.profiles;
   const only = opts.only ? opts.only.split(',').map((s) => s.trim()) : null;

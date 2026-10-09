@@ -123,6 +123,8 @@ Buat inspector dinamis yang membaca definisi `params` di file `asset.js`:
 
 ## 3. Visual Gallery & Thumbnails di Sidebar
 
+> **Status: selesai (tahap 3).** Thumbnail dirender di browser dari GLB generic tiap asset, di-cache per hash GLB di `.studio/thumbs/`, dan tampil di daftar Assets serta library scene.
+
 ### 3.1 Masalah Saat Ini
 Sidebar kiri hanya memuat daftar teks dari 100+ aset. Sulit mengenali model hanya dari nama teks.
 
@@ -154,6 +156,8 @@ Seringkali saat membuat model (seperti senjata atau karakter), kita punya gambar
 ## 5. Fitur Spesifik Roblox Developer (QoL)
 
 ### 5.1 Roblox Dummy Scale (R15 & R6)
+
+> **Status: selesai (tahap 3).** Pilihan figur di top bar: Human 1.75 m, Roblox R6, Roblox R15 (tinggi 5,1 stud). Tombol H berpindah antar pilihan.
 * Mengganti atau menambahkan opsi di samping tombol `Human`:
   * `Human (1.75m)`
   * `Roblox R15 Dummy`
@@ -204,6 +208,8 @@ Seringkali saat membuat model (seperti senjata atau karakter), kita punya gambar
 
 ## 8. Scene Composer (Pembuat Map & Ruangan Utuh)
 
+> **Status: versi pertama selesai (tahap 3).** Lihat [SCENES.md](SCENES.md). Sudah ada: library, taruh/geser/putar, snapping grid-dinding-stack, plan view, shell ruangan dari ukuran, autosave, undo/redo, versi, export satu GLB (tiap instance node sendiri), dan skill `/scene` untuk AI draft. Belum ada: walkthrough view dan layout `.rbxmx` berbasis asset ter-publish (lihat catatan di 8.3).
+
 Fitur ini adalah evolusi dari pembuatan barang satuan menjadi **perakitan 1 lingkungan game utuh (misal: Lobby, Dungeon, Ruang Tunggu)**. Fitur ini menyambung langsung dengan fokus **Tahap 3 (Library + Scene Assembly)**.
 
 ### 8.1 Gambaran Besar: Konsep "Merakit Lego"
@@ -222,6 +228,6 @@ Alih-alih membuat map sebagai 1 objek raksasa yang kaku, sistem membaginya menja
   * **Walkthrough View:** Berjalan di dalam ruangan layaknya karakter game untuk memastikan ruangan tidak terasa sempit.
 
 ### 8.3 Hasil Ekspor yang Siap Pakai di Game
-* **Untuk Roblox:** Tidak diekspor sebagai satu bongkahan mati, melainkan sebagai file model berstruktur (`.rbxmx`).
+* **Untuk Roblox:** Tidak diekspor sebagai satu bongkahan mati, melainkan sebagai file model berstruktur (`.rbxmx`). *Catatan implementasi:* `.rbxmx` tidak bisa memuat data mesh (MeshPart menunjuk asset yang sudah di-upload), jadi versi pertama menulis satu GLB dengan satu node per barang plus `layout.json`; struktur per barang tetap terjaga saat di-import.
 * **Manfaatnya di Roblox Studio:** Developer masih bisa menggeser kursi satu per satu, memasang script pintu otomatis, atau menambahkan lampu sorot langsung di Roblox tanpa batasan.
 

@@ -8,6 +8,7 @@ import { checkTexturesAndUVs } from './checks/texture-uv.js';
 import { checkMaterials } from './checks/material.js';
 import { checkSource } from './checks/source.js';
 import { checkSkinLock } from './checks/skin.js';
+import { checkMarkers } from './checks/markers.js';
 import { issue, sortIssues, countIssues } from './issues.js';
 
 const KHRONOS_SEVERITY = ['error', 'warning', 'info', 'info'];
@@ -42,6 +43,7 @@ export async function validate({ glb, info, ir, profile, meta, sourceFiles = [],
     ...tex.issues,
     ...checkMaterials({ info, profile, sourceMaterials: ir.sourceMaterials || ir.materials }),
     ...checkSource({ files: sourceFiles }),
+    ...checkMarkers({ info, ir, meta }),
     ...(skinBase ? checkSkinLock({ info, base: skinBase }) : []),
   ];
   const issues = sortIssues(all);

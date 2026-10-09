@@ -119,3 +119,46 @@ Skip the import with `node studio publish ak-rifle --roblox --skins` (API key se
   TextureID was created and that Studio could upload the images (you must be signed in).
 - **Colors look darker than the viewport:** Roblox lighting (Future/ShadowMap, exposure) differs
   from the neutral viewport. Compare under default Studio lighting.
+
+## 7. Scene import (optional)
+
+A scene export is one GLB with a node per placed asset (`docs/SCENES.md`). Export one, for
+example `node studio scene export <name> --profile roblox`, import
+`exports/roblox/scenes/<name>.glb` with *Scale Unit: Stud*, and check:
+
+- [ ] The Explorer shows one group per instance, named by its id (`table-1`, `stool-2`, …), and
+      a `room` group with `floor`, `wall-front`, `wall-back`, `wall-left`, `wall-right`, `ceiling`.
+      If the importer flattens or renames them, write down what you get.
+- [ ] Moving one instance does not move another (each is its own Model or MeshPart set).
+- [ ] The room measures what `<name>.layout.json` says under `room.studs`, and a default
+      avatar (about 5 studs tall) fits through the door.
+- [ ] Repeated assets: note whether the importer creates one mesh asset per instance or reuses
+      one (it affects upload count, not how the scene looks).
+
+## 8. Attachments and collision (optional)
+
+Assets that declare `k.attach` points or collision export a setup module
+(`docs/KIT.md` → Attachments and collision). Try it with the pilot:
+
+```bash
+node studio export glock-17 --profile roblox
+```
+
+1. Import `exports/roblox/glock-17.glb` (Scale Unit: Stud).
+2. Open `exports/roblox/glock-17.setup.lua` in a text editor, select all, copy. In Studio click
+   the command bar (View > Command Bar), paste, press Enter. Nothing has to be inserted first:
+   the chunk works on the selected Model, or on the model named `glock-17` in Workspace.
+   (`glock-17.setup.rbxmx` holds the same code as a ModuleScript for game scripts. Import 3D does
+   not open it; use Insert from File, then `require(folder.AssetSetup).apply(model)`.)
+
+Check and write down:
+
+- [ ] The Output line: `1 collider(s), 3 attachment(s); model turned N deg, 3 of 3 mesh part(s) matched`.
+      Note N (how the importer turns the model) and whether all three parts matched. Fewer
+      than 3 means the MeshParts are not named `body`, `slide`, `magazine`: note their names.
+- [ ] If it stops with a size error instead, copy the message (it prints both sizes).
+- [ ] `Collision > bounds` is an invisible Part that wraps the pistol; the MeshParts have
+      CanCollide off.
+- [ ] Attachments `grip`, `muzzle`, `magwell` sit on the `body` MeshPart in the middle of the
+      grip, at the end of the barrel and at the bottom of the grip (View > Constraint Details
+      shows them). Select `muzzle`: its orange/look axis points out of the barrel.

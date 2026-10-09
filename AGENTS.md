@@ -37,6 +37,8 @@ node studio history <slug>  |  node studio revert <slug> <vNNN>  |  node studio 
 node studio export <slug|set:name> --profile <generic|godot|roblox|all> [--skins]   # strict: blocked by errors
 node studio publish <slug|set:name> --roblox [--skins] [--dry-run]   # Open Cloud upload (key from env/.env)
 node studio validate <slug> --profile <p>  |  node studio report <slug> [--profile p]  |  node studio list  |  node studio stats
+node studio scene new <name> --room 6x4x3  |  node studio scene library [--set s] [--json]   # rooms assembled from existing assets
+node studio scene review <name> [--profile p]  |  node studio scene save <name> -m "<prompt>"  |  node studio scene export <name> --profile <p>
 node studio golden                      # golden suite (maintainers: after kit/exporter/profile changes)
 node studio engine-verify godot  |  node studio engine-pack roblox  |  node studio doctor
 ```
@@ -45,7 +47,7 @@ node studio engine-verify godot  |  node studio engine-pack roblox  |  node stud
 
 The workflows below also exist as ready-made shortcuts, written once as Agent Skills in
 `.agents/skills/<name>/SKILL.md` (asset, asset-revise, asset-variants, asset-skins, asset-set,
-asset-review, asset-export, asset-publish, asset-undo):
+asset-review, asset-export, asset-publish, asset-undo, scene):
 
 | Agent | How the user runs them |
 | --- | --- |
@@ -79,9 +81,13 @@ viewport.
    `{ separate: true, pivot, id }` and an `editor.parts` entry for Move/Rotate/uniform Scale.
    Keep IDs when labels change. Do not split decorative detail just to expose a gizmo.
    Fill `meta.interpretation` and `meta.budget`. See `docs/KIT.md` for the editor contract.
+   Declare what the engine cannot guess (`rules/06`): `k.attach` points where something connects
+   (weapons: `grip`, `muzzle`, `magwell`), and collision for anything a player bumps into
+   (`k.collider.*` shapes, or `meta.collision: 'bounds'` for simple props and hand-held items).
 5. `node studio review <slug>` → **open the printed sheet PNG** (see *Looking at images*) and go
    through `rules/checklists/review.md`. When structure or proportions look wrong, also open
-   `parts.png` (each `k.part` colored) and `blueprint.png` (rulers in meters); with a reference,
+   `parts.png` (each `k.part` colored) and `blueprint.png` (rulers in meters); with markers,
+   `markers.png` (collision in green, attachments with a blue forward line); with a reference,
    open `reference.png` and fix the largest red/cyan area (IoU printed). Fix errors and visible
    problems; repeat (usually 1–3 rounds, more when matching a reference).
 6. `node studio save <slug> -m "<user prompt>" --include-variants` for editor-enabled assets
@@ -117,7 +123,9 @@ cards have the correct variant previews. The set checkpoint still preserves the 
 ## Workflow E — export for an engine
 
 `node studio review <slug> --profile <engine>` → fix → `node studio export <slug> --profile <engine>`
-→ point the user to `exports/<engine>/<slug>.glb` and its `.report.md` (import steps included).
+→ point the user to `exports/<engine>/<slug>.glb` and its `.report.md` (import steps included;
+with attachments or collision also `<slug>.setup.json`, and for Roblox `<slug>.setup.lua` to
+paste into Studio's command bar).
 Roblox: textures and colors are baked automatically; watch texel density and triangle warnings.
 
 ## Workflow F — skins (same mesh, different looks)
@@ -134,6 +142,18 @@ skin sheet; every look must pass the skin lock: same mesh, same material slots) 
 → `node studio publish <slug> --roblox [--skins]`. Credentials only from `ROBLOX_API_KEY` and
 `ROBLOX_CREATOR` in the environment or the gitignored `.env`: never ask for the key in chat,
 never print it or write it anywhere else. Reply with the asset ids and the insert steps printed.
+
+## Workflow H — scene (a room assembled from existing assets)
+
+Follow `rules/18-scene-layout.md`. A scene is data, not modeling code: it places assets that
+already exist, at their real size.
+`node studio scene library --json` (real sizes and bounds) → `node studio scene new <name> --room
+<W>x<D>x<H> --prompt "<prompt verbatim>"` → edit `scenes/<name>/scene.json` (openings, finishes,
+instances: `position` in meters, `yaw` in degrees, never a scale) → `node studio scene review <name>`
+→ **open the printed sheet PNG** (labeled plan, dollhouse views, eye level) and fix the layout →
+`node studio scene save <name> -m "<user prompt>"`. If an asset the scene needs does not exist,
+say so and make it with Workflow A first. Export with `node studio scene export <name> --profile
+<engine>`: one GLB, every instance its own node (`exports/<engine>/scenes/`).
 
 ## Definition of done (every request)
 
@@ -154,8 +174,9 @@ never print it or write it anywhere else. Reply with the asset ids and the inser
 - Ask for, print, commit or write Roblox API keys anywhere except the user's own environment or
   the gitignored `.env`.
 - Change the mesh in a skin: shape changes are variants.
+- Scale an asset inside a scene, or put modeling code in `scenes/`: a scene only places assets.
 
 ## Where things are
 
 `rules/` modeling knowledge (13 buildings, 15 weapons, 16 skins, 17 complex shapes) · `.agents/skills/` workflow shortcuts · `docs/KIT.md` kit API · `docs/GUIDE.md` user guide ·
-`studio/profiles/*.json` engine limits · `assets/` assets · `sets/` packs · `exports/` engine files.
+`studio/profiles/*.json` engine limits · `assets/` assets · `sets/` packs · `scenes/` rooms (`docs/SCENES.md`, rule 18) · `exports/` engine files.

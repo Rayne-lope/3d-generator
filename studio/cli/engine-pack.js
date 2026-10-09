@@ -3,6 +3,7 @@
 import { parse } from './args.js';
 import { packGodot, packRoblox } from '../core/engines.js';
 import { c, sym } from '../core/log.js';
+import { onAuthoredSources, runOnAuthoredSources } from './authored.js';
 
 const USAGE = `Usage: node studio engine-pack <godot | roblox | all> [options]
 
@@ -21,6 +22,8 @@ export async function run(argv) {
   const { args, opts } = parse(argv, { variants: { type: 'boolean' }, 'no-variants': { type: 'boolean', default: false } }, USAGE);
   const target = args[0];
   if (!['godot', 'roblox', 'all'].includes(target)) throw new Error(USAGE);
+  // Same sources as the golden suite, so the packed GLBs match golden/manifest.json.
+  if (!onAuthoredSources()) return runOnAuthoredSources('engine-pack', argv, { quiet: opts.json });
   const pick = (dflt) => (opts['no-variants'] ? false : opts.variants ?? dflt);
   const results = {};
   if (target === 'godot' || target === 'all') results.godot = await packGodot({ variants: pick(true) });

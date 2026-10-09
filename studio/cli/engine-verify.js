@@ -8,6 +8,7 @@ import { withCapture } from '../core/render/capture.js';
 import { readPNG, writePNG, dataUrlToBuffer, sideBySide, grid } from '../core/render/image.js';
 import { rel } from '../core/paths.js';
 import { c, sym } from '../core/log.js';
+import { onAuthoredSources, runOnAuthoredSources } from './authored.js';
 
 const USAGE = `Usage: node studio engine-verify godot [options]
 
@@ -33,6 +34,7 @@ export async function run(argv) {
     console.log(c.gray('   https://godotengine.org/download — the standard (non-.NET) build is enough.'));
     return 2;
   }
+  if (!onAuthoredSources()) return runOnAuthoredSources('engine-verify', argv, { quiet: opts.json });
   if (godot.major < 4 || (godot.major === 4 && godot.minor < 3)) console.log(`${sym.warn} Godot ${godot.version}: 4.3 or newer is recommended`);
   if (!opts['no-pack']) {
     const pack = await packGodot({ variants: true });

@@ -49,10 +49,12 @@ prompt ──► agent writes assets/<slug>/asset.js (kit code)
 | `studio/core/validate/checks/skin.js` | Skin lock: a skin must keep the default look's mesh and material slots. |
 | `studio/core/engines.js` | Godot/Roblox packs, Godot discovery, headless verification and capture. |
 | `studio/profiles/*.json` | Engine profiles: units, limits, material/texture/UV policy, import hints, verification notes. |
+| `studio/scene/` | Scenes (rooms assembled from library assets). `schema.js` reads, validates and writes `scenes/<name>/scene.json`; `shell.js` builds the room shell with the kit through the normal pipeline; `compose.js` merges the preview GLB of every placed asset plus the shell into one GLB (one node per instance, shared meshes); `validate.js`, `export.js` (strict), `review.js` (contact sheet), `library.js` (assets with real sizes, thumbnails), `snapshots.js` (versions). Kept outside `kit/`, `core/` and `profiles/`, which are part of every asset's build hash. |
 | `studio/server/server.js` | Dev server: static mounts, import map, `/api/*`, SSE events, recursive file watching, rebuilds in child processes. |
-| `studio/viewport/` | Browser viewport (`index.html`, `app.js`), the capture page (`capture.html/js`) and the rendering setup they share (`scene-setup.js`). |
+| `studio/viewport/` | Browser viewport (`index.html`, `app.js`), the capture page (`capture.html/js`) and the rendering setup they share (`scene-setup.js`). The scene composer is `composer.js` (3D state, gizmo, placing, autosave), `scene-ui.js` (panels) and `snap.js` (placement math shared with Node); `thumbs.js` renders library thumbnails. |
 | `studio/templates/` | Scaffolds for `new` and `new-set`. |
 | `assets/`, `sets/` | Asset code (the only place the agent writes code) and shared set styles. |
+| `scenes/` | Scene data (`<name>/scene.json`): a room spec and placed assets. No code. |
 | `rules/`, `AGENTS.md`, `CLAUDE.md` | What the agent reads. |
 | `.agents/skills/` | The workflow shortcuts as Agent Skills (read directly by Codex and Gemini CLI). `node studio agents` (`studio/core/agents.js`) generates `.claude/commands/` and `.gemini/commands/` from them; `.gemini/settings.json` makes Gemini CLI load `AGENTS.md`. |
 | `golden/` | `golden.json` (the set), `manifest.json` (expected structure), `baselines/` (expected renders), `report/` (generated). |
@@ -115,6 +117,10 @@ parent, so undo follows the real edit chain. Restores always auto-save unsaved w
   engine checks compare against it.
 - `.studio/history/<target>/index.json`: the version list plus `head`. Each `vNNN/meta.json`
   holds the message, parent, source hash and stats.
+- `scenes/<name>/scene.json`: version, title, prompt, room (size, openings, finishes) and
+  instances (`id`, `asset`, `variant`, `skin`, `position` in meters, `yaw` in degrees). Its
+  sha256 is the scene revision used for conflict detection. Composed previews, reports, the
+  cached shell and checkpoints live in `.studio/scenes/<name>/`; thumbnails in `.studio/thumbs/`.
 - `.studio/metrics.json`: per-asset timestamps (created, first GLB, first save, exports) for
   `stats`.
 

@@ -28,9 +28,9 @@ requests. The full walkthrough is in the **[User Guide](docs/GUIDE.md)**.
 
 ## What's inside
 
-- **Agent workflow:** `AGENTS.md` (any coding agent), `CLAUDE.md`, and nine shortcuts written
+- **Agent workflow:** `AGENTS.md` (any coding agent), `CLAUDE.md`, and ten shortcuts written
   once as Agent Skills (`.agents/skills/`): `asset`, `asset-revise`, `asset-variants`,
-  `asset-skins`, `asset-set`, `asset-review`, `asset-export`, `asset-publish`, `asset-undo`. Use them as `/asset …` in Claude Code
+  `asset-skins`, `asset-set`, `asset-review`, `asset-export`, `asset-publish`, `asset-undo`, `scene`. Use them as `/asset …` in Claude Code
   and Gemini CLI, or `$asset …` in Codex. The agent reviews its own work from rendered contact
   sheets of the exported GLB.
 - **Kit** (`studio/kit`): geometry, operators, UV tools and atlas packing, a texture painter
@@ -55,6 +55,10 @@ requests. The full walkthrough is in the **[User Guide](docs/GUIDE.md)**.
   for the chest lid, mailbox flag and valve handwheel. New assets get curated editor
   controls by default. See the [part editor guide](docs/PART-EDITOR.md) and
   [verification results](docs/PART-EDITOR-VERIFICATION.md).
+- **Scene composer:** assemble a room from the asset library in the browser (thumbnails, real
+  sizes, grid/wall/stack snapping, plan view, a generated room shell with door and window
+  openings) or with `/scene <prompt>`, and export one GLB in which every placed asset is still
+  its own node. See the [scenes guide](docs/SCENES.md).
 - **Engine profiles:** Generic glTF, Godot, Roblox Studio. The Roblox profile handles studs,
   colors baked into textures, a palette atlas, one material per MeshPart, ≤ 1024 px textures, the
   20k-triangle split and UV-padding dilation.

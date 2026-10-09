@@ -69,6 +69,12 @@ switcher shows exactly that file.
 | `scene.materials-per-mesh` | A mesh has more materials than the engine allows | Normally handled by the profile (split / palette); merge similar materials |
 | `scene.node-scale` | A node has scale left after baking | Don't scale separate parts' roots; scale geometry instead |
 | `scene.floating-part` (info) | A piece touches no other piece and does not rest on the ground | Overlap it 1–2 mm with what it attaches to (find it in `parts.png`); ignore it when it floats on purpose (sparks, flames, glow) |
+| `attachment.duplicate-name` | Two `k.attach` with the same name | Attachment names are unique per asset: engines look them up by name |
+| `attachment.far` | An attachment is far from the asset | `at` is in the space of the part it was added to (meters): check it in `markers.png` |
+| `attachment.weapon-grip` (info) | A weapon has no `grip` attachment | Add `k.attach('grip', …)` where the hand holds it (rule 15) |
+| `collider.outside-asset` | A collision shape does not touch the asset | `at` is the center of the shape; check it in `markers.png` |
+| `collider.oversized` | A collision shape is much larger than the asset | Sizes are meters: box(w, h, d), sphere(radius), cylinder(radius, height) |
+| `collider.count` | More than 12 collision shapes | Cover the silhouette with a few boxes; details do not need their own shape |
 | `material.double-sided` | Double-sided materials are not portable | Model thickness, or add a back face with `k.op.flipWinding` |
 | `material.emissive-strength` | Emissive intensity > 1 needs an extension the engine ignores | Keep `emissiveIntensity` ≤ 1 for Roblox; brighten the emissive color instead |
 | `texture.density-below-target` | Sharpness below the profile's target (above its minimum) | Fine for secondary parts; raise resolution or reduce repeats on hero surfaces |

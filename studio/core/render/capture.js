@@ -61,6 +61,7 @@ export async function withCapture(fn) {
       renderParts: call('renderParts'),
       blueprint: call('blueprint'),
       referenceOverlay: call('referenceOverlay'),
+      markers: call('markers'),
       errors,
     };
     return await fn(api);

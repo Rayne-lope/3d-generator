@@ -12,6 +12,7 @@ const COMMANDS = {
   review: ['Build + render multi-view contact sheets + source-vs-GLB parity check', () => import('./cli/review.js')],
   export: ['Strict export to exports/<profile>/ (blocked by errors); --skins adds skin packs', () => import('./cli/export.js')],
   publish: ['Upload to Roblox with Open Cloud (model + skins), no manual import', () => import('./cli/publish.js')],
+  scene: ['Compose rooms from library assets (new, library, build, review, export, save)', () => import('./cli/scene.js')],
   save: ['Save a version (snapshot of the source + GLB) after a generate/revise step', () => import('./cli/save.js')],
   history: ['List saved versions', () => import('./cli/history.js')],
   revert: ['Restore a saved version into the working copy', () => import('./cli/revert.js')],

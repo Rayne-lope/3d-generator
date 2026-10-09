@@ -182,6 +182,60 @@ export function makeHuman(unitsPerMeter) {
   return g;
 }
 
+// Roblox avatar rigs as boxes, in studs: [width, height, depth, center x, center y].
+// R15 follows the block rig's part bounds in its T-pose (5.1 studs tall, arms out to ±2);
+// R6 is the classic six-part layout. 1 stud = 0.28 m.
+const ROBLOX_RIGS = {
+  r6: [
+    [1, 2, 1, -0.5, 1], [1, 2, 1, 0.5, 1], // legs
+    [2, 2, 1, 0, 3], // torso
+    [1, 2, 1, -1.5, 3], [1, 2, 1, 1.5, 3], // arms
+    [1.2, 1.2, 1.2, 0, 4.5], // head
+  ],
+  r15: [
+    [1, 0.3, 1, -0.5, 0.15], [1, 0.3, 1, 0.5, 0.15], // feet
+    [1, 1.208, 1, -0.5, 0.799], [1, 1.208, 1, 0.5, 0.799], // lower legs
+    [1, 1.228, 1, -0.5, 1.579], [1, 1.228, 1, 0.5, 1.579], // upper legs
+    [2, 0.4, 1, 0, 2.2], // lower torso
+    [2, 1.6, 1, 0, 3.2], // upper torso
+    [1, 1.173, 1, -1.5, 3.372], [1, 1.173, 1, 1.5, 3.372], // upper arms
+    [1, 1.061, 1, -1.5, 2.776], [1, 1.061, 1, 1.5, 2.776], // lower arms
+    [1, 0.306, 1, -1.5, 2.15], [1, 0.306, 1, 1.5, 2.15], // hands
+    [1.2, 1.2, 1.2, 0, 4.5], // head
+  ],
+};
+const STUD_METERS = 0.28;
+
+export const SCALE_REFS = {
+  off: { label: 'Off' },
+  human: { label: 'Human 1.75 m', height: 1.75 },
+  r6: { label: 'Roblox R6', height: 5.1 * STUD_METERS },
+  r15: { label: 'Roblox R15', height: 5.1 * STUD_METERS },
+};
+
+/** Roblox R6 / R15 dummy (scale reference), feet on y = 0, facing +Z. */
+export function makeRobloxDummy(kind, unitsPerMeter) {
+  const g = new THREE.Group();
+  g.name = '__human';
+  const mat = new THREE.MeshStandardMaterial({ color: 0x9aa7b8, roughness: 0.8 });
+  for (const [w, h, d, x, y] of ROBLOX_RIGS[kind] || ROBLOX_RIGS.r6) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w * 0.98, h * 0.98, d * 0.98), mat);
+    m.position.set(x, y, 0);
+    m.userData.__helper = true;
+    g.add(m);
+  }
+  g.scale.setScalar(STUD_METERS * unitsPerMeter);
+  g.userData.__helper = true;
+  return g;
+}
+
+/** The scale reference for `kind` ('human' | 'r6' | 'r15'), or null for 'off'. */
+export function makeScaleRef(kind, unitsPerMeter) {
+  if (kind === 'human') return makeHuman(unitsPerMeter);
+  if (kind === 'r6' || kind === 'r15') return makeRobloxDummy(kind, unitsPerMeter);
+  return null;
+}
+
 function labelSprite(text, scale) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -202,6 +256,58 @@ function labelSprite(text, scale) {
   sprite.renderOrder = 10;
   sprite.userData.__helper = true;
   return sprite;
+}
+
+/**
+ * Markers of a build report as a viewing aid: collision shapes as green wire volumes,
+ * attachments as small axes (blue = forward, green = up, red = right) with their name.
+ * The values are in the report's file units, like the GLB it describes.
+ */
+export function makeMarkers(report, { colliders = true, attachments = true } = {}) {
+  const g = new THREE.Group();
+  g.name = '__markers';
+  g.userData.__helper = true;
+  const bounds = report?.bounds;
+  const span = bounds ? Math.max(...bounds.max.map((v, i) => v - bounds.min[i])) || 1 : 1;
+  const helper = (object) => {
+    object.userData.__helper = true;
+    object.renderOrder = 9;
+    return object;
+  };
+  if (colliders) {
+    for (const c of report?.colliders || []) {
+      const geometry = c.shape === 'sphere' ? new THREE.SphereGeometry(c.size[0], 20, 12)
+        : c.shape === 'cylinder' ? new THREE.CylinderGeometry(c.size[0], c.size[0], c.size[1], 24)
+          : new THREE.BoxGeometry(c.size[0], c.size[1], c.size[2]);
+      const holder = new THREE.Group();
+      holder.position.set(...c.position);
+      holder.quaternion.set(...c.rotation);
+      holder.userData.__helper = true;
+      holder.add(helper(new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0x4cc38a, transparent: true, opacity: 0.05, depthWrite: false }))));
+      holder.add(helper(new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 25), new THREE.LineBasicMaterial({ color: 0x4cc38a, depthTest: false, transparent: true, opacity: 0.9 }))));
+      g.add(holder);
+    }
+  }
+  if (attachments) {
+    const length = span * 0.16;
+    for (const a of report?.attachments || []) {
+      const holder = new THREE.Group();
+      holder.position.set(...a.position);
+      holder.quaternion.set(...a.rotation);
+      holder.userData.__helper = true;
+      const axis = (to, color) => {
+        const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(...to)]);
+        return helper(new THREE.Line(geometry, new THREE.LineBasicMaterial({ color, depthTest: false })));
+      };
+      holder.add(axis([0, 0, length], 0x4d8dff), axis([0, length * 0.45, 0], 0x4cc38a), axis([length * 0.45, 0, 0], 0xff5d6c));
+      holder.add(helper(new THREE.Mesh(new THREE.SphereGeometry(length * 0.07, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffc857, depthTest: false }))));
+      const label = labelSprite(a.name, span * 0.045);
+      label.position.set(0, length * 0.62, 0);
+      holder.add(label);
+      g.add(holder);
+    }
+  }
+  return g;
 }
 
 /** Bounding box outline with width/height/depth labels in meters (and studs). */

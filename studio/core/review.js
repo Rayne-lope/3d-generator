@@ -48,6 +48,7 @@ export async function reviewItem(api, { slug, variant = null, skin = null, profi
   const extra = {};
   if (parts) extra.parts = await partsSheet(api, { slug, variant, skin, profileId, size: tile, title: report.title });
   if (blueprint) extra.blueprint = await blueprintSheet(api, { slug, variant, skin, profileId, size: tile, title: report.title });
+  if (report.attachments?.length || report.colliders?.length) extra.markers = await markersSheet(api, { slug, variant, skin, profileId, size: tile, title: report.title, report });
   const def = await loadAssetDef(slug);
   if (def.meta.reference) extra.reference = await referenceSheet(api, { slug, variant, skin, profileId, reference: def.meta.reference });
   return { slug, variant, skin, profile: profileId, report: readJson(previewReport(slug, variant, profileId, skin)), sheet: rel(sheetFile), dir: rel(dir), parity: parityResult, glb: rel(previewGlb(slug, variant, profileId, skin)), ...extra };
@@ -81,6 +82,22 @@ export async function blueprintSheet(api, { slug, variant = null, skin = null, p
     lines: [`front ${fmt(r.dims.front)} · top ${fmt(r.dims.top)} · right ${fmt(r.dims.right)} · rulers start at the model's min corner`],
   });
   return { file: rel(writeDataUrl(path.join(shotsDir(slug, variant, profileId, skin), 'blueprint.png'), sheet)), dims: r.dims };
+}
+
+/** Markers view: collision shapes (green) and attachment points (blue = forward) over the GLB. */
+export async function markersSheet(api, { slug, variant = null, skin = null, profileId = 'generic', size = 512, title = slug, report }) {
+  const views = ['front', 'top', 'right', 'iso'];
+  const r = await api.markers({
+    url: previewUrl(api, slug, variant, profileId, skin),
+    report: { bounds: report.bounds, attachments: report.attachments, colliders: report.colliders },
+    views,
+    size,
+  });
+  const lines = [];
+  if (report.attachments.length) lines.push(`attachments (blue line = forward): ${report.attachments.map((a) => `${a.name} on ${a.node}`).join(', ')}`);
+  if (report.colliders.length) lines.push(`collision (green): ${report.colliders.map((c) => `${c.name} ${c.shape}`).join(', ')}`);
+  const sheet = await api.sheet({ tiles: views.map((v) => ({ image: r.images[v], label: v })), columns: 2, tileSize: size, title: `${title} — attachments and collision`, lines });
+  return { file: rel(writeDataUrl(path.join(shotsDir(slug, variant, profileId, skin), 'markers.png'), sheet)) };
 }
 
 /** Reference overlay: model silhouette vs the asset's reference image (meta.reference). */

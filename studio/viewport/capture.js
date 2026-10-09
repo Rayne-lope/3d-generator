@@ -6,7 +6,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { createRenderer, applyLighting, contentBox, frameCamera, forceSingleSided, setOverlays, unitsPerMeter, BACKGROUND, VIEWS } from './scene-setup.js';
+import { createRenderer, applyLighting, contentBox, frameCamera, forceSingleSided, makeMarkers, setOverlays, unitsPerMeter, BACKGROUND, VIEWS } from './scene-setup.js';
 
 const canvas = document.getElementById('c');
 const renderer = createRenderer(canvas, { preserveDrawingBuffer: true, antialias: true });
@@ -558,3 +558,104 @@ window.studioCapture.referenceOverlay = async function referenceOverlay({ url, i
 };
 
 window.studioReady = true;
+
+// ------------------------------------------------------------------ markers
+
+/** The GLB with its collision shapes and attachment points drawn on top (data from the report). */
+window.studioCapture.markers = async function markers({ url, report, views = ['front', 'top', 'right', 'iso'], size = 512 }) {
+  const { object } = await loadGLB(url);
+  object.add(makeMarkers(report));
+  return renderViews(object, { views, size });
+};
+
+// ------------------------------------------------------------------ scenes
+
+/**
+ * Review views of a composed scene GLB: a labeled top-down plan, two dollhouse views (ceiling
+ * and the walls facing the camera hidden) and, with a room, two views from eye level inside.
+ * room and instances are the scene's data in meters; the GLB may be in other units.
+ */
+window.studioCapture.sceneViews = async function sceneViews({ url, room = null, instances = [], size = 640 }) {
+  const { object, units: u } = await loadGLB(url);
+  renderer.setSize(size, size, false);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(BACKGROUND);
+  scene.add(object);
+  const box = contentBox(object);
+  applyLighting(renderer, scene, 'neutral', { size: box.getSize(new THREE.Vector3()).length() || 1 });
+  const shell = ['wall-front', 'wall-back', 'wall-left', 'wall-right', 'ceiling'];
+  const hide = (hidden) => {
+    for (const name of shell) {
+      const node = object.getObjectByName(name);
+      if (node) node.visible = !hidden.includes(name);
+    }
+  };
+  const shot = () => canvas.toDataURL('image/png');
+  const tiles = [];
+
+  // Plan: orthographic from above, +X to the right, the front wall (+Z) at the bottom.
+  hide(['ceiling']);
+  const o = orthoCamera(box, 'top', 1, 0.1);
+  renderer.render(scene, o.cam);
+  const { cv, ctx } = await canvasFrom(shot(), size, size);
+  const pxPerMeter = (size / (2 * o.hw)) * u;
+  for (const inst of instances) {
+    const [x, y] = orthoPixel(o, new THREE.Vector3(inst.position[0] * u, inst.position[1] * u, inst.position[2] * u), size, size);
+    // A tick shows where the asset's front points.
+    const a = (inst.yaw * Math.PI) / 180;
+    ctx.strokeStyle = '#ffc857';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.sin(a) * 14, y + Math.cos(a) * 14);
+    ctx.stroke();
+    drawLabel(ctx, inst.id, x, y - 22, { size: 11, align: 'center' });
+  }
+  const step = niceStep(80 / pxPerMeter);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(14, size - 22, step * pxPerMeter, 4);
+  drawLabel(ctx, fmtLen(step), 14, size - 48, { size: 12 });
+  if (room) {
+    drawLabel(ctx, 'front (+Z)', size / 2, size - 26, { size: 11, align: 'center', color: '#ffc857' });
+    drawLabel(ctx, 'back (−Z)', size / 2, 30, { size: 11, align: 'center', color: '#ffc857' });
+  }
+  tiles.push({ key: 'plan', label: 'plan · +X right, front wall at the bottom · tick = front of the asset', image: cv.toDataURL('image/png') });
+
+  // Dollhouse views from two opposite corners.
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 1000);
+  for (const [view, hidden, key, label] of [
+    ['iso', ['ceiling', 'wall-front', 'wall-right'], 'iso-front-right', 'from the front-right corner'],
+    ['iso-back', ['ceiling', 'wall-back', 'wall-left'], 'iso-back-left', 'from the back-left corner'],
+  ]) {
+    hide(hidden);
+    frameCamera(camera, box, view);
+    renderer.render(scene, camera);
+    tiles.push({ key, label, image: shot() });
+  }
+
+  hide([]);
+  if (room) {
+    // Standing inside at eye height (1.6 m): how the room feels at human scale.
+    const eye = new THREE.PerspectiveCamera(75, 1, 0.03 * u, (room.width + room.depth + room.height) * 4 * u);
+    const inset = Math.min(0.4, room.width / 4, room.depth / 4);
+    for (const [from, to, key, label] of [
+      [[0, 1.6, room.depth / 2 - inset], [0, 1.1, -room.depth / 2], 'eye-front', 'eye level · standing at the front wall, looking back'],
+      [[-room.width / 2 + inset, 1.6, -room.depth / 2 + inset], [room.width / 2, 0.9, room.depth / 2], 'eye-corner', 'eye level · from the back-left corner'],
+    ]) {
+      eye.position.set(from[0] * u, Math.min(from[1], room.height - 0.3) * u, from[2] * u);
+      eye.up.set(0, 1, 0);
+      eye.lookAt(to[0] * u, to[1] * u, to[2] * u);
+      eye.updateProjectionMatrix();
+      renderer.render(scene, eye);
+      tiles.push({ key, label, image: shot() });
+    }
+  } else {
+    for (const view of ['front', 'right']) {
+      frameCamera(camera, box, view);
+      renderer.render(scene, camera);
+      tiles.push({ key: view, label: view, image: shot() });
+    }
+  }
+  scene.remove(object);
+  return { tiles, units: u };
+};

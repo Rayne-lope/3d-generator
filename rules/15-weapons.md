@@ -12,8 +12,11 @@ decides the style (realistic, stylized, toy, sci-fi).
   The review's `front` view then shows the full profile and `iso` the classic 3/4 view. Write
   the convention in `meta.interpretation` so engine setup knows it.
 - **Origin:** `base-center` for props that lie or stand in the world (pickups, racks, displays).
-  For a held item, the engine sets the grip offset (Roblox `Tool.Grip`, a Godot hand marker);
-  mention where the grip is.
+  For a held item, declare where it is held: `k.attach('grip', { at, forward })` in the middle of
+  the grip, forward along the barrel or blade (+X). Firearms also get `muzzle` (end of the
+  bore, forward = shooting direction) and, with a magazine, `magwell`; melee weapons may add
+  `tip`. Put them on the frame/body part, not on a part that cycles or detaches. Add
+  `meta.collision: 'bounds'`: a hand-held item needs one box.
 - **Real sizes** (meters, overall length unless stated; stylized prompts may exaggerate them):
 
 | Weapon | Size |
@@ -135,8 +138,11 @@ complete example.
 
 ## 9. In the engine
 
-- **Roblox:** the GLB imports as a Model with one MeshPart per part (body, magazine). For a Tool,
-  name the grip part `Handle` (or weld the MeshParts to a Handle part) and set `Tool.Grip`.
+- **Roblox:** the GLB imports as a Model with one MeshPart per part (body, magazine). The export
+  writes `<slug>.setup.lua`: paste its content into Studio's command bar to get the `grip`,
+  `muzzle` and `magwell` Attachments and the collision box. For a Tool, name the grip part
+  `Handle` (or weld the MeshParts to a Handle part) and derive `Tool.Grip` from the `grip`
+  Attachment.
   `node studio publish <slug> --roblox --skins` uploads the model and its skins.
 - **Godot:** instance the GLB under a `BoneAttachment3D` or hand `Marker3D`; separate parts are
   nodes an `AnimationPlayer` can move (magazine drop, bolt).

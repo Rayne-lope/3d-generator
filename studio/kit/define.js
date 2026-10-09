@@ -4,6 +4,8 @@ import { editorControls, editorParts } from './editor.js';
 
 const VARIANT_RE = /^[a-z0-9][a-z0-9-]{0,40}$/;
 const ORIGINS = new Set(['base-center', 'center', 'back-center', 'none']);
+// 'bounds' = one box around the whole asset; 'none' = nothing collides. Unset: the engine's default.
+const COLLISIONS = new Set(['bounds', 'none']);
 // 'default' names the base look in skin packs and the viewport; 'base' means "no variant".
 const RESERVED_SKINS = new Set(['default', 'base', 'all']);
 
@@ -17,6 +19,7 @@ const RESERVED_SKINS = new Set(['default', 'base', 'all']);
  * @property {{triangles?: number}} [budget]
  * @property {'base-center'|'center'|'back-center'|'none'} [origin]
  * @property {string} [set]             set name when the asset belongs to a pack
+ * @property {'bounds'|'none'} [collision] shortcut instead of k.collider.*: one box around the asset, or no collision
  */
 
 /**
@@ -34,6 +37,7 @@ export function defineAsset(def) {
   const meta = { origin: 'base-center', category: 'prop', style: [], ...(def.meta || {}) };
   if (!meta.title) throw new Error('defineAsset: meta.title is required');
   if (!ORIGINS.has(meta.origin)) throw new Error(`defineAsset: meta.origin must be one of ${[...ORIGINS].join(', ')}`);
+  if (meta.collision !== undefined && !COLLISIONS.has(meta.collision)) throw new Error(`defineAsset: meta.collision must be one of ${[...COLLISIONS].join(', ')} (or leave it out and add k.collider shapes)`);
   const variants = def.variants || {};
   for (const [name, v] of Object.entries(variants)) {
     if (!VARIANT_RE.test(name)) throw new Error(`defineAsset: variant name '${name}' must be lowercase letters, digits or '-'`);

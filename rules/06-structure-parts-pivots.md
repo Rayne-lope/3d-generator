@@ -44,6 +44,24 @@ meta: {
 - Put the pivot exactly on the physical hinge/axle (back top edge of a chest lid, door hinge
   side, wheel center).
 
+## Attachments and collision
+
+Engines need two things a mesh cannot say (API in `docs/KIT.md`):
+
+- **Attachment points** (`k.attach(name, { at, forward })`) wherever something connects: the
+  `grip` and `muzzle` of a weapon, the `magwell`, a lamp's `light` point, a `seat`. Add them to
+  the part they belong to, so they move with it. Do not put them on a part that animates away
+  from the point (a muzzle belongs on the frame, not on a slide that cycles). `forward` is the
+  direction the thing points; when it does not point anywhere, use the asset's own forward.
+- **Collision** for anything a player walks into or stands on: a few `k.collider.box / sphere /
+  cylinder` shapes that cover the silhouette (table: top + legs or trestles; shelf: one box;
+  arch: two posts + lintel, so it stays walkable). `meta.collision: 'bounds'` is enough for
+  simple props and hand-held items; `'none'` for small decor players should pass through.
+  Leave both out and the engine uses its default collision.
+
+Check `markers.png` from the review: shapes hug the model, attachments sit where they should
+and their blue line points the right way.
+
 ## Orientation and units
 
 Meters, +Y up, front +Z. Build around the origin; the runtime moves the origin to

@@ -7,7 +7,7 @@ and in the browser (parity renders). It uses no Node built-ins, randomness only 
 Units are **meters**. **+Y is up** and the asset's **front faces +Z**. By default the origin is
 the **base center**: the lowest point at y = 0, and x/z at the center of the footprint.
 
-- [Asset module](#asset-module) · [Editor controls](#editor-controls) · [Structure](#structure) · [Materials](#materials) · [Color](#color)
+- [Asset module](#asset-module) · [Editor controls](#editor-controls) · [Structure](#structure) · [Attachments and collision](#attachments-and-collision) · [Materials](#materials) · [Color](#color)
 - [Geometry](#geometry) · [2D shapes](#2d-shapes) · [Operators](#operators) · [UVs](#uvs) · [Textures](#textures) · [3D painting and skins](#3d-painting-and-skins)
 - [CSG](#csg) · [Terrain](#terrain) · [Architecture](#architecture) · [Units](#units) · [Randomness and noise](#randomness-and-noise)
 - [Sets](#sets-shared-style) · [Complete example](#complete-example) · [Errors you may see](#errors-you-may-see)
@@ -30,6 +30,7 @@ export default defineAsset({
     category: 'container',     // prop | furniture | container | architecture | environment | nature | vehicle | weapon | lighting | decor | modular
     budget: { triangles: 6000 },
     origin: 'base-center',     // base-center (default) | center | back-center | none
+    collision: 'bounds',       // optional: 'bounds' (one box around the asset) | 'none'; or add k.collider shapes
     set: 'tavern',             // only for set members
   },
   seed: 1234,                  // change only when the user wants a different random result
@@ -169,6 +170,45 @@ See [PART-EDITOR.md](PART-EDITOR.md) for draft gestures, recovery and keyboard c
 
 Animate a separate part in-engine by rotating its node. For a preview, use a param:
 `if (p.lidOpen) lid.rotation.x = -p.lidOpen;`
+
+## Attachments and collision
+
+Markers are engine data, not geometry: nothing is rendered or exported as a mesh. Add them to
+a part like a mesh; they move with it (pivots, the asset origin, editor transforms).
+
+| Call | Result |
+| --- | --- |
+| `k.attach(name, { at, forward, up })` | A named point with an orientation: `grip`, `muzzle`, `magwell`, a lamp socket, a seat. `at` is in the space of the part it is added to (meters). `forward` (default `[0, 0, 1]`) is the direction the attached thing points: a muzzle's forward is the shooting direction. `up` defaults to `[0, 1, 0]`. Names are unique per asset. |
+| `k.collider.box(w, h, d, { at, rot, name })` | A collision box, centered on `at`. `rot` = Euler XYZ radians. |
+| `k.collider.sphere(r, { at, name })` | A collision sphere. |
+| `k.collider.cylinder(r, h, { at, rot, name })` | A collision cylinder along Y (turn it with `rot`). |
+| `meta.collision: 'bounds'` | Shortcut: one box around the whole asset (ignored when the asset adds its own shapes). |
+| `meta.collision: 'none'` | Nothing collides (small decor a player should walk through). |
+
+```js
+const frame = k.part('frame');
+frame.add(k.attach('grip', { at: [-0.07, -0.07, 0], forward: [1, 0, 0] }));
+frame.add(k.attach('muzzle', { at: [0.1, 0, 0], forward: [1, 0, 0] }));
+const table = k.part('table');
+table.add(k.collider.box(1.6, 0.06, 0.8, { at: [0, 0.73, 0] }));          // the top
+table.add(k.collider.box(0.1, 0.7, 0.7, { at: [-0.6, 0.35, 0] }));        // one trestle
+```
+
+Use a few simple shapes that cover what a player bumps into, not one per detail (more than 12
+warns). Without any marker an asset behaves as before: the engine's default collision.
+
+Where they go at export:
+
+| Profile | Attachments and colliders |
+| --- | --- |
+| generic, godot | Empty nodes under the node they belong to, with `extras.studio` (`{ role: 'attachment' }` or `{ role: 'collider', shape, size }`), plus `<item>.setup.json`. |
+| roblox | The GLB is unchanged. Next to it: `<item>.setup.json` (data), `<item>.setup.lua` (paste its content into Studio's command bar after importing the GLB) and `<item>.setup.rbxmx` (the same code as a ModuleScript: `require(folder.AssetSetup).apply(model)`). The setup checks the imported size, creates invisible collision Parts (folder `Collision`), turns collision off on the visual MeshParts and adds the Attachments (their `LookVector` is `forward`). |
+
+`node studio review` writes `markers.png` (shapes in green, attachments with a blue forward
+line) whenever an asset has markers; the viewport shows the same with **Colliders** and
+**Attach**. Checks: `attachment.duplicate-name` (error), `collider.outside-asset`,
+`collider.oversized`, `collider.count`, `attachment.far` (warnings), and for weapons the
+reminder `attachment.weapon-grip` (info).
 
 ## Materials
 
@@ -575,6 +615,9 @@ Then: `node studio review wooden-stool`, open the sheet, fix, and
 | `k.shape.offset: offset … collapses the shape` | The inset is larger than the shape allows: use a smaller distance. |
 | `k.geo.loft: pass at least 2 sections` / `every section needs at least 3 points` | Give two or more `{ at, shape }` sections. |
 | `k.geo.sweep: path too short` | The path needs two or more distinct points. |
+| `k.attach: invalid name …` / `up must not be parallel to forward` | Names are letters, digits, `_`, `-`; give an `up` that is not along `forward`. |
+| `collider '…' is inside a non-uniformly scaled or mirrored group` | Size the collider itself; keep groups around it at uniform scale. |
+| `meta.collision is 'none' but the asset adds k.collider shapes` | Pick one. |
 | `k.arch: unknown style '…'` | Use a built-in style name or pass a style object (`{ extends: 'georgian', … }`). |
 | `k.arch.plan: mass … needs width > 0 and depth > 0` / `two masses are called '…'` / `entrance mass '…' does not exist` | Fix the masses list. |
 | Validator issue ids (`uv.padding`, `scene.mesh-triangles`, `texture.low-density`…) | See `rules/07-export-hygiene.md`, which has a fix for every id. |

@@ -21,7 +21,13 @@
   <header class="topbar">
     <div class="brand">AI 3D Asset Studio</div>
     <div class="title" id="title">No asset selected</div>
-    <div class="edit-actions" aria-label="Asset editing">
+    <div class="edit-actions scene-only" aria-label="Scene editing">
+      <button id="sceneUndo" type="button" title="Undo the last scene edit (Ctrl/⌘ Z)" disabled>Undo</button>
+      <button id="sceneRedo" type="button" title="Redo (Ctrl/⌘ Shift Z)" disabled>Redo</button>
+      <button id="sceneSaveBtn" type="button" disabled>Save Version</button>
+      <button id="sceneExportBtn" type="button" disabled>Export</button>
+    </div>
+    <div class="edit-actions asset-only" aria-label="Asset editing">
       <button id="undoEdit" type="button" title="Undo this look's last edit (Ctrl/⌘ Z)" disabled>Undo</button>
       <button id="redoEdit" type="button" title="Redo this look's last edit (Ctrl/⌘ Shift Z)" disabled>Redo</button>
       <button id="saveVersionBtn" type="button" disabled>Save Version</button>
@@ -35,7 +41,7 @@
           <option value="showcase">Showcase</option>
         </select>
       </label>
-      <label>View
+      <label class="asset-only">View
         <select id="viewMode">
           <option value="shaded">Shaded</option>
           <option value="normals">Normals</option>
@@ -43,13 +49,22 @@
           <option value="density">Texel density</option>
         </select>
       </label>
-      <div class="toggles">
+      <div class="toggles asset-only">
         <button data-toggle="wire" title="Wireframe overlay (W)">Wire</button>
         <button data-toggle="backfaces" title="Highlight back faces in red: shows missing or inverted faces (B)">Backfaces</button>
         <button data-toggle="grid" class="on" title="1 m grid (G)">Grid</button>
         <button data-toggle="dims" class="on" title="Dimensions (D)">Dims</button>
-        <button data-toggle="human" title="1.75 m human for scale (H)">Human</button>
+        <button data-toggle="colliders" class="on" title="Collision shapes of this asset (green), when it declares any">Colliders</button>
+        <button data-toggle="attach" class="on" title="Attachment points (blue = forward), when the asset declares any">Attach</button>
       </div>
+      <label title="A figure for scale (H cycles): 1.75 m human, or a Roblox R6 / R15 avatar (5.1 studs)">
+        <select id="scaleRef" aria-label="Scale reference figure">
+          <option value="off">No figure</option>
+          <option value="human">Human 1.75 m</option>
+          <option value="r6">Roblox R6</option>
+          <option value="r15">Roblox R15</option>
+        </select>
+      </label>
       <div class="views">
         <button data-view="front">Front</button>
         <button data-view="right">Side</button>
@@ -67,10 +82,29 @@
     <div class="side-tabs" role="tablist" aria-label="Sidebar content">
       <button id="sideAssets" type="button" class="on" role="tab" aria-selected="true">Assets</button>
       <button id="sideParts" type="button" role="tab" aria-selected="false">Parts</button>
+      <button id="sideScenes" type="button" role="tab" aria-selected="false">Scenes</button>
     </div>
     <div id="assetList" class="asset-list"></div>
     <div id="partList" class="asset-list hidden" role="tree" aria-label="Exported parts"></div>
-    <div class="side-foot">Select a part to inspect its transform. The viewport always loads the exported GLB.</div>
+    <div id="sceneSide" class="asset-list hidden" aria-label="Scene composer">
+      <div class="scene-bar">
+        <select id="sceneSelect" aria-label="Scene"></select>
+        <button id="sceneNew" type="button" title="Create a scene">New</button>
+      </div>
+      <form id="sceneNewForm" class="scene-new hidden">
+        <input id="sceneNewName" placeholder="Scene name" maxlength="60" required autocomplete="off" aria-label="Scene name">
+        <div class="part-axis-fields">
+          <label>W<input id="sceneNewW" type="number" step="0.5" min="1" max="100" value="6" aria-label="Room width in meters"></label>
+          <label>D<input id="sceneNewD" type="number" step="0.5" min="1" max="100" value="4" aria-label="Room depth in meters"></label>
+          <label>H<input id="sceneNewH" type="number" step="0.1" min="2" max="20" value="3" aria-label="Room height in meters"></label>
+        </div>
+        <div class="edit-form-actions"><button type="submit">Create</button><button id="sceneNewCancel" type="button">Cancel</button></div>
+        <p id="sceneNewError" class="edit-error" role="alert"></p>
+      </form>
+      <div id="sceneOutliner"></div>
+      <div id="sceneLibrary"></div>
+    </div>
+    <div id="sideFoot" class="side-foot">Select a part to inspect its transform. The viewport always loads the exported GLB.</div>
   </aside>
   <main class="stage">
     <canvas id="canvas"></canvas>
@@ -82,6 +116,26 @@
       <button id="partSnap" type="button" aria-pressed="false" title="Snap: 1 cm, 15°, 5%">Snap Off</button>
       <span id="partDraftBadge" class="part-draft-badge hidden" role="status">Draft not saved</span>
     </div>
+    <div id="sceneTools" class="part-tools hidden" role="toolbar" aria-label="Scene tools">
+      <button type="button" data-scene-mode="select" class="on" title="Select (Q)">Select</button>
+      <button type="button" data-scene-mode="translate" title="Move (T)">Move</button>
+      <button type="button" data-scene-mode="rotate" title="Turn around the vertical axis (hold the ring)">Turn</button>
+      <label class="scene-tool-label">Grid
+        <select id="sceneGrid" title="Snap step for moving and placing (hold Alt to move freely)">
+          <option value="0">off</option>
+          <option value="0.1">10 cm</option>
+          <option value="0.25">25 cm</option>
+          <option value="0.28">1 stud</option>
+          <option value="0.5">50 cm</option>
+        </select>
+      </label>
+      <button id="sceneWallSnap" type="button" aria-pressed="true" title="Stick to walls: back against the wall, front toward the room">Wall snap</button>
+      <button id="sceneStack" type="button" aria-pressed="false" title="While placing, rest on the surface under the pointer (a mug on a table)">Stack</button>
+      <button id="scenePlan" type="button" aria-pressed="false" title="Top-down plan view (P). Drag on the floor to select everything in a rectangle.">Plan view</button>
+      <button id="sceneCeiling" type="button" aria-pressed="false" title="Show the ceiling when the camera is inside the room">Ceiling</button>
+      <span id="sceneHint" class="part-draft-badge hidden" role="status"></span>
+    </div>
+    <div id="sceneMarquee" class="scene-marquee hidden" aria-hidden="true"></div>
     <div id="banner" class="banner hidden" role="status"></div>
     <div class="bars">
       <div id="skinBar" class="variant-bar hidden"></div>
@@ -94,12 +148,28 @@
   </main>
   <section class="panel">
     <nav class="tabs">
-      <button data-tab="edit">Edit</button>
-      <button data-tab="report" class="on">Report</button>
-      <button data-tab="issues">Issues <span id="issueCount" class="pill"></span></button>
-      <button data-tab="uv">UV</button>
-      <button data-tab="versions">Versions</button>
+      <button data-tab="scene" class="scene-only">Scene</button>
+      <button data-tab="edit" class="asset-only">Edit</button>
+      <button data-tab="report" class="on asset-only">Report</button>
+      <button data-tab="issues" class="asset-only">Issues <span id="issueCount" class="pill"></span></button>
+      <button data-tab="uv" class="asset-only">UV</button>
+      <button data-tab="versions" class="asset-only">Versions</button>
     </nav>
+    <div id="tab-scene" class="tab" aria-label="Scene inspector">
+      <div id="sceneStatus" class="edit-status" aria-live="polite"></div>
+      <div id="sceneAlert" class="edit-alert hidden" role="alert"></div>
+      <div id="sceneExportResult" class="export-result hidden"></div>
+      <form id="sceneSaveForm" class="edit-form hidden">
+        <label for="sceneNote">Version note</label>
+        <input id="sceneNote" maxlength="180" required placeholder="What changed?" autocomplete="off">
+        <div class="edit-form-actions"><button type="submit">Save Version</button><button id="sceneSaveCancel" type="button">Cancel</button></div>
+      </form>
+      <div id="sceneInspector"></div>
+      <div id="sceneArray"></div>
+      <div id="sceneRoom"></div>
+      <div id="sceneReportBox"></div>
+      <div id="sceneVersions"></div>
+    </div>
     <div id="tab-edit" class="tab" aria-label="Asset inspector">
       <div id="editStatus" class="edit-status" aria-live="polite"></div>
       <div id="editAlert" class="edit-alert hidden" role="alert"></div>
@@ -122,8 +192,9 @@
   </section>
   <footer class="status">
     <span id="status">Connecting…</span>
-    <span id="quality" class="quality" aria-live="polite"></span>
-    <span class="badge" title="The viewport loads the exported GLB through a clean GLTFLoader — never the source scene">Preview = Export</span>
+    <span id="serverNotice" class="server-notice hidden" role="alert"></span>
+    <span id="quality" class="quality asset-only" aria-live="polite"></span>
+    <span class="badge" title="The viewport loads exported GLBs through a clean GLTFLoader — never the source scene. A scene is assembled from the exported GLB of every placed asset.">Preview = Export</span>
   </footer>
   <script type="module" src="/viewport/app.js"></script>
 </body>

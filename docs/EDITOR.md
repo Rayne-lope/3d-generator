@@ -79,6 +79,9 @@ wood-color edit does not replace the authored walnut color. Editing walnut's sea
 color creates an override for walnut; resetting it restores the authored walnut seat
 color.
 
+Editing a golden asset is safe: `node studio golden` checks the authored source and ignores
+`editor.json`, so trying things here never shows up as a regression.
+
 Edits are stored in `assets/<slug>/editor.json`, alongside `asset.js`. The studio's
 services write this file atomically. It is included in source hashes, history, source
 diffs and engine builds. A working copy with all overrides reset has no sidecar file.

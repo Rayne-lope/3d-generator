@@ -170,13 +170,16 @@ files, so it is also your export preview.
 
 | Area | What it does |
 | --- | --- |
-| **Assets** (left) | Every asset, grouped by set, with status (green = clean, yellow = warnings, red = errors), variant count and triangles. |
+| **Assets** (left) | Every asset, grouped by set, with a thumbnail, status (green = clean, yellow = warnings, red = errors), variant count and triangles. |
+| **Scenes** (left) | The scene composer: assemble a room from the asset library with grid, wall and stack snapping, a plan view, and a one-GLB export in which every placed asset stays its own node. See the [scenes guide](SCENES.md). |
 | **Parts** (left) | The exported hierarchy. Select by tree or canvas; eligible separate parts have Move/Rotate/uniform Scale gizmos, numeric controls and Focus. See the [part editor guide](PART-EDITOR.md). |
 | **Profile** | Generic glTF / Godot / Roblox Studio. Switching shows that profile's GLB (built on demand), e.g. the Roblox version in studs with baked colors. |
 | **Light** | **Neutral** (default) is a plain gray environment with key and fill lights and no tone mapping: the parity reference, close to an engine's default look. **Showcase** adds reflections and filmic tone mapping. It looks nicer but is not a parity reference. |
 | **View** | Shaded, normals, UV checker, and texel density: a checker where each square is 16 texels of the real texture. Even square sizes across the model mean consistent sharpness; big squares mean blurry areas. |
 | **Wire / Backfaces** | Wireframe overlay; back faces in red (missing or inverted faces show up as red from outside). |
-| **Grid / Dims / Human** | 1 m grid, dimensions in m (and studs on the Roblox profile), and a 1.75 m human for scale. |
+| **Grid / Dims** | 1 m grid and dimensions in m (and studs on the Roblox profile). |
+| **Colliders / Attach** | Collision shapes (green) and attachment points (blue line = forward) of assets that declare them. |
+| **Figure** | A scale reference next to the asset (H cycles): a 1.75 m human, or a Roblox R6 or R15 avatar (5.1 studs tall). |
 | **Front / Side / Top / 3/4** | Camera presets. Drag to orbit, right-drag to pan, wheel to zoom. |
 | **PNG** | Saves a screenshot. |
 | **Variant bar / Skin bar** (bottom) | Switch between the base asset and its variants, and between the default look and its skins (same mesh, different textures). |
@@ -343,6 +346,10 @@ Godot is verified automatically: `node studio engine-verify godot` (52/52 golden
    is often a single MeshPart. Separate parts are separate MeshParts.
 5. Colors live in textures, because the Roblox glTF importer ignores color factors. You must be
    signed in so Studio can upload the images.
+6. When the asset has attachments or collision shapes, the export also writes
+   `<asset>.setup.lua`. Copy its content, paste it into Studio's command bar and press Enter:
+   it adds the Attachments and invisible collision Parts to the imported model.
+   `<asset>.setup.rbxmx` has the same code as a ModuleScript for use from game scripts.
 
 What the Roblox profile does for you: studs, baked colors, a palette atlas, one material per
 mesh, repeats baked into 0..1 UVs, textures ≤ 1024 px, a 20k-triangle split, gutter dilation and
@@ -571,6 +578,10 @@ For sci-fi gear, vehicles, gadgets and other designed shapes (`rules/17-complex-
 These are for maintainers: run them when you change the kit, the exporter, a profile or a golden
 asset.
 
+The suite checks the **authored source** of each golden asset: it runs on copies without
+`editor.json`, so edits you make in the visual editor (a recolored chair, a tilted lid) never
+fail it, and baselines never record them. `engine-pack` and `engine-verify` use the same copies.
+
 ```bash
 node studio golden                         # 52 items × 3 profiles, ~8 minutes
 open golden/report/index.html              # checks + baseline/current/diff images
@@ -620,6 +631,7 @@ All commands accept `--help` and most accept `--json`. Targets are `<slug>`, `<s
 | `export <target> --profile p\|all [--no-parity] [--skins \| --skin s]` | Strict export to `exports/` (+ per-skin GLBs and skin packs) |
 | `publish <target> --roblox [--skins] [--dry-run] [--user id \| --group id] [--force]` | Upload to Roblox with Open Cloud |
 | `report <slug[--variant][@skin]> [--profile p] [--export] [--md]` | Full build or export report |
+| `scene new\|list\|library\|validate\|build\|review\|export\|save\|history\|restore …` | Rooms assembled from existing assets: see the [scenes guide](SCENES.md#cli) |
 | `list` | Assets and sets |
 | `stats` | Project statistics and success metrics |
 | `golden [--profile p] [--only a,b] [--update-baselines]` | Golden suite |
@@ -633,6 +645,7 @@ All commands accept `--help` and most accept `--json`. Targets are `<slug>`, `<s
 ```
 assets/<slug>/asset.js      your assets (the only place asset code lives)
 sets/<set>/                 set.json + style.js shared by set members
+scenes/<name>/scene.json    scenes: a room spec + placed assets (data only, see docs/SCENES.md)
 rules/                      modeling knowledge the agent reads (01–14 + review checklist)
 AGENTS.md, CLAUDE.md        the agent workflow (Codex reads AGENTS.md; Gemini via .gemini/settings.json)
 .agents/skills/             the shortcuts as Agent Skills (Codex, Gemini CLI); source for
@@ -720,7 +733,7 @@ Every skin is checked to keep the exact same mesh, and `export --skins` / `publi
 deliver them in the form each engine uses (see [Skins](#skins-many-looks-on-one-model)).
 
 **Can I use Codex, Gemini CLI or another agent instead of Claude Code?** Yes. See
-[Using Codex or Gemini CLI](#using-codex-or-gemini-cli): the same nine shortcuts are available
+[Using Codex or Gemini CLI](#using-codex-or-gemini-cli): the same ten shortcuts are available
 (`$asset …` in Codex, `/asset …` in Gemini CLI), and any agent that reads `AGENTS.md` follows the
 workflow from plain requests.
 

@@ -7,7 +7,7 @@ import http from 'node:http';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { paths, previewReport, itemId, ROOT } from '../core/paths.js';
-import { readJson, writeJson, ensureDir } from '../core/fsutil.js';
+import { readJson, writeJson, ensureDir, hashDirs } from '../core/fsutil.js';
 import { listAssets, listSets, loadSet, setOfAsset } from '../core/targets.js';
 import { listProfiles, loadProfile } from '../profiles/index.js';
 import { loadConfig } from '../core/config.js';
@@ -15,6 +15,13 @@ import { EditorError, editorData, editorRevision, replaceEditorScope, assertEdit
 import { computeSourceHash } from '../core/build.js';
 import { loadAssetDef } from '../core/load-asset.js';
 import { editorControls, editorParts } from '../kit/editor.js';
+import { SceneError, assertSceneName, createScene, listScenes as listSceneNames, readScene, sceneExists, sceneRevision, writeScene } from '../scene/schema.js';
+import { libraryEntries, thumbFiles, thumbUrl } from '../scene/library.js';
+import { listSceneVersions, sceneWorkingState } from '../scene/snapshots.js';
+import { scenePaths, sceneReport } from '../scene/paths.js';
+import { buildShell } from '../scene/shell.js';
+import { parseItemId } from '../core/paths.js';
+import { writeFileAtomic } from '../core/fsutil.js';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -43,6 +50,8 @@ const MOUNTS = [
   ['/files/shots/', paths.shots],
   ['/files/exports/', paths.exports],
   ['/files/engines/', paths.engines],
+  ['/files/scenes/', scenePaths.state],
+  ['/files/thumbs/', scenePaths.thumbs],
 ];
 
 function send(res, status, body, type = 'application/json; charset=utf-8') {
@@ -58,7 +67,7 @@ function serveFile(res, file) {
   });
 }
 
-function readBody(req) {
+function readBody(req, limit = 65536) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
@@ -66,7 +75,7 @@ function readBody(req) {
     req.on('data', (chunk) => {
       if (exceeded) return;
       size += chunk.byteLength;
-      if (size > 65536) {
+      if (size > limit) {
         exceeded = true;
         reject(new EditorError('request body too large', 413));
       } else chunks.push(chunk);
@@ -83,15 +92,42 @@ function readBody(req) {
   });
 }
 
-function requireLocalJson(req) {
+function requireLocal(req, contentType = /^application\/json(?:\s*;|$)/i, label = 'application/json') {
   const host = req.headers.host || '';
   let local;
   try { local = new URL(`http://${host}`); } catch { throw new EditorError('local host required', 403); }
   const hostname = local.hostname.toLowerCase();
   if (!['127.0.0.1', 'localhost', '[::1]'].includes(hostname)) throw new EditorError('local host required', 403);
   if (req.headers.origin && req.headers.origin !== local.origin) throw new EditorError('same origin required', 403);
-  if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] || '')) throw new EditorError('application/json required', 415);
+  if (!contentType.test(req.headers['content-type'] || '')) throw new EditorError(`${label} required`, 415);
 }
+
+function requireLocalJson(req) {
+  requireLocal(req);
+}
+
+/** Raw request body up to `limit` bytes (thumbnail uploads). */
+function readBinary(req, limit) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    let exceeded = false;
+    req.on('data', (chunk) => {
+      if (exceeded) return;
+      size += chunk.byteLength;
+      if (size > limit) {
+        exceeded = true;
+        reject(new EditorError('request body too large', 413));
+      } else chunks.push(chunk);
+    });
+    req.on('end', () => { if (!exceeded) resolve(Buffer.concat(chunks)); });
+    req.on('error', reject);
+  });
+}
+
+const SCENE_BODY_LIMIT = 2 * 1024 * 1024;
+const THUMB_LIMIT = 400 * 1024;
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function runJsonCli(args, { timeoutMs = 120000 } = {}) {
   return new Promise((resolve, reject) => {
@@ -188,7 +224,7 @@ async function assetSummaries() {
       const r = readJson(previewReport(slug, null, p), null);
       if (r) profiles[p] = { ok: r.ok, counts: r.counts, triangles: r.triangles.total, builtAt: r.builtAt };
     }
-    out.push({ slug, ...(meta || { title: slug }), variants, skins, profiles });
+    out.push({ slug, ...(meta || { title: slug }), variants, skins, profiles, thumb: thumbUrl(slug, report?.hashes?.glb), glbHash: report?.hashes?.glb || null });
   }
   return out;
 }
@@ -196,6 +232,11 @@ async function assetSummaries() {
 export async function startServer({ port, host = '127.0.0.1' } = {}) {
   const config = loadConfig();
   const listenPort = port ?? config.server.port;
+  // This process keeps the studio's code in memory (kit version, hashing, validation). When the
+  // code on disk changes, its idea of "current preview" no longer matches what builds produce,
+  // so the viewport is told to ask for a restart instead of showing previews as stale forever.
+  const codeDirs = [paths.kit, path.join(ROOT, 'studio', 'core'), paths.profiles, path.join(ROOT, 'studio', 'server'), path.join(ROOT, 'studio', 'cli'), scenePaths.code];
+  const bootCode = hashDirs(codeDirs);
   const clients = new Set();
   const activeProfiles = new Set(['generic']);
   const queue = [];
@@ -224,6 +265,49 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
     const def = await loadAssetDef(slug);
     if (!editorControls(def).length && !editorParts(def).length) throw new EditorError(`asset '${slug}' is not enabled for visual editing`, 403);
     return def;
+  };
+  const scenePayload = (name, profile = 'generic') => {
+    if (!listProfiles().includes(profile)) throw new EditorError(`unknown profile '${profile}'`, 400, 'profile');
+    const data = readScene(name);
+    const report = readJson(sceneReport(name, profile), null);
+    return {
+      ...data,
+      profile,
+      report,
+      preview: { current: !!report && report.hashes?.scene === data.revision, url: report?.file ? `/files/scenes/${name}/${profile}.glb` : null },
+      history: sceneWorkingState(name),
+      versions: listSceneVersions(name),
+    };
+  };
+  const requireScene = (name) => {
+    assertSceneName(name);
+    if (!sceneExists(name)) throw new SceneError(`scene '${name}' not found`, 404);
+  };
+  /** One placeable item (asset + variant + skin) for the composer: a current preview GLB and its size in meters. */
+  const sceneItem = async (slug, variant, skin, profile) => {
+    assertEditorSlug(slug);
+    if (!listProfiles().includes(profile)) throw new EditorError(`unknown profile '${profile}'`, 400, 'profile');
+    const def = await loadAssetDef(slug);
+    if (variant && !Object.hasOwn(def.variants, variant)) throw new EditorError(`unknown variant '${variant}'`, 404, 'variant');
+    if (skin && !Object.hasOwn(def.skins || {}, skin)) throw new EditorError(`unknown skin '${skin}'`, 404, 'skin');
+    const expected = () => computeSourceHash(slug, variant, profile, def.meta.set || setOfAsset(slug), skin);
+    let report = readJson(previewReport(slug, variant, profile, skin), null);
+    let error = null;
+    if (!report || report.hashes?.source !== expected()) {
+      const result = await enqueue(slug, variant, profile, skin);
+      error = result.error || null;
+      report = readJson(previewReport(slug, variant, profile, skin), null);
+    }
+    if (!report) return { item: itemId(slug, variant, skin), slug, variant, skin, profile, error: error || 'no preview' };
+    const perMeter = report.profile.units.perMeter;
+    return {
+      item: itemId(slug, variant, skin), slug, variant, skin, profile, title: report.title,
+      url: `/files/preview/${itemId(slug, variant, skin)}/${profile}.glb`,
+      glbHash: report.hashes.glb,
+      bounds: { min: report.bounds.min.map((v) => v / perMeter), max: report.bounds.max.map((v) => v / perMeter) },
+      meters: report.dimensions.meters, triangles: report.triangles.total, meshes: report.meshCount,
+      ok: report.counts.error === 0, errors: report.counts.error, warnings: report.counts.warning, error,
+    };
   };
   const noteLook = (slug, variant, skin) => {
     if (slug) activeLook.set(slug, { variant: variant || null, skin: skin || null });
@@ -337,11 +421,31 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
     }
   }
 
+  // Watch scenes/<name>/scene.json: edits by an agent or the CLI reach the composer at once.
+  const sceneTimers = new Map();
+  ensureDir(scenePaths.scenes);
+  try {
+    watchers.push(fs.watch(scenePaths.scenes, { recursive: true }, (_evt, file) => {
+      if (!file) return;
+      const name = String(file).split(/[\\/]/)[0];
+      clearTimeout(sceneTimers.get(name));
+      sceneTimers.set(name, setTimeout(() => {
+        sceneTimers.delete(name);
+        let revision = null;
+        try { if (sceneExists(name)) revision = sceneRevision(name); } catch {}
+        broadcast('scene-changed', { name, revision });
+      }, 150));
+    }));
+  } catch (err) {
+    console.warn(`watch disabled for ${scenePaths.scenes}: ${err.message}`);
+  }
+
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const p = decodeURIComponent(url.pathname);
     let requestSlug = null;
     let requestLook = {};
+    let requestScene = null;
     try {
       if (p === '/api/events') {
         res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store', connection: 'keep-alive' });
@@ -360,6 +464,7 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
           sets: listSets().map((n) => loadSet(n)),
           profiles: listProfiles().map((id) => ({ id, label: loadProfile(id).label, units: loadProfile(id).units })),
           config,
+          codeChanged: hashDirs(codeDirs) !== bootCode,
           building: running ? { slug: running.slug, variant: running.variant || null, skin: running.skin || null, profile: running.profile, revision: running.revision } : null,
         });
       }
@@ -480,6 +585,118 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
         const result = await enqueue(body.slug, variant, profile, skin);
         return send(res, 200, result);
       }
+      if (p === '/api/scenes' && req.method === 'GET') {
+        const scenes = listSceneNames().map((name) => {
+          try {
+            const { scene, revision } = readScene(name);
+            return { name, title: scene.title, room: scene.room ? [scene.room.width, scene.room.depth, scene.room.height] : null, instances: scene.instances.length, revision };
+          } catch (err) {
+            return { name, title: name, error: err.message };
+          }
+        });
+        return send(res, 200, { scenes });
+      }
+      if (p === '/api/library' && req.method === 'GET') {
+        return send(res, 200, { assets: await libraryEntries({ looks: true }) });
+      }
+      if (p === '/api/scene' && req.method === 'GET') {
+        const name = url.searchParams.get('name');
+        requireScene(name);
+        return send(res, 200, scenePayload(name, url.searchParams.get('profile') || 'generic'));
+      }
+      if (p === '/api/scene/shell' && req.method === 'GET') {
+        // The shell is kit code only (no asset module runs), so it is built in-process and cached.
+        const name = url.searchParams.get('name');
+        const profile = url.searchParams.get('profile') || 'generic';
+        requireScene(name);
+        if (!listProfiles().includes(profile)) throw new EditorError(`unknown profile '${profile}'`, 400, 'profile');
+        const { scene, revision } = readScene(name);
+        if (!scene.room) return send(res, 200, { name, profile, revision, url: null });
+        const shell = await withAssetOperation(`scene-shell:${name}`, () => buildShell({ name, room: scene.room, title: scene.title, profileId: profile }));
+        return send(res, 200, { name, profile, revision, url: `/files/scenes/${name}/shell.${profile}.glb?h=${shell.info.sha256.slice(0, 12)}`, ok: shell.info.ok, issues: shell.info.issues });
+      }
+      if (p === '/api/scene/item' && req.method === 'GET') {
+        const q = url.searchParams;
+        return send(res, 200, await sceneItem(q.get('slug'), q.get('variant') || null, q.get('skin') || null, q.get('profile') || 'generic'));
+      }
+      if (p === '/api/scene/create' && req.method === 'POST') {
+        requireLocalJson(req);
+        const body = await readBody(req);
+        const created = createScene(body.name, { title: typeof body.title === 'string' ? body.title : null, room: body.room === undefined ? undefined : body.room });
+        return send(res, 200, scenePayload(created.name, body.profile || 'generic'));
+      }
+      if (p === '/api/scene' && req.method === 'PUT') {
+        requireLocalJson(req);
+        const body = await readBody(req, SCENE_BODY_LIMIT);
+        requireScene(body.name);
+        requestScene = { name: body.name, profile: body.profile || 'generic' };
+        if (typeof body.expectedRevision !== 'string') throw new SceneError('expectedRevision required', 400, 'expectedRevision');
+        const result = await withAssetOperation(`scene:${body.name}`, async () => {
+          writeScene(body.name, body.scene, { expectedRevision: body.expectedRevision });
+          return scenePayload(body.name, requestScene.profile);
+        });
+        return send(res, 200, result);
+      }
+      if ((p === '/api/scene/build' || p === '/api/scene/export') && req.method === 'POST') {
+        requireLocalJson(req);
+        const body = await readBody(req);
+        requireScene(body.name);
+        const profile = body.profile || 'generic';
+        if (typeof profile !== 'string' || !listProfiles().includes(profile)) throw new EditorError(`unknown profile '${profile}'`, 400, 'profile');
+        requestScene = { name: body.name, profile };
+        const exporting = p === '/api/scene/export';
+        const result = await withAssetOperation(`scene:${body.name}`, async () => {
+          if (body.expectedRevision && body.expectedRevision !== sceneRevision(body.name)) throw new SceneError('scene changed on disk', 409);
+          const cli = await runJsonCli(['scene', exporting ? 'export' : 'build', body.name, '--profile', profile], { timeoutMs: 300000 });
+          const first = cli.results?.[0] || null;
+          if (!first) throw new EditorError(cli.error || `scene ${exporting ? 'export' : 'build'} failed`, 500);
+          return { result: first, ...scenePayload(body.name, profile) };
+        });
+        return send(res, 200, result);
+      }
+      if (p === '/api/scene/save' && req.method === 'POST') {
+        requireLocalJson(req);
+        const body = await readBody(req);
+        requireScene(body.name);
+        requestScene = { name: body.name, profile: body.profile || 'generic' };
+        if (typeof body.note !== 'string' || !body.note.trim() || body.note.length > 500) throw new SceneError('note required (max 500 characters)', 400, 'note');
+        const result = await withAssetOperation(`scene:${body.name}`, async () => {
+          if (body.expectedRevision && body.expectedRevision !== sceneRevision(body.name)) throw new SceneError('scene changed on disk', 409);
+          const saved = await runJsonCli(['scene', 'save', body.name, '-m', body.note.trim()]);
+          return { result: saved, ...scenePayload(body.name, requestScene.profile) };
+        });
+        return send(res, 200, result);
+      }
+      if (p === '/api/scene/restore' && req.method === 'POST') {
+        requireLocalJson(req);
+        const body = await readBody(req);
+        requireScene(body.name);
+        requestScene = { name: body.name, profile: body.profile || 'generic' };
+        if (typeof body.version !== 'string' || !/^v\d+$/.test(body.version)) throw new SceneError('invalid version', 400, 'version');
+        const result = await withAssetOperation(`scene:${body.name}`, async () => {
+          const restored = await runJsonCli(['scene', 'restore', body.name, body.version]);
+          if (restored.error) throw new SceneError(restored.error, 404);
+          return { result: restored, ...scenePayload(body.name, requestScene.profile) };
+        });
+        return send(res, 200, result);
+      }
+      if (p === '/api/thumb' && req.method === 'PUT') {
+        requireLocal(req, /^image\/png$/i, 'image/png');
+        const item = url.searchParams.get('item') || '';
+        const hash = url.searchParams.get('hash') || '';
+        const parsed = parseItemId(item);
+        if (!parsed || itemId(parsed.slug, parsed.variant, parsed.skin) !== item) throw new EditorError('invalid item', 400, 'item');
+        assertEditorSlug(parsed.slug);
+        const report = readJson(previewReport(parsed.slug, parsed.variant, 'generic', parsed.skin), null);
+        // Only the thumbnail of the current generic GLB is kept: a stale upload is dropped.
+        if (!report || report.hashes?.glb !== hash) throw new EditorError('thumbnail does not match the current preview', 409);
+        const png = await readBinary(req, THUMB_LIMIT);
+        if (png.length < 64 || !png.subarray(0, 8).equals(PNG_SIGNATURE)) throw new EditorError('not a PNG image', 400);
+        const files = thumbFiles(item);
+        writeFileAtomic(files.png, png);
+        writeJson(files.meta, { hash });
+        return send(res, 200, { thumb: thumbUrl(item, hash) });
+      }
       if (p === '/api/notify' && req.method === 'POST') {
         const body = await readBody(req);
         for (const item of body.items || []) broadcast('built', { ...item, external: true });
@@ -494,6 +711,7 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
       if (err.field) body.field = err.field;
       if (status === 409) {
         if (requestSlug) try { body.current = await editorPayload(requestSlug, requestLook); } catch {}
+        if (requestScene) try { body.current = scenePayload(requestScene.name, requestScene.profile); } catch {}
       }
       return send(res, status, body);
     }
@@ -505,7 +723,19 @@ export async function startServer({ port, host = '127.0.0.1' } = {}) {
   });
   const actualPort = server.address().port;
   const info = { port: actualPort, pid: process.pid, url: `http://${host}:${actualPort}/` };
-  writeJson(paths.serverInfo, info);
+  // CLI builds notify the server named in this file. A second server (a test, a capture run)
+  // must not take that over from one that is still running.
+  const other = readJson(paths.serverInfo, null);
+  let otherAlive = false;
+  if (other && other.pid && other.pid !== process.pid) {
+    try {
+      process.kill(other.pid, 0);
+      otherAlive = true;
+    } catch {
+      // stale file from a server that is gone
+    }
+  }
+  if (!otherAlive) writeJson(paths.serverInfo, info);
   const close = () => {
     for (const w of watchers) w.close();
     for (const c of clients) c.end();

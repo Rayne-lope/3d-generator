@@ -90,10 +90,10 @@ Plus geometry (inverted faces, inside-out shells, degenerate/duplicate triangles
 ## Agents other than Claude Code
 
 - The workflow is tool-neutral: `AGENTS.md` is the entry point (Codex reads it natively; Gemini CLI loads it through `.gemini/settings.json` → `context.fileName`).
-- The nine shortcuts are **Agent Skills** in `.agents/skills/<name>/SKILL.md`, the open format that both **Codex** (repo skills; `$asset`, `/skills`, or automatic) and **Gemini CLI** (`.agents/skills` is an alias of `.gemini/skills`) read directly.
+- The ten shortcuts are **Agent Skills** in `.agents/skills/<name>/SKILL.md`, the open format that both **Codex** (repo skills; `$asset`, `/skills`, or automatic) and **Gemini CLI** (`.agents/skills` is an alias of `.gemini/skills`) read directly.
 - Codex custom prompts (`~/.codex/prompts`, `/prompts:name`) are deprecated and live in the user's home folder, so they are not used. Codex can't run skills as `/asset` yet (openai/codex#50068); `$asset` is the Codex form.
 - Real slash commands are generated from the skills by `node studio agents`: `.claude/commands/<name>.md` (`$ARGUMENTS`) and `.gemini/commands/<name>.toml` (`{{args}}`). A test fails when they drift.
-- All names start with `asset` because Claude Code's built-in `/review` and `/export` win name collisions with project commands.
+- The asset shortcuts start with `asset` because Claude Code's built-in `/review` and `/export` win name collisions with project commands; `scene` has no built-in namesake.
 
 ## Skins (one model, many looks)
 
@@ -109,6 +109,60 @@ Plus geometry (inverted faces, inside-out shells, degenerate/duplicate triangles
 - Credentials only from `ROBLOX_API_KEY` / `ROBLOX_CREATOR` (environment or gitignored `.env`); never logged, stored in reports, or put in error messages (tested).
 - `.studio/roblox/published.json` keeps asset ids per item and per image hash per creator: unchanged models are skipped, changed ones become versions, identical maps upload once.
 - Verified against a local fake Open Cloud server in the tests. A real upload needs the user's key.
+
+## Scenes (rooms assembled from assets)
+
+- **A scene is data.** `scenes/<name>/scene.json` holds a room spec and placed assets; the
+  browser composer, the CLI and coding agents all edit that file. No modeling code, no scale:
+  an instance is a position in meters and a yaw, so sizes stay consistent across a project.
+- **One GLB per scene, one node per instance.** The composer merges the preview GLB of every
+  placed asset (the bytes `export` writes for it) with glTF-Transform; instances of one asset
+  share its meshes, materials and textures. This needs no Roblox API key. A `.rbxmx` cannot
+  carry mesh data (MeshParts reference uploaded assets), so a layout that reuses published
+  assets by id is left for later; `<name>.layout.json` already has positions in meters and studs.
+- **Preview = Export still holds.** The browser assembles the same exported GLBs; `scene export`
+  composes twice and compares bytes, and is blocked by any member asset's validation errors.
+- **The room shell is generated**, not modeled: `k.arch.wall` (openings), box floor and ceiling,
+  flat `k.mat.physical` finishes, one node per surface, through the normal IR → profile → GLB →
+  validate pipeline. Tiling wall textures, door leaves and frames are not generated yet.
+- **Scene code lives in `studio/scene/`**, outside `kit/`, `core/` and `profiles/`: those are
+  hashed into every asset build, and scene work must not invalidate asset previews or the
+  golden suite.
+- **Thumbnails are rendered in the browser** from each asset's generic GLB and cached on the
+  server by GLB hash, so they cost nothing at build time and never go stale.
+- **Roblox scale references.** The R15 dummy uses the part bounds of the block rig in its
+  T-pose (5.1 studs tall, 4 studs wide), measured from the user's rig file; R6 is the classic
+  six-part layout with the same height. They are viewing aids, not exported.
+- **Unverified (needs Roblox Studio):** whether the 3D Importer keeps each instance as its own
+  nested group, and whether meshes shared by several instances are uploaded once or once per
+  instance. See `engines/roblox/CHECKLIST.md`, section 7.
+
+## Attachments and collision
+
+- **Markers are data.** `k.attach` and `k.collider.*` add empty objects to the asset scene; the
+  IR records them in asset space and relative to the node they belong to. No marker, no change:
+  existing assets export exactly as before.
+- **Generic and Godot** get them as empty glTF nodes with `extras.studio` (plain glTF, readable
+  anywhere) plus `<item>.setup.json`. No Godot automation yet (Godot is not installed on the
+  development machine, so it could not be verified).
+- **Roblox gets a setup module, not GLB conventions.** How the Roblox importer treats empty
+  nodes is unknown, and a GLB cannot set collision. So the Roblox GLB stays byte-for-byte as it
+  was and `<item>.setup.rbxmx` carries a ModuleScript: `AssetSetup.apply(model)` creates
+  invisible Block/Ball/Cylinder Parts, turns `CanCollide` off on the visual MeshParts and adds
+  Attachments. Only scriptable API is used (no `CollisionFidelity`).
+- **The module verifies before it acts.** It compares the model's bounding box with the exported
+  size (3% tolerance) and stops on a mismatch; it tries the four quarter turns around the
+  vertical axis and uses the MeshPart positions to pick the one the importer applied.
+- **Verified:** the generated module runs in the Luau CLI against a stand-in for the Roblox API
+  (`tests/markers.test.js`): frame solving for 0° and 180°, collider and attachment placement,
+  welding, the size refusal. **Seen in Roblox Studio (2026-10-09, glock-17 import preview):** the
+  file becomes a Model holding a Model of the same name; every glTF mesh node `X` becomes a
+  Model `X_Node` with a MeshPart `X` inside, so parts are found by name through
+  `GetDescendants`. **Still unverified:** the result of `AssetSetup.apply` on that model
+  (positions, the turn the importer applies). `engines/roblox/CHECKLIST.md`, section 8.
+- **Golden checks the authored source.** `golden`, `engine-pack` and `engine-verify` run on
+  copies of the golden assets without `editor.json`: a working-copy edit in the visual editor is
+  the user's choice, not a regression of the default render.
 
 ## Tooling choices
 

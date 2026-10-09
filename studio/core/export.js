@@ -13,10 +13,12 @@ import { ensureDir, readJson, sha256, writeFileAtomic, writeJson } from './fsuti
 import { reportMarkdown } from './report.js';
 import { loadAssetDef } from './load-asset.js';
 import { setOfAsset } from './targets.js';
+import { loadProfile } from '../profiles/index.js';
+import { assetSetupCommand, hasSetup, setupData, setupRbxmx } from './setup.js';
 
 export function exportPaths(slug, variant, profileId, skin = null) {
   const base = path.join(paths.exports, profileId, itemId(slug, variant, skin));
-  return { glb: `${base}.glb`, json: `${base}.report.json`, md: `${base}.report.md` };
+  return { glb: `${base}.glb`, json: `${base}.report.json`, md: `${base}.report.md`, setup: `${base}.setup.json`, setupScript: `${base}.setup.rbxmx`, setupCommand: `${base}.setup.lua` };
 }
 
 function recordExport(slug, profileId, file) {
@@ -66,6 +68,18 @@ export async function exportItem({ slug, variant = null, skin = null, profileId,
   const out = exportPaths(slug, variant, profileId, skin);
   ensureDir(path.dirname(out.glb));
   writeFileAtomic(out.glb, previewBytes);
+  // Attachments and collision travel next to the GLB (a GLB cannot carry them for every engine).
+  const setup = hasSetup(finalReport) ? setupData(finalReport) : null;
+  const setupScript = !!setup && !!loadProfile(profileId).metadata?.setupScript;
+  if (setup) writeJson(out.setup, setup);
+  else fs.rmSync(out.setup, { force: true });
+  if (setupScript) {
+    writeFileAtomic(out.setupScript, setupRbxmx(setup));
+    writeFileAtomic(out.setupCommand, assetSetupCommand(setup));
+  } else {
+    fs.rmSync(out.setupScript, { force: true });
+    fs.rmSync(out.setupCommand, { force: true });
+  }
   const exported = {
     ...finalReport,
     file: { ...finalReport.file, path: rel(out.glb), preview: finalReport.file.path },
@@ -74,6 +88,7 @@ export async function exportItem({ slug, variant = null, skin = null, profileId,
       previewMatch: true,
       sha256: previewHash,
       parity: parityResult ? { max: parityResult.max, ok: parityResult.ok, views: parityResult.views } : null,
+      ...(setup ? { setup: { json: rel(out.setup), ...(setupScript ? { rbxmx: rel(out.setupScript), command: rel(out.setupCommand) } : {}) } } : {}),
     },
   };
   writeJson(out.json, exported);
@@ -82,5 +97,6 @@ export async function exportItem({ slug, variant = null, skin = null, profileId,
     return { slug, variant, skin, id, profile: profileId, blocked: true, reason: 'source changed while exporting; rebuild the selected look', errors: [], report };
   }
   recordExport(slug, profileId, rel(out.glb));
-  return { slug, variant, skin, id, profile: profileId, blocked: false, files: { glb: rel(out.glb), json: rel(out.json), md: rel(out.md) }, report: exported, parity: parityResult };
+  const files = { glb: rel(out.glb), json: rel(out.json), md: rel(out.md), ...(setup ? { setup: rel(out.setup) } : {}), ...(setupScript ? { setupScript: rel(out.setupScript), setupCommand: rel(out.setupCommand) } : {}) };
+  return { slug, variant, skin, id, profile: profileId, blocked: false, files, report: exported, parity: parityResult };
 }
