@@ -80,6 +80,7 @@ assets/*
 
 # Engine files written by `node studio export` and `node studio engine-pack`
 exports/
+deliveries/
 engines/godot/golden/
 engines/godot/verify/report.json
 engines/godot/verify/*.png
